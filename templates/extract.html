@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Web Extractor | OneGrad{% endblock %}
+{% block extra_head %}
+<style>
+  .extract-container {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 14px 30px rgba(29, 46, 83, 0.1);
+    padding: 2rem;
+  }
+  form.extract-form {
+    display: grid;
+    gap: 1rem;
+  }
+  label {
+    font-weight: 600;
+    color: #1d2e53;
+  }
+  input[type="url"],
+  textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ccd4e0;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  input[type="url"]:focus,
+  textarea:focus {
+    outline: none;
+    border-color: #3e6acb;
+    box-shadow: 0 0 0 3px rgba(62, 106, 203, 0.15);
+  }
+  textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+  button {
+    background: linear-gradient(135deg, #2f4f8f, #4068c6);
+    color: #ffffff;
+    border: none;
+    padding: 0.9rem 1.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    justify-self: start;
+  }
+  button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 20px rgba(29, 46, 83, 0.18);
+  }
+  .result-section {
+    margin-top: 2rem;
+  }
+  .result-section h2 {
+    margin-bottom: 0.5rem;
+    color: #1d2e53;
+  }
+  .primary-heading {
+    margin-bottom: 0.75rem;
+    font-size: 1.05rem;
+    color: #2f4f8f;
+  }
+  pre {
+    white-space: pre-wrap;
+    background-color: #f1f4fb;
+    padding: 1.25rem;
+    border-radius: 8px;
+    border: 1px solid #d9e1f2;
+    overflow-y: auto;
+    max-height: 420px;
+    font-size: 0.95rem;
+    color: #1f1f24;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<section class="extract-container">
+  <h2>Web Page Text Extractor</h2>
+  <p>Fetch a web page and summarize it with Gemini using your research prompt.</p>
+  <form method="post" class="extract-form" novalidate>
+    <div>
+      <label for="url">Page URL</label>
+      <input
+        type="url"
+        id="url"
+        name="url"
+        placeholder="https://www.example.edu/programs"
+        value="{{ url }}"
+        required
+      />
+    </div>
+    <div>
+      <label for="prompt">Prompt</label>
+      <textarea
+        id="prompt"
+        name="prompt"
+        placeholder="Describe the insights you're looking for..."
+      >{{ prompt }}</textarea>
+    </div>
+    <button type="submit">Extract and Analyze</button>
+  </form>
+  {% if extracted_text %}
+  <section class="result-section">
+    <h2>Extracted Text</h2>
+    {% if primary_heading or primary_title %}
+    <p class="primary-heading">{{ primary_heading or primary_title }}</p>
+    {% endif %}
+    <pre>{{ extracted_text }}</pre>
+  </section>
+  {% endif %}
+  {% if llm_output %}
+  <section class="result-section">
+    <h2>Gemini Response</h2>
+    <pre>{{ llm_output }}</pre>
+  </section>
+  {% endif %}
+</section>
+{% endblock %}
+
+

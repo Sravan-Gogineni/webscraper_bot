@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Database Dashboard | OneGrad{% endblock %}
+{% block content %}
+<section class="card">
+  <h2>Database Overview</h2>
+  {% if db_error %}
+  <p class="flash error">{{ db_error }}</p>
+  {% elif not tables %}
+  <p class="flash info">No tables were discovered. Verify the database credentials and permissions.</p>
+  {% else %}
+  <p>Select a table to view, create, or edit records.</p>
+  <div style="display: grid; gap: 0.75rem; margin-top: 1.5rem;">
+    {% for table in tables %}
+    <a
+      href="{{ url_for('admin.admin_table', table_name=table) }}"
+      style="
+        display: block;
+        padding: 0.85rem 1.1rem;
+        border-radius: 10px;
+        background-color: #f3f6ff;
+        border: 1px solid #d0daf5;
+        text-decoration: none;
+        color: #1d2e53;
+        font-weight: 600;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      "
+      >{{ table }}</a
+    >
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Delete Record | {{ table_name }}{% endblock %}
+{% block content %}
+<section class="card">
+  <h2>Delete {{ table_name }} Record</h2>
+  <p>
+    Are you sure you want to delete the record with primary key <strong>{{ pk_value }}</strong> from
+    <strong>{{ table_name }}</strong>? This action cannot be undone.
+  </p>
+  <form method="post" style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+    <button
+      type="submit"
+      style="
+        background: #d3384a;
+        color: #ffffff;
+        border: none;
+        padding: 0.85rem 1.6rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+      "
+    >
+      Delete
+    </button>
+    <a
+      href="{{ url_for('admin.admin_table', table_name=table_name) }}"
+      style="
+        align-self: center;
+        text-decoration: none;
+        color: #2f4f8f;
+        font-weight: 600;
+      "
+      >Cancel</a
+    >
+  </form>
+</section>
+{% endblock %}
+
+

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}{{ action }} {{ table_name }} | OneGrad{% endblock %}
+{% block content %}
+<section class="card">
+  <h2>{{ action }} {{ table_name }}</h2>
+  {% if pk_value %}
+  <p style="margin-top: 0.25rem; color: #4a5674;">Editing record with primary key <strong>{{ pk_value }}</strong>.</p>
+  {% endif %}
+  <form method="post" style="margin-top: 1.5rem; display: grid; gap: 1.25rem;">
+    {% for field in fields %}
+    <div>
+      <label for="{{ field.name }}" style="display: block; font-weight: 600; margin-bottom: 0.4rem;">{{ field.label }}{% if not field.nullable %} *{% endif %}</label>
+      {% if field.input_type == "checkbox" %}
+      <input
+        type="checkbox"
+        id="{{ field.name }}"
+        name="{{ field.name }}"
+        {% if form_values[field.name] in ("on", "1", "true", "True") %}checked{% endif %}
+      />
+      {% elif field.use_textarea %}
+      <textarea
+        id="{{ field.name }}"
+        name="{{ field.name }}"
+        rows="5"
+        style="width: 100%; padding: 0.75rem; border: 1px solid #ccd4e0; border-radius: 8px;"
+      >{{ form_values[field.name] }}</textarea>
+      {% else %}
+      <input
+        type="{{ field.input_type }}"
+        id="{{ field.name }}"
+        name="{{ field.name }}"
+        value="{{ form_values[field.name] }}"
+        {% if not field.nullable %}required{% endif %}
+        style="width: 100%; padding: 0.75rem; border: 1px solid #ccd4e0; border-radius: 8px;"
+      />
+      {% endif %}
+    </div>
+    {% endfor %}
+    <div style="display: flex; gap: 1rem;">
+      <button
+        type="submit"
+        style="
+          background: linear-gradient(135deg, #2f4f8f, #4068c6);
+          color: #ffffff;
+          border: none;
+          padding: 0.9rem 1.6rem;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+        "
+      >
+        {{ action }}
+      </button>
+      <a
+        href="{{ url_for('admin.admin_table', table_name=table_name) }}"
+        style="
+          align-self: center;
+          text-decoration: none;
+          color: #2f4f8f;
+          font-weight: 600;
+        "
+        >Cancel</a
+      >
+    </div>
+  </form>
+</section>
+{% endblock %}
+
+

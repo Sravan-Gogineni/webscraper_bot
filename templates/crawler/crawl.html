@@ -1,0 +1,721 @@
+{% extends "base.html" %}
+{% block main_class %}wide-container{% endblock %}
+{% block extra_head %}
+<style>
+  .crawler-results {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 1.75rem;
+  }
+  .crawler-card {
+    border: 1px solid rgba(54, 73, 124, 0.14);
+    border-radius: 12px;
+    padding: 1.15rem 1.4rem;
+    background-color: #ffffff;
+    box-shadow: 0 8px 18px rgba(23, 38, 92, 0.08);
+  }
+  .crawler-card h3 {
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+    color: #1f2d4f;
+    word-break: break-all;
+  }
+  .crawler-card .meta {
+    font-size: 0.82rem;
+    color: #60709c;
+    margin-bottom: 0.65rem;
+  }
+  .crawler-card pre {
+    background: #f5f7ff;
+    border: 1px solid rgba(123, 140, 190, 0.25);
+    border-radius: 8px;
+    padding: 0.85rem;
+    font-size: 0.85rem;
+    max-height: 280px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+  }
+  .crawler-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding: 0.9rem 1rem;
+    border-radius: 10px;
+    background: #f0f4ff;
+    border: 1px solid rgba(75, 104, 187, 0.18);
+    color: #1d2e53;
+    font-size: 0.92rem;
+  }
+  .progress-wrapper {
+    margin-top: 1.5rem;
+  }
+  .progress-bar {
+    width: 100%;
+    height: 12px;
+    background: #e3e9fb;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(135deg, #2f4f8f, #4068c6);
+    transition: width 0.3s ease;
+  }
+  .progress-bar-fill.complete {
+    width: 100%;
+  }
+  .progress-status {
+    margin-top: 0.6rem;
+    font-size: 0.9rem;
+    color: #2b3760;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<section class="card">
+  <h2 style="margin-top: 0;">Deep Link Crawler</h2>
+  <p class="form-hint">
+    Provide a starting URL and we will recursively follow discoverable links, extracting readable text from
+    each HTML page. Use the options to tune how far the crawler explores.
+  </p>
+  <form method="post" class="form-layout form-layout--wide">
+    <div class="form-section">
+      <div class="section-header">
+        <h3>Starting Point</h3>
+        <p class="section-description">
+          Target an HTTPS page for best results. Consider limiting the crawl to the same domain to avoid runaway scans.
+          {% if default_workers %}
+          <br />Defaults to {{ default_workers }} parallel fetch worker{{ 's' if default_workers|int != 1 else '' }} (set `CRAWLER_MAX_WORKERS` to override).
+          {% endif %}
+        </p>
+      </div>
+      <div class="field-grid">
+        <div class="field">
+          <label for="url">Start URL *</label>
+          <input
+            type="url"
+            id="url"
+            name="url"
+            value="{{ url }}"
+            required
+            placeholder="https://www.example.edu"
+          />
+        </div>
+        <div class="field">
+          <label for="max_pages">Page Limit *</label>
+          <input
+            type="number"
+            id="max_pages"
+            name="max_pages"
+            value="{{ max_pages }}"
+            min="1"
+            max="2000"
+            placeholder="30"
+          />
+        </div>
+        <div class="field checkbox-field">
+          <input
+            type="checkbox"
+            id="same_domain"
+            name="same_domain"
+            {% if same_domain %}checked{% endif %}
+            title="Stay within the same domain"
+          />
+          <label for="same_domain">Limit to same domain</label>
+        </div>
+        <div class="field checkbox-field">
+          <input
+            type="checkbox"
+            id="per_page_llm"
+            name="per_page_llm"
+            {% if per_page_llm %}checked{% endif %}
+            title="Run Gemini extraction on every crawled page"
+          />
+          <label for="per_page_llm">Run Gemini per page (slower &amp; higher cost)</label>
+        </div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit">Start Crawl</button>
+      <a href="{{ url_for('crawler.crawler_index') }}">Reset</a>
+    </div>
+  </form>
+
+  {% if job_id %}
+  <div class="crawler-card progress-wrapper" id="progress-card">
+    <h3 style="margin-top: 0;">Crawl Progress</h3>
+    {% if default_workers %}
+    <p style="margin: 0 0 0.65rem; color: #4a5a87; font-size: 0.85rem;">
+      Running with up to {{ default_workers }} worker{{ 's' if default_workers|int != 1 else '' }}.
+    </p>
+    {% endif %}
+    {% if per_page_llm %}
+    <p style="margin: -0.45rem 0 0.75rem; color: #7b86aa; font-size: 0.8rem;">
+      Per-page Gemini extraction enabled — crawl will take longer and use more quota.
+    </p>
+    {% endif %}
+    <div class="progress-bar">
+      <div
+        class="progress-bar-fill{% if job_complete %} complete{% endif %}"
+        id="progress-fill"
+      ></div>
+    </div>
+    <div class="progress-status" id="progress-status">
+      {% if job_complete %}
+        {% if job_error %}
+        Crawl finished with error: {{ job_error }}
+        {% else %}
+        Crawl complete{% if stats.visited %} — {{ stats.visited }} pages{% endif %}.
+        {% endif %}
+      {% else %}
+      Waiting for updates…
+      {% endif %}
+    </div>
+  </div>
+  {% if job_error and not results %}
+  <div class="crawler-card" style="margin-top: 1.2rem; border-left: 4px solid #d33;">
+    <strong>Error:</strong> {{ job_error }}
+  </div>
+  {% endif %}
+  {% endif %}
+
+  {% if stats %}
+  <div class="crawler-stats">
+    <div><strong>Pages visited:</strong> {{ stats.visited }}</div>
+    <div><strong>Errors:</strong> {{ stats.errors }}</div>
+    <div><strong>Requested limit:</strong> {{ stats.limit }}</div>
+  </div>
+  {% endif %}
+
+  {% if job_id %}
+  <div class="crawler-card progress-wrapper" id="processing-card" style="margin-top: 1rem;">
+    <h3 style="margin-top: 0;">Entity Processing</h3>
+    <div class="progress-bar">
+      <div
+        class="progress-bar-fill{% if job_complete %} complete{% endif %}"
+        id="processing-fill"
+        style="transition: width 0.4s ease;"
+      ></div>
+    </div>
+    <div class="progress-status" id="processing-status">
+      {% if job_complete %}
+      Extracted fields consolidated across college, department, and program.
+      {% else %}
+      Mapping literal & heuristic values to field candidates…
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if job_id and job_complete and entity_results %}
+  <div class="crawler-card progress-wrapper" id="processing-card" style="margin-top: 1rem;">
+    <h3 style="margin-top: 0;">Processing Extracted Data</h3>
+    <div class="progress-bar">
+      <div class="progress-bar-fill complete"></div>
+    </div>
+    <div class="progress-status">
+      Completed entity consolidation and field detection.
+    </div>
+  </div>
+  {% endif %}
+
+  {% for entity in entity_order %}
+  {% set data = entity_results.get(entity) %}
+  {% if data and data.merged_fields %}
+  <div class="crawler-card" style="margin-top: 1.5rem;">
+    <h3 style="margin: 0 0 0.65rem;">{{ data.label }} Field Summary</h3>
+    <p style="margin: 0 0 0.8rem; color: #506099; font-size: 0.88rem;">
+      Combined literal (L), heuristic (H), and Gemini (G) signals. Hover over the tags to view each source.
+    </p>
+    <div style="display: grid; gap: 0.65rem 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+      {% for key, value in data.merged_fields.items() %}
+      <div>
+        <div style="font-size: 0.8rem; font-weight: 600; color: #1f2d4f;">{{ key }}</div>
+        <div style="font-size: 0.9rem; color: #253463;">{{ value }}</div>
+        {% set tags = [] %}
+        {% if data.literal_fields.get(key) %}
+        {% set _ = tags.append('L') %}
+        {% endif %}
+        {% if data.heuristic_fields.get(key) %}
+        {% set _ = tags.append('H') %}
+        {% endif %}
+        {% if data.llm_fields.get(key) %}
+        {% set _ = tags.append('G') %}
+        {% endif %}
+        {% if tags %}
+        <div style="margin-top: 0.35rem; font-size: 0.75rem; color: #4f5e8c;">
+          Sources:
+          {% for tag in tags %}
+          <span title="{% if tag == 'L' %}Literal text match{% elif tag == 'H' %}Heuristic pattern{% else %}Gemini LLM{% endif %}" style="display: inline-block; margin-right: 0.35rem; padding: 0.2rem 0.4rem; border-radius: 6px; background: #eef3ff; border: 1px solid rgba(94, 118, 171, 0.25);">
+            {{ tag }}
+          </span>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  {% if job_complete and selection_sections %}
+  <div id="finalize"></div>
+  <div class="crawler-card" style="margin-top: 1.5rem;">
+    <style>
+      .entity-tabs {
+        display: flex;
+        gap: 0.5rem;
+        border-bottom: 2px solid #e3e9fb;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+      }
+      .entity-tab {
+        padding: 0.7rem 1.2rem;
+        background: #f5f7ff;
+        border: none;
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+        font-weight: 600;
+        color: #506099;
+        transition: all 0.2s ease;
+        border-radius: 8px 8px 0 0;
+        font-size: 0.95rem;
+      }
+      .entity-tab:hover {
+        background: #eef3ff;
+        color: #2f4f8f;
+      }
+      .entity-tab.active {
+        background: #ffffff;
+        color: #2f4f8f;
+        border-bottom-color: #3e6acb;
+      }
+      .entity-tab.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+      .entity-tab-content {
+        display: none;
+      }
+      .entity-tab-content.active {
+        display: block;
+      }
+      .existing-value-compare {
+        margin-top: 0.5rem;
+        padding: 0.65rem;
+        background: #fff9e6;
+        border: 1px solid #f5d76e;
+        border-radius: 6px;
+        font-size: 0.85rem;
+      }
+      .existing-value-compare strong {
+        color: #856404;
+        display: block;
+        margin-bottom: 0.3rem;
+      }
+      .existing-value-compare .existing-value {
+        color: #5a4a00;
+        margin-bottom: 0.25rem;
+      }
+      .existing-value-compare .new-value {
+        color: #856404;
+        font-weight: 600;
+      }
+      .override-controls {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 8px;
+      }
+      .override-controls label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: #856404;
+      }
+      .override-controls input[type="radio"] {
+        width: auto;
+      }
+    </style>
+    <div class="entity-tabs">
+      {% for entity in entity_order %}
+      {% set data = entity_results.get(entity) %}
+      {% set sections = selection_sections.get(entity, []) %}
+      {% set can_access = (entity == 'college') or (entity == 'department' and selected_college_id) or (entity == 'program' and selected_college_id) %}
+      <button
+        class="entity-tab {% if loop.first %}active{% endif %} {% if not can_access %}disabled{% endif %}"
+        data-tab="{{ entity }}"
+        onclick="switchTab('{{ entity }}')"
+      >
+        {{ data.label if data else entity|title }}
+        {% if entity == 'college' and data and data.ingested_id %}
+        <span style="margin-left: 0.5rem; color: #3d7c3c;">✓</span>
+        {% elif entity == 'department' and data and data.ingested_id %}
+        <span style="margin-left: 0.5rem; color: #3d7c3c;">✓</span>
+        {% elif entity == 'program' and data and data.ingested_id %}
+        <span style="margin-left: 0.5rem; color: #3d7c3c;">✓</span>
+        {% endif %}
+      </button>
+      {% endfor %}
+    </div>
+
+    {% for entity in entity_order %}
+    {% set sections = selection_sections.get(entity, []) %}
+    {% set data = entity_results.get(entity) %}
+    {% set can_access = (entity == 'college') or (entity == 'department' and selected_college_id) or (entity == 'program' and selected_college_id) %}
+    {% if sections and data and can_access %}
+    <div class="entity-tab-content {% if loop.first %}active{% endif %}" id="tab-{{ entity }}">
+      {% if data.ingested_id %}
+      <div class="crawler-card" style="margin-bottom: 1.5rem; border-left: 4px solid #3d7c3c; background: #f1fbf1;">
+        <strong>Success:</strong> Saved {{ data.label }} as {{ data.id_label }} {{ data.ingested_id }}.
+        {% if data.edit_endpoint == 'forms.university_edit' %}
+        {% set edit_url = url_for('forms.university_edit', college_id=data.ingested_id) %}
+        {% elif data.edit_endpoint == 'forms.department_edit' %}
+        {% set edit_url = url_for('forms.department_edit', department_id=data.ingested_id) %}
+        {% elif data.edit_endpoint == 'forms.program_edit' %}
+        {% set edit_url = url_for('forms.program_edit', program_id=data.ingested_id) %}
+        {% else %}
+        {% set edit_url = None %}
+        {% endif %}
+        {% if edit_url %}
+        <a href="{{ edit_url }}" style="margin-left: 0.5rem; color: #2456a5;">Edit record</a>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      {% if entity == 'college' and data.existing_college_id and not data.ingested_id %}
+      <div class="override-controls">
+        <strong style="display: block; margin-bottom: 0.75rem; color: #856404;">Duplicate College Detected</strong>
+        <p style="margin: 0 0 0.75rem; color: #5a4a00;">
+          A college with the same name already exists (ID: {{ data.existing_college_id }}). Choose an action:
+        </p>
+        <label>
+          <input type="radio" name="override_choice_{{ entity }}" value="skip" checked />
+          Skip - Keep existing values (do not update)
+        </label>
+        <label>
+          <input type="radio" name="override_choice_{{ entity }}" value="override" />
+          Override - Replace existing values with new extracted values
+        </label>
+      </div>
+      {% endif %}
+
+      <form
+        method="post"
+        action="{{ url_for('crawler.finalize_crawl', job_id=job_id) }}"
+        class="form-layout form-layout--wide"
+        style="margin-top: 1.5rem;"
+      >
+        {% if entity == 'program' %}
+        <div class="form-section" style="border-color: rgba(62,106,203,0.25);">
+          <div class="section-header">
+            <h3>Programs URL Crawler (Single URL)</h3>
+            <p class="section-description">
+              Provide a Programs/Catalog URL to detect program titles (e.g., “M.S. in Data Science”).
+              This runs a quick pass on just this page to seed ProgramName options.
+            </p>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label for="program_start_url">Programs Page URL</label>
+              <input
+                type="url"
+                id="program_start_url"
+                name="program_start_url"
+                placeholder="https://university.edu/academics/programs"
+              />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button
+              formaction="{{ url_for('crawler.programs_extract') }}"
+              formmethod="post"
+              type="submit"
+            >
+              Detect Program Titles from URL
+            </button>
+          </div>
+        </div>
+        {% endif %}
+        <input type="hidden" name="entity" value="{{ entity }}" />
+        {% if entity == 'college' and data.existing_college_id %}
+        <input type="hidden" name="override_choice" id="override_choice_input_{{ entity }}" value="skip" />
+        {% endif %}
+        <div class="form-section">
+          <div class="section-header">
+            <h3>Review {{ data.label }} Fields</h3>
+            <p class="section-description">
+              Choose the best value per field (Literal = L, Heuristic = H, LLM = G) or override manually.
+              {% if entity == 'college' and data.existing_college_id %}
+              Existing values are shown in yellow below each field.
+              {% endif %}
+            </p>
+          </div>
+        </div>
+        {% for section in sections %}
+        <div class="form-section">
+          <div class="section-header">
+            <h3>{{ section.title }}</h3>
+            {% if section.description %}
+            <p class="section-description">{{ section.description }}</p>
+            {% endif %}
+          </div>
+          <div class="field-grid">
+            {% for field in section.fields %}
+            {% set field_name = field.name %}
+            {% set options = data.field_options.get(field_name, []) %}
+            {% set selected_token = data.field_defaults.get(field_name, '') %}
+            {% set override_value = data.selection_overrides.get(field_name, '') %}
+            {% set existing_value = None %}
+            {% if entity == 'college' and data.existing_values %}
+              {% if section.table == 'College' and data.existing_values.get('College') %}
+                {% set existing_value = data.existing_values['College'].get(field_name) %}
+              {% elif section.table == 'Address' and data.existing_values.get('Address') %}
+                {% set existing_value = data.existing_values['Address'].get(field_name) %}
+              {% elif section.table == 'ContactInformation' and data.existing_values.get('ContactInformation') %}
+                {% set existing_value = data.existing_values['ContactInformation'].get(field_name) %}
+              {% elif section.table == 'ApplicationRequirements' and data.existing_values.get('ApplicationRequirements') %}
+                {% set existing_value = data.existing_values['ApplicationRequirements'].get(field_name) %}
+              {% elif section.table == 'StudentStatistics' and data.existing_values.get('StudentStatistics') %}
+                {% set existing_value = data.existing_values['StudentStatistics'].get(field_name) %}
+              {% endif %}
+            {% endif %}
+            <div class="field">
+              <label for="choice_{{ entity }}_{{ field_name }}">
+                {{ field.label }}
+                {% if (entity == 'college' and field_name == 'CollegeName') or
+                      (entity == 'department' and field_name == 'DepartmentName') or
+                      (entity == 'program' and field_name == 'ProgramName') %}
+                <span style="color: #c0392b;">*</span>
+                {% endif %}
+              </label>
+              <select
+                id="choice_{{ entity }}_{{ field_name }}"
+                name="choice_{{ entity }}_{{ field_name }}"
+                style="min-height: 36px;"
+              >
+                <option value="">— Keep blank —</option>
+                {% for option in options %}
+                <option
+                  value="{{ option.token }}"
+                  {% if option.token == selected_token %}selected{% endif %}
+                  title="{{ option.snippet | default('') | replace('\n', ' ') }}"
+                >
+                  {{ option.value }} • {{ option.source }}
+                </option>
+                {% endfor %}
+              </select>
+              <input
+                type="text"
+                name="override_{{ entity }}_{{ field_name }}"
+                value="{{ override_value }}"
+                placeholder="Manual override"
+                style="margin-top: 0.35rem;"
+              />
+              {% if existing_value is not none %}
+              <div class="existing-value-compare">
+                <strong>Existing Value:</strong>
+                <div class="existing-value">{{ existing_value or '(empty)' }}</div>
+                <div class="new-value" style="margin-top: 0.4rem;">
+                  <strong>New Value:</strong> Select from dropdown above or enter manually
+                </div>
+              </div>
+              {% endif %}
+              {% if options %}
+              <div style="margin-top: 0.35rem; font-size: 0.75rem; color: #5a6894;">
+                {% for option in options[:3] %}
+                <div style="margin-bottom: 0.2rem;">
+                  <strong>{{ option.origin|upper }}</strong>
+                  {% if option.page_url %}
+                  <a href="{{ option.page_url }}" target="_blank" rel="noopener" style="margin-left: 0.35rem; color: #2456a5;">
+                    View page
+                  </a>
+                  {% endif %}
+                </div>
+                {% endfor %}
+                {% if options|length > 3 %}
+                <div>+ {{ options|length - 3 }} more source{{ 's' if options|length - 3 != 1 else '' }} available in the menu.</div>
+                {% endif %}
+              </div>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+        {% if entity == 'college' %}
+        {% if data.existing_social %}
+        <div class="form-section">
+          <div class="section-header">
+            <h3>Social Media (Existing Values)</h3>
+            <p class="section-description">Current social media links in the database:</p>
+          </div>
+          <div class="field-grid">
+            {% for platform in ['Facebook', 'Instagram', 'Twitter', 'Youtube', 'Tiktok', 'LinkedIn'] %}
+            {% set existing_social_row = data.existing_social.get(platform.lower()) %}
+            {% if existing_social_row %}
+            <div class="field">
+              <label>{{ platform }}</label>
+              <div class="existing-value-compare">
+                <div class="existing-value">{{ existing_social_row.get('URL') or '(empty)' }}</div>
+              </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        {% endif %}
+        <div class="form-actions" style="margin-top: 1.5rem;">
+          <button type="submit">
+            {% if entity == 'college' and data.existing_college_id %}
+            Save {{ data.label }} Values
+            {% else %}
+            Save {{ data.label }} Values
+            {% endif %}
+          </button>
+          {% if data.list_endpoint == 'forms.university_list' %}
+          {% set list_url = url_for('forms.university_list') %}
+          {% elif data.list_endpoint == 'forms.department_list' %}
+          {% set list_url = url_for('forms.department_list') %}
+          {% elif data.list_endpoint == 'forms.program_list' %}
+          {% set list_url = url_for('forms.program_list') %}
+          {% else %}
+          {% set list_url = None %}
+          {% endif %}
+          {% if list_url %}
+          <a href="{{ list_url }}">Go to {{ data.label }} list</a>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+
+  <script>
+    function switchTab(entity) {
+      // Hide all tabs
+      document.querySelectorAll('.entity-tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      document.querySelectorAll('.entity-tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      // Show selected tab
+      document.getElementById('tab-' + entity).classList.add('active');
+      document.querySelector('[data-tab="' + entity + '"]').classList.add('active');
+    }
+
+    // Handle override choice radio buttons
+    document.querySelectorAll('input[name^="override_choice_"]').forEach(radio => {
+      radio.addEventListener('change', function() {
+        const entity = this.name.replace('override_choice_', '');
+        const overrideInput = document.getElementById('override_choice_input_' + entity);
+        if (overrideInput) {
+          overrideInput.value = this.value;
+        }
+      });
+    });
+  </script>
+  {% endif %}
+
+  {% for entity in entity_order %}
+  {% set data = entity_results.get(entity) %}
+  {% if data and data.heuristic_fields %}
+  <div class="crawler-card" style="margin-top: 1.5rem;">
+    <h3 style="margin: 0 0 0.65rem;">{{ data.label }} Heuristic Matches (H)</h3>
+    <p style="margin: 0 0 0.8rem; color: #506099; font-size: 0.88rem;">
+      Basic pattern matching (phone numbers, emails, URLs) extracted these values directly from the crawl text.
+    </p>
+    <div style="display: grid; gap: 0.5rem 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); word-break: break-word;">
+      {% for key, value in data.heuristic_fields.items() %}
+      <div>
+        <div style="font-size: 0.78rem; color: #3b4a78; font-weight: 600;">{{ key }}</div>
+        <div style="font-size: 0.88rem; color: #27345e; word-break: break-word;">{{ value }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if data and data.llm_fields %}
+  <div class="crawler-card" style="margin-top: 1.5rem;">
+    <h3 style="margin: 0 0 0.65rem;">{{ data.label }} LLM Summary (G)</h3>
+    <p style="margin: 0 0 0.8rem; color: #506099; font-size: 0.88rem;">
+      Gemini analyzed the crawl text and extracted these values exactly as written. Empty entries were left blank when no evidence was present.
+    </p>
+    <div style="display: grid; gap: 0.5rem 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); word-break: break-word;">
+      {% for key, value in data.llm_fields.items() %}
+      <div>
+        <div style="font-size: 0.78rem; color: #3b4a78; font-weight: 600;">{{ key }}</div>
+        <div style="font-size: 0.88rem; color: #27345e; word-break: break-word;">{{ value }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  {% if job_id and not job_complete %}
+  <script id="crawler-progress-config" type="application/json">
+    {{ {
+      "jobId": job_id,
+      "limit": max_pages,
+      "progressUrl": url_for('crawler.stream_crawl_progress', job_id=job_id)
+    } | tojson }}
+  </script>
+  <script src="{{ url_for('static', filename='js/crawler_progress.js') }}"></script>
+  {% endif %}
+
+  {% if results %}
+  <div class="crawler-results">
+    {% for result in results %}
+    <article class="crawler-card">
+      <h3>{{ result.url }}</h3>
+      <div class="meta">
+        {% if result.status == "error" %}
+        <strong>Status:</strong> {{ result.status }} — {{ result.error }}
+        {% elif result.status == "non-html" %}
+        <strong>Status:</strong> Skipped (non HTML content)
+        {% else %}
+        <strong>Status:</strong> {{ result.status }}
+        {% endif %}
+        {% if result.title %}
+        &nbsp; | &nbsp; <strong>Title:</strong> {{ result.title }}
+        {% endif %}
+        {% if result.heading %}
+        &nbsp; | &nbsp; <strong>Heading:</strong> {{ result.heading }}
+        {% endif %}
+      </div>
+      {% if result.text %}
+      <pre>{{ result.text }}</pre>
+      {% endif %}
+      {% set page_fields = result.combined_fields or result.fields %}
+      {% if page_fields %}
+      <div style="margin-top: 0.75rem; background: #eef3ff; border: 1px solid rgba(99, 122, 190, 0.25); border-radius: 8px; padding: 0.8rem;">
+        <div style="font-size: 0.82rem; font-weight: 600; color: #1f2d4f; margin-bottom: 0.5rem;">Detected Fields</div>
+        <div style="display: grid; gap: 0.5rem 1rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); word-break: break-word;">
+          {% for key, value in page_fields.items() %}
+          <div>
+            <div style="font-size: 0.78rem; color: #3b4a78; font-weight: 600;">{{ key }}</div>
+            <div style="font-size: 0.88rem; color: #27345e; word-break: break-word;">{{ value }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+

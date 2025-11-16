@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}LLM Test | OneGrad{% endblock %}
+{% block content %}
+<section class="card" style="max-width: 800px; margin: 0 auto;">
+  <h2 style="margin-top: 0;">Vertex LLM Smoke Test</h2>
+  <p class="form-hint">
+    Use this form to send a quick prompt to the configured Vertex AI model (`{{ vertex_model or 'not set' }}`).
+    Make sure you've exported <code>VERTEX_PROJECT</code>, <code>VERTEX_REGION</code>, and <code>VERTEX_MODEL</code>, and that
+    <code>gcloud auth application-default login</code> has been run on this machine.
+  </p>
+  <form method="post" class="form-layout">
+    <div class="form-section">
+      <div class="field">
+        <label for="prompt">Prompt *</label>
+        <textarea
+          id="prompt"
+          name="prompt"
+          rows="6"
+          required
+          placeholder="Ask anything to confirm the model is reachable..."
+        >{{ prompt }}</textarea>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit">Send</button>
+      <a href="{{ url_for('llm_test.llm_test_index') }}">Reset</a>
+    </div>
+  </form>
+
+  {% if output %}
+  <div class="card" style="margin-top: 1.5rem; background: #f7f9ff; border: 1px solid rgba(66, 89, 179, 0.2);">
+    <h3 style="margin-top: 0;">Model Response</h3>
+    <pre style="white-space: pre-wrap;">{{ output }}</pre>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+

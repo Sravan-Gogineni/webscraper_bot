@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ table_name }} Records | OneGrad{% endblock %}
+{% block content %}
+<section class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h2 style="margin: 0;">{{ table_name }}</h2>
+      <p style="margin: 0.25rem 0 0;">Showing up to {{ limit }} rows. Adjust the limit by adding <code>?limit=200</code> to the URL.</p>
+    </div>
+    <a
+      href="{{ url_for('admin.admin_create_record', table_name=table_name) }}"
+      style="
+        background: linear-gradient(135deg, #2f4f8f, #4068c6);
+        color: #ffffff;
+        padding: 0.75rem 1.3rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 0 10px 18px rgba(29, 46, 83, 0.2);
+      "
+      >Add Record</a
+    >
+  </div>
+  {% if not rows %}
+  <p style="margin-top: 1.5rem;">No records found.</p>
+  {% else %}
+  <div style="overflow-x: auto; margin-top: 1.5rem;">
+    <table
+      style="
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 800px;
+        font-size: 0.95rem;
+      "
+    >
+      <thead>
+        <tr style="background-color: #eef3ff; text-align: left;">
+          {% for column in columns %}
+          <th style="padding: 0.75rem; border-bottom: 1px solid #d7dff3;">{{ column.name }}</th>
+          {% endfor %}
+          <th style="padding: 0.75rem; border-bottom: 1px solid #d7dff3;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr style="border-bottom: 1px solid #e4e9f5;">
+          {% for column in columns %}
+          {% set value = row[column.name] %}
+          <td style="padding: 0.65rem;">
+            {% if value is boolean %}
+            {{ "Yes" if value else "No" }}
+            {% else %}
+            {{ value }}
+            {% endif %}
+          </td>
+          {% endfor %}
+          <td style="padding: 0.65rem; white-space: nowrap;">
+            {% if pk_column %}
+            <a href="{{ url_for('admin.admin_edit_record', table_name=table_name, pk_value=row[pk_column.name]) }}">Edit</a>
+            |
+            <a href="{{ url_for('admin.admin_delete_record', table_name=table_name, pk_value=row[pk_column.name]) }}">Delete</a>
+            {% else %}
+            —
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+

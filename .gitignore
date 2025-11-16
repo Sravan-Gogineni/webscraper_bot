@@ -1,3 +1,18 @@
+scrapeenv/
+*.pyc
+__pycache__/
+.env
+*.sqlite
+.DS_Store
+.vscode/
+.idea/
+*.log
+*.coverage
+dist/
+build/
+node_modules/
+
+<<<<<<< HEAD
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -205,3 +220,27 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+=======
+scrapeenv/
+*.pyc
+__pycache__/
+.env
+*.sqlite
+.DS_Store
+.vscode/
+.idea/
+*.log
+*.coverage
+dist/
+build/
+node_modules/
+
+scrapeenv/
+*.pyc
+__pycache__/
+.env
+*.sqlite
+.DS_Store
+.vscode/
+.idea/
+>>>>>>> d986d19 (Initial commit)
