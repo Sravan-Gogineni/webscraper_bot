@@ -6,4 +6,5 @@ google-auth>=2.30.0
 python-dotenv>=1.0.0
 SQLAlchemy>=2.0.0
 pyodbc>=4.0.39
+ddgs>=1.0.0
 

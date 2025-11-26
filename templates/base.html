@@ -257,14 +257,17 @@
   </head>
   <body>
     <header>
-      <h1>OneGrad Admin Console</h1>
+      <h1>Webscraper Console</h1>
       <nav>
         <a href="{{ url_for('admin.admin_index') }}">Dashboard</a>
         <a href="{{ url_for('forms.university_list') }}">Universities</a>
         <a href="{{ url_for('forms.department_list') }}">Departments</a>
         <a href="{{ url_for('forms.program_list') }}">Programs</a>
-        <a href="{{ url_for('crawler.crawler_index') }}">Deep Crawler</a>
-        <a href="{{ url_for('extract.extract_page') }}">Web Extractor</a>
+        <a href="{{ url_for('extract.extract_page') }}">Extract Text</a>
+        <a href="{{ url_for('extract.direct_contact_page') }}">Direct Contact</a>
+        <a href="{{ url_for('extract.extract_departments_page') }}">Extract Departments</a>
+        <a href="{{ url_for('extract.extract_programs_page') }}">Extract Programs</a>
+        <a href="{{ url_for('extract.import_programs_json') }}">Import Programs JSON</a>
       </nav>
     </header>
     <main class="{% block main_class %}{% endblock %}">

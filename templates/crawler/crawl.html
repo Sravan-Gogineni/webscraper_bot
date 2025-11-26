@@ -75,6 +75,7 @@
 {% endblock %}
 {% block content %}
 <section class="card">
+  {% if not from_extract %}
   <h2 style="margin-top: 0;">Deep Link Crawler</h2>
   <p class="form-hint">
     Provide a starting URL and we will recursively follow discoverable links, extracting readable text from
@@ -142,8 +143,14 @@
       <a href="{{ url_for('crawler.crawler_index') }}">Reset</a>
     </div>
   </form>
+  {% else %}
+  <h2 style="margin-top: 0;">Review Extracted Fields</h2>
+  <p class="form-hint">
+    This page shows the values detected from your single URL. Select the best values and Save.
+  </p>
+  {% endif %}
 
-  {% if job_id %}
+  {% if job_id and not from_extract %}
   <div class="crawler-card progress-wrapper" id="progress-card">
     <h3 style="margin-top: 0;">Crawl Progress</h3>
     {% if default_workers %}
@@ -181,7 +188,7 @@
   {% endif %}
   {% endif %}
 
-  {% if stats %}
+  {% if stats and not from_extract %}
   <div class="crawler-stats">
     <div><strong>Pages visited:</strong> {{ stats.visited }}</div>
     <div><strong>Errors:</strong> {{ stats.errors }}</div>
@@ -189,7 +196,32 @@
   </div>
   {% endif %}
 
-  {% if job_id %}
+  {% if from_extract and results %}
+  <div class="crawler-card" style="margin-top: 1rem;">
+    <h3 style="margin-top: 0;">Links Found on Page</h3>
+    <div style="max-height: 240px; overflow: auto;">
+      <ul style="margin: 0; padding-left: 1.1rem;">
+        {% set page = results[0] %}
+        {% for link in page.links %}
+        <li style="margin: 0.25rem 0;">
+          <a href="{{ link.url }}" target="_blank" rel="noopener">
+            {{ link.text or link.url }}
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if from_extract and coarse %}
+  <div class="crawler-card" style="margin-top: 1rem;">
+    <h3 style="margin-top: 0;">Coarse Extraction (Stage 1)</h3>
+    <pre>{{ coarse | tojson(indent=2) }}</pre>
+  </div>
+  {% endif %}
+
+  {% if job_id and not from_extract %}
   <div class="crawler-card progress-wrapper" id="processing-card" style="margin-top: 1rem;">
     <h3 style="margin-top: 0;">Entity Processing</h3>
     <div class="progress-bar">

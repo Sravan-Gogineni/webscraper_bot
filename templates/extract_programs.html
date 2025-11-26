@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+{% block title %}Extract Programs | OneGrad{% endblock %}
+{% block content %}
+<section class="card" style="max-width: 1400px; margin: 0 auto;">
+  <h2 style="margin-top: 0;">Extract Program Details</h2>
+  <p class="form-hint">
+    Provide a program page URL (e.g., Master of Science in Data Science, MBA, Bachelor of Accounting).
+    We'll extract program information in multiple steps to ensure comprehensive data extraction (aiming for 75%+ field completion).
+  </p>
+  
+  <!-- URL Input Form -->
+  <form id="url-form" method="post" class="form-layout">
+    <div class="form-section">
+      <div class="field">
+        <label for="url">Program Page URL</label>
+        <input
+          type="url"
+          id="url"
+          name="url"
+          value="{{ url }}"
+          placeholder="https://www.example.edu/academics/programs/data-science-ms"
+          required
+        />
+        <small style="color: #7b86aa; display: block; margin-top: 0.25rem;">
+          Direct link to a specific program page (e.g., MS Data Science, MBA, BA Accounting)
+        </small>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" id="btn-extract-text" style="background: #2f4f8f;">Extract Text from URL</button>
+    </div>
+  </form>
+
+  <!-- Extracted Text Display -->
+  {% if extracted_text %}
+  <section class="result-section" style="margin-top: 2rem;">
+    <h3>Extracted Text</h3>
+    <p class="form-hint" style="margin-bottom: 1rem;">
+      Text extracted from the page. Use the buttons below to run section-specific extractions.
+    </p>
+    {% if primary_title or primary_heading %}
+    <p style="color: #2f4f8f; font-weight: 600; margin-bottom: 0.5rem;">
+      {{ primary_title or primary_heading }}
+    </p>
+    {% endif %}
+    <pre style="max-height: 300px; overflow-y: auto; background: #f8f9fa; padding: 1rem; border-radius: 8px; border: 1px solid #e0e6ed;">{{ extracted_text }}</pre>
+  </section>
+
+  <!-- Section Extraction Buttons -->
+  <section class="result-section" style="margin-top: 2rem;">
+    <h3>Extract Program Information</h3>
+    <p class="form-hint">
+      Extract program details in two separate sections. Program-specific details are unique to each program, while shared requirements may apply to multiple programs at the same university.
+    </p>
+    
+    <!-- Program-Specific Details Section -->
+    <div style="margin-bottom: 2rem; padding: 1.5rem; background: #f8f9fa; border-radius: 8px; border: 2px solid #2f4f8f;">
+      <h4 style="margin-top: 0; color: #2f4f8f;">Section 1: Complete Program Details</h4>
+      <p class="form-hint" style="margin-bottom: 1rem;">
+        Extract program-specific information: Program Name, Level, Concentration, Description, Program URL, Accreditation, QS World Ranking.
+        <strong>This information is unique to each program.</strong>
+      </p>
+      <div class="form-actions">
+        <button type="button" id="btn-run-program-details" style="background: #2f4f8f;">Extract Complete Program Details</button>
+      </div>
+    </div>
+    
+    <!-- Shared Requirements Section -->
+    <div style="padding: 1.5rem; background: #fff9e6; border-radius: 8px; border: 2px solid #ffc107;">
+      <h4 style="margin-top: 0; color: #856404;">Section 2: Shared Requirements & Details</h4>
+      <p class="form-hint" style="margin-bottom: 1rem;">
+        Extract requirements, term details, and test scores that may be shared across multiple programs at the same university.
+        <strong>These details can be applied to multiple programs.</strong>
+      </p>
+      <div class="form-actions" style="flex-wrap: wrap; gap: 0.75rem;">
+        <button type="button" id="btn-run-requirements" style="background: #ffc107; color: #000;">Extract Application Requirements</button>
+        <button type="button" id="btn-run-term" style="background: #ffc107; color: #000;">Extract Term & Investment</button>
+        <button type="button" id="btn-run-test-scores" style="background: #ffc107; color: #000;">Extract Minimum Test Scores</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Review Forms -->
+  <section class="result-section" style="margin-top: 2rem;">
+    <h3>Review & Save Extracted Program</h3>
+    <p class="form-hint">
+      Review the extracted data below. Adjust any field values, select the target college and department, then save to the database.
+    </p>
+    
+    <form id="save-form" method="post" action="{{ url_for('extract.extract_programs_save') }}" class="form-layout form-layout--wide">
+      <!-- College Selection -->
+      <div class="form-section">
+        <h4 style="margin-top: 0; color: #1d2e53;">College & Department</h4>
+        <div class="field">
+          <label for="college_id_program_select">College *</label>
+          <select id="college_id_program_select" name="college_id_program_select" style="min-height: 36px;" required>
+            <option value="">— Select College —</option>
+            {% for cid, label in college_options %}
+            <option value="{{ cid }}" {% if matched_college and matched_college.CollegeID == cid %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="college_department_id">Department (Optional)</label>
+          <select id="college_department_id" name="college_department_id" style="min-height: 36px;">
+            <option value="">— Select Department —</option>
+            {% for cdept_id, label in college_department_options %}
+            <option value="{{ cdept_id }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+          <small style="color: #7b86aa; display: block; margin-top: 0.25rem;">
+            Link this program to a specific department (e.g., College of Business Admissions)
+          </small>
+        </div>
+        {% if matched_college %}
+        <div class="form-hint" style="margin-top: 0.5rem; padding: 0.75rem; background: #e8f1ff; border-radius: 6px;">
+          Matched College: <strong>{{ matched_college.CollegeName }}</strong> (ID: {{ matched_college.CollegeID }})
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Program Snapshot -->
+      <div class="form-section">
+        <h4 style="margin-top: 0; color: #1d2e53;">Program Snapshot</h4>
+        <div class="field">
+          <label for="Program.ProgramName">Program Name *</label>
+          <input type="text" id="Program.ProgramName" name="Program.ProgramName" value="{{ program_snapshot.ProgramName or '' }}" required />
+        </div>
+        <div class="field">
+          <label for="Program.Level">Level</label>
+          <select id="Program.Level" name="Program.Level" style="min-height: 36px;">
+            <option value="">— Select —</option>
+            <option value="Undergraduate" {% if program_snapshot.Level == 'Undergraduate' %}selected{% endif %}>Undergraduate</option>
+            <option value="Graduate" {% if program_snapshot.Level == 'Graduate' %}selected{% endif %}>Graduate</option>
+            <option value="Certificate" {% if program_snapshot.Level == 'Certificate' %}selected{% endif %}>Certificate</option>
+            <option value="Doctoral" {% if program_snapshot.Level == 'Doctoral' %}selected{% endif %}>Doctoral</option>
+            <option value="Professional" {% if program_snapshot.Level == 'Professional' %}selected{% endif %}>Professional</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="Program.Concentration">Concentration</label>
+          <input type="text" id="Program.Concentration" name="Program.Concentration" value="{{ program_snapshot.Concentration or '' }}" />
+        </div>
+        <div class="field">
+          <label for="Program.Description">Description</label>
+          <textarea id="Program.Description" name="Program.Description" rows="4">{{ program_snapshot.Description or '' }}</textarea>
+        </div>
+        <div class="field">
+          <label for="Program.ProgramWebsiteURL">Program Website URL</label>
+          <input type="url" id="Program.ProgramWebsiteURL" name="Program.ProgramWebsiteURL" value="{{ program_snapshot.ProgramWebsiteURL or url or '' }}" />
+        </div>
+        <div class="field">
+          <label for="Program.Accreditation">Accreditation</label>
+          <input type="text" id="Program.Accreditation" name="Program.Accreditation" value="{{ program_snapshot.Accreditation or '' }}" />
+        </div>
+        <div class="field">
+          <label for="Program.QsWorldRanking">QS World Ranking</label>
+          <input type="text" id="Program.QsWorldRanking" name="Program.QsWorldRanking" value="{{ program_snapshot.QsWorldRanking or '' }}" />
+        </div>
+      </div>
+
+      <!-- Application Checklist -->
+      <div class="form-section">
+        <h4 style="margin-top: 0; color: #1d2e53;">Application Checklist</h4>
+        <div class="field">
+          <label for="ProgramRequirements.Resume">Resume/CV Requirements</label>
+          <input type="text" id="ProgramRequirements.Resume" name="ProgramRequirements.Resume" value="{{ program_requirements.Resume or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramRequirements.StatementOfPurpose">Statement of Purpose</label>
+          <textarea id="ProgramRequirements.StatementOfPurpose" name="ProgramRequirements.StatementOfPurpose" rows="3">{{ program_requirements.StatementOfPurpose or '' }}</textarea>
+        </div>
+        <div class="field">
+          <label for="ProgramRequirements.GreOrGmat">GRE/GMAT Requirements</label>
+          <input type="text" id="ProgramRequirements.GreOrGmat" name="ProgramRequirements.GreOrGmat" value="{{ program_requirements.GreOrGmat or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramRequirements.EnglishScore">English Proficiency Requirements</label>
+          <input type="text" id="ProgramRequirements.EnglishScore" name="ProgramRequirements.EnglishScore" value="{{ program_requirements.EnglishScore or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramRequirements.Requirements">General Requirements</label>
+          <textarea id="ProgramRequirements.Requirements" name="ProgramRequirements.Requirements" rows="3">{{ program_requirements.Requirements or '' }}</textarea>
+        </div>
+        <div class="field">
+          <label for="ProgramRequirements.WritingSample">Writing Sample</label>
+          <input type="text" id="ProgramRequirements.WritingSample" name="ProgramRequirements.WritingSample" value="{{ program_requirements.WritingSample or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramRequirements.MinGPA">Minimum GPA</label>
+          <input type="text" id="ProgramRequirements.MinGPA" name="ProgramRequirements.MinGPA" value="{{ program_requirements.MinGPA or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramRequirements.MaxGPA">Maximum GPA</label>
+          <input type="text" id="ProgramRequirements.MaxGPA" name="ProgramRequirements.MaxGPA" value="{{ program_requirements.MaxGPA or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramRequirements.MaxFails">Maximum Failed Courses</label>
+          <input type="text" id="ProgramRequirements.MaxFails" name="ProgramRequirements.MaxFails" value="{{ program_requirements.MaxFails or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramRequirements.PreviousYearAcceptanceRates">Acceptance Rate</label>
+          <input type="text" id="ProgramRequirements.PreviousYearAcceptanceRates" name="ProgramRequirements.PreviousYearAcceptanceRates" value="{{ program_requirements.PreviousYearAcceptanceRates or '' }}" />
+        </div>
+        
+        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e0e6ed;">
+          <h5 style="margin-top: 0; color: #4d5b88;">Test Requirements (Check if Required)</h5>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.5rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsGMATRequired" value="on" {% if program_requirements.IsGMATRequired %}checked{% endif %} />
+              <span>GMAT Required</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsGreRequired" value="on" {% if program_requirements.IsGreRequired %}checked{% endif %} />
+              <span>GRE Required</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsGMATOrGreRequired" value="on" {% if program_requirements.IsGMATOrGreRequired %}checked{% endif %} />
+              <span>GMAT or GRE</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsIELTSRequired" value="on" {% if program_requirements.IsIELTSRequired %}checked{% endif %} />
+              <span>IELTS Required</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsTOEFLIBRequired" value="on" {% if program_requirements.IsTOEFLIBRequired %}checked{% endif %} />
+              <span>TOEFL iBT Required</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsTOEFLPBTRequired" value="on" {% if program_requirements.IsTOEFLPBTRequired %}checked{% endif %} />
+              <span>TOEFL PBT Required</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsDuoLingoRequired" value="on" {% if program_requirements.IsDuoLingoRequired %}checked{% endif %} />
+              <span>Duolingo Required</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsPTERequired" value="on" {% if program_requirements.IsPTERequired %}checked{% endif %} />
+              <span>PTE Required</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsLSATRequired" value="on" {% if program_requirements.IsLSATRequired %}checked{% endif %} />
+              <span>LSAT Required</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsMCATRequired" value="on" {% if program_requirements.IsMCATRequired %}checked{% endif %} />
+              <span>MCAT Required</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsMATRequired" value="on" {% if program_requirements.IsMATRequired %}checked{% endif %} />
+              <span>MAT Required</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsACTRequired" value="on" {% if program_requirements.IsACTRequired %}checked{% endif %} />
+              <span>ACT Required</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsSATRequired" value="on" {% if program_requirements.IsSATRequired %}checked{% endif %} />
+              <span>SAT Required</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsStemProgram" value="on" {% if program_requirements.IsStemProgram %}checked{% endif %} />
+              <span>STEM Program</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsRecommendationSystemOpted" value="on" {% if program_requirements.IsRecommendationSystemOpted %}checked{% endif %} />
+              <span>Recommendation System</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsEnglishNotRequired" value="on" {% if program_requirements.IsEnglishNotRequired %}checked{% endif %} />
+              <span>English Not Required</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsEnglishOptional" value="on" {% if program_requirements.IsEnglishOptional %}checked{% endif %} />
+              <span>English Optional</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsAnalyticalNotRequired" value="on" {% if program_requirements.IsAnalyticalNotRequired %}checked{% endif %} />
+              <span>Analytical Not Required</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" name="ProgramRequirements.IsAnalyticalOptional" value="on" {% if program_requirements.IsAnalyticalOptional %}checked{% endif %} />
+              <span>Analytical Optional</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Term & Investment -->
+      <div class="form-section">
+        <h4 style="margin-top: 0; color: #1d2e53;">Term & Investment</h4>
+        <div class="field">
+          <label for="ProgramTermDetails.Term">Term</label>
+          <input type="text" id="ProgramTermDetails.Term" name="ProgramTermDetails.Term" value="{{ program_term.Term or '' }}" placeholder="e.g., Fall 2025" />
+        </div>
+        <div class="field">
+          <label for="ProgramTermDetails.LiveDate">Live Date</label>
+          <input type="date" id="ProgramTermDetails.LiveDate" name="ProgramTermDetails.LiveDate" value="{{ program_term.LiveDate or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramTermDetails.DeadlineDate">Deadline Date</label>
+          <input type="date" id="ProgramTermDetails.DeadlineDate" name="ProgramTermDetails.DeadlineDate" value="{{ program_term.DeadlineDate or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramTermDetails.Fees">Fees</label>
+          <input type="text" id="ProgramTermDetails.Fees" name="ProgramTermDetails.Fees" value="{{ program_term.Fees or '' }}" placeholder="e.g., $50,000" />
+        </div>
+        <div class="field">
+          <label for="ProgramTermDetails.CostPerCredit">Cost Per Credit</label>
+          <input type="text" id="ProgramTermDetails.CostPerCredit" name="ProgramTermDetails.CostPerCredit" value="{{ program_term.CostPerCredit or '' }}" placeholder="e.g., $1,200" />
+        </div>
+        <div class="field">
+          <label for="ProgramTermDetails.AverageScholarshipAmount">Average Scholarship Amount</label>
+          <input type="text" id="ProgramTermDetails.AverageScholarshipAmount" name="ProgramTermDetails.AverageScholarshipAmount" value="{{ program_term.AverageScholarshipAmount or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramTermDetails.ScholarshipAmount">Scholarship Amount</label>
+          <input type="text" id="ProgramTermDetails.ScholarshipAmount" name="ProgramTermDetails.ScholarshipAmount" value="{{ program_term.ScholarshipAmount or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramTermDetails.ScholarshipPercentage">Scholarship Percentage</label>
+          <input type="text" id="ProgramTermDetails.ScholarshipPercentage" name="ProgramTermDetails.ScholarshipPercentage" value="{{ program_term.ScholarshipPercentage or '' }}" placeholder="e.g., 50%" />
+        </div>
+        <div class="field">
+          <label for="ProgramTermDetails.ScholarshipType">Scholarship Type</label>
+          <input type="text" id="ProgramTermDetails.ScholarshipType" name="ProgramTermDetails.ScholarshipType" value="{{ program_term.ScholarshipType or '' }}" placeholder="e.g., Merit-based" />
+        </div>
+      </div>
+
+      <!-- Minimum Test Scores -->
+      <div class="form-section">
+        <h4 style="margin-top: 0; color: #1d2e53;">Minimum Test Scores</h4>
+        <div class="field">
+          <label for="ProgramTestScores.MinimumACTScore">Minimum ACT Score</label>
+          <input type="text" id="ProgramTestScores.MinimumACTScore" name="ProgramTestScores.MinimumACTScore" value="{{ program_test_scores.MinimumACTScore or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramTestScores.MinimumSATScore">Minimum SAT Score</label>
+          <input type="text" id="ProgramTestScores.MinimumSATScore" name="ProgramTestScores.MinimumSATScore" value="{{ program_test_scores.MinimumSATScore or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramTestScores.MinimumGMATScore">Minimum GMAT Score</label>
+          <input type="text" id="ProgramTestScores.MinimumGMATScore" name="ProgramTestScores.MinimumGMATScore" value="{{ program_test_scores.MinimumGMATScore or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramTestScores.MinimumGreScore">Minimum GRE Score</label>
+          <input type="text" id="ProgramTestScores.MinimumGreScore" name="ProgramTestScores.MinimumGreScore" value="{{ program_test_scores.MinimumGreScore or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramTestScores.MinimumIELTSScore">Minimum IELTS Score</label>
+          <input type="text" id="ProgramTestScores.MinimumIELTSScore" name="ProgramTestScores.MinimumIELTSScore" value="{{ program_test_scores.MinimumIELTSScore or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramTestScores.MinimumTOEFLScore">Minimum TOEFL Score</label>
+          <input type="text" id="ProgramTestScores.MinimumTOEFLScore" name="ProgramTestScores.MinimumTOEFLScore" value="{{ program_test_scores.MinimumTOEFLScore or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramTestScores.MinimumDuoLingoScore">Minimum Duolingo Score</label>
+          <input type="text" id="ProgramTestScores.MinimumDuoLingoScore" name="ProgramTestScores.MinimumDuoLingoScore" value="{{ program_test_scores.MinimumDuoLingoScore or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramTestScores.MinimumPTEScore">Minimum PTE Score</label>
+          <input type="text" id="ProgramTestScores.MinimumPTEScore" name="ProgramTestScores.MinimumPTEScore" value="{{ program_test_scores.MinimumPTEScore or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramTestScores.MinimumLSATScore">Minimum LSAT Score</label>
+          <input type="text" id="ProgramTestScores.MinimumLSATScore" name="ProgramTestScores.MinimumLSATScore" value="{{ program_test_scores.MinimumLSATScore or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramTestScores.MinimumMCATScore">Minimum MCAT Score</label>
+          <input type="text" id="ProgramTestScores.MinimumMCATScore" name="ProgramTestScores.MinimumMCATScore" value="{{ program_test_scores.MinimumMCATScore or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramTestScores.MinimumMATScore">Minimum MAT Score</label>
+          <input type="text" id="ProgramTestScores.MinimumMATScore" name="ProgramTestScores.MinimumMATScore" value="{{ program_test_scores.MinimumMATScore or '' }}" />
+        </div>
+        <div class="field">
+          <label for="ProgramTestScores.MinimumELSScore">Minimum ELS Score</label>
+          <input type="text" id="ProgramTestScores.MinimumELSScore" name="ProgramTestScores.MinimumELSScore" value="{{ program_test_scores.MinimumELSScore or '' }}" />
+        </div>
+      </div>
+
+      <div class="form-actions" style="margin-top: 1.5rem;">
+        <button type="submit" id="save-btn" style="background: #28a745;">Save Program to Database</button>
+      </div>
+    </form>
+  </section>
+  {% endif %}
+</section>
+
+<script>
+  // Handle URL form submission
+  document.getElementById('url-form')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    // Form will submit normally to extract text
+    this.submit();
+  });
+
+  // Handle section extraction buttons
+  const urlInput = document.getElementById('url');
+  const urlValue = urlInput?.value || '{{ url }}';
+
+  // Handle program details extraction (Section 1)
+  function runProgramDetails() {
+    const btn = document.getElementById('btn-run-program-details');
+    if (!btn || !urlValue) {
+      alert('Please extract text from URL first.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Extracting...';
+
+    fetch('{{ url_for("extract.extract_programs_run_program_details") }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: urlValue
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.ok && data.data) {
+        const sectionData = data.data;
+        Object.keys(sectionData).forEach(key => {
+          const field = document.getElementById(`Program.${key}`);
+          if (field && sectionData[key]) {
+            field.value = sectionData[key];
+          }
+        });
+        alert('Program details extracted successfully!');
+      } else {
+        alert('Extraction failed: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      alert('Error: ' + error.message);
+    })
+    .finally(() => {
+      btn.disabled = false;
+      btn.textContent = 'Extract Complete Program Details';
+    });
+  }
+
+  // Handle shared requirements extraction (Section 2)
+  function runSection(sectionName, buttonId) {
+    const btn = document.getElementById(buttonId);
+    if (!btn || !urlValue) {
+      alert('Please extract text from URL first.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Extracting...';
+
+    fetch('{{ url_for("extract.extract_programs_run_shared_requirements") }}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: urlValue,
+        section: sectionName
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.ok && data.data) {
+        // Prefill form fields based on section
+        const sectionData = data.data;
+        if (sectionName === 'requirements') {
+          Object.keys(sectionData).forEach(key => {
+            if (key.startsWith('Is')) {
+              const checkbox = document.querySelector(`input[name="ProgramRequirements.${key}"]`);
+              if (checkbox) {
+                checkbox.checked = sectionData[key] === true || sectionData[key] === 'true';
+              }
+            } else {
+              const field = document.getElementById(`ProgramRequirements.${key}`);
+              if (field && sectionData[key]) {
+                field.value = sectionData[key];
+              }
+            }
+          });
+        } else if (sectionName === 'term') {
+          Object.keys(sectionData).forEach(key => {
+            const field = document.getElementById(`ProgramTermDetails.${key}`);
+            if (field && sectionData[key]) {
+              field.value = sectionData[key];
+            }
+          });
+        } else if (sectionName === 'test_scores') {
+          Object.keys(sectionData).forEach(key => {
+            const field = document.getElementById(`ProgramTestScores.${key}`);
+            if (field && sectionData[key]) {
+              field.value = sectionData[key];
+            }
+          });
+        }
+        alert(`${sectionName.charAt(0).toUpperCase() + sectionName.slice(1).replace('_', ' ')} extracted successfully!`);
+      } else {
+        alert('Extraction failed: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      alert('Error: ' + error.message);
+    })
+    .finally(() => {
+      btn.disabled = false;
+      const originalTexts = {
+        'btn-run-snapshot': 'Run Program Snapshot',
+        'btn-run-requirements': 'Run Application Checklist',
+        'btn-run-term': 'Run Term & Investment',
+        'btn-run-test-scores': 'Run Minimum Test Scores'
+      };
+      btn.textContent = originalTexts[buttonId] || 'Run Section';
+    });
+  }
+
+  document.getElementById('btn-run-program-details')?.addEventListener('click', runProgramDetails);
+  document.getElementById('btn-run-requirements')?.addEventListener('click', () => runSection('requirements', 'btn-run-requirements'));
+  document.getElementById('btn-run-term')?.addEventListener('click', () => runSection('term', 'btn-run-term'));
+  document.getElementById('btn-run-test-scores')?.addEventListener('click', () => runSection('test_scores', 'btn-run-test-scores'));
+
+  // Handle save form submission
+  document.getElementById('save-form')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const saveBtn = document.getElementById('save-btn');
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+    }
+
+    try {
+      const response = await fetch('{{ url_for("extract.extract_programs_save") }}', {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formData
+      });
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error('Unexpected response format');
+      }
+
+      const result = await response.json();
+      
+      if (result.ok) {
+        alert(result.message || 'Program saved successfully!');
+        window.location.href = '{{ url_for("forms.program_list") }}';
+      } else {
+        alert(result.message || 'Failed to save program.');
+      }
+    } catch (error) {
+      alert('Save failed: ' + error.message);
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save Program to Database';
+      }
+    }
+  });
+</script>
+{% endblock %}
+

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Prompt on Page | OneGrad{% endblock %}
+{% block content %}
+<section class="card">
+  <h2 style="margin-top: 0;">Prompt on a Single Page</h2>
+  <p class="form-hint">Enter a URL and a prompt. We’ll fetch the page, send both to the LLM (Llama or Gemini), and display the raw response.</p>
+  <form method="post" class="form-layout form-layout--wide">
+    <div class="form-section">
+      <div class="field-grid">
+        <div class="field">
+          <label for="url">Page URL</label>
+          <input type="url" id="url" name="url" value="{{ url }}" placeholder="https://www.example.edu/about" required />
+        </div>
+      </div>
+    </div>
+    <div class="form-section">
+      <div class="field-grid">
+        <div class="field" style="grid-column: 1 / -1;">
+          <label for="prompt">Prompt</label>
+          <textarea id="prompt" name="prompt" rows="8" placeholder="Ask anything about the page...">{{ prompt }}</textarea>
+        </div>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit">Send</button>
+    </div>
+  </form>
+
+  {% if llm_response %}
+  <div class="crawler-card" style="margin-top: 1.25rem;">
+    <h3>LLM Response</h3>
+    <pre>{{ llm_response }}</pre>
+  </div>
+  {% endif %}
+
+  {% if page_text %}
+  <div class="crawler-card" style="margin-top: 1.25rem;">
+    <h3>Extracted Page Text (before LLM)</h3>
+    <pre>{{ page_text }}</pre>
+  </div>
+  {% endif %}
+
+  {% if coarse_json %}
+  <div class="crawler-card" style="margin-top: 1.25rem;">
+    <h3>Coarse Extraction (Stage 1)</h3>
+    <pre>{{ coarse_json }}</pre>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+

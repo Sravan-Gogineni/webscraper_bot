@@ -1,0 +1,430 @@
+{
+  "California State University, San Bernadino": {
+    "Graduate Programs URL": "https://catalog.csusb.edu/graduate-degree-programs/",
+    "Undergraduate Programs URL": "https://catalog.csusb.edu/undergraduate-degree-programs/"
+  },
+  "Cambridge University Press & Assessment": {
+    "Graduate Programs URL": null,
+    "Undergraduate Programs URL": null
+  },
+  "Central Michigan University": {
+    "Graduate Programs URL": "https://www.cmich.edu/graduate/how-to-apply",
+    "Undergraduate Programs URL": "https://www.cmich.edu/program-finder"
+  },
+  "City University of Seattle": {
+    "Graduate Programs URL": "https://www.cityu.edu/programs-overview/master-of-arts-in-marriage-and-family-therapy/",
+    "Undergraduate Programs URL": "https://www.cityu.edu/admissions-us/undergraduate-admissions/"
+  },
+  "Clark University": {
+    "Graduate Programs URL": "https://www.clarku.edu/graduate-education/graduate-programs/",
+    "Undergraduate Programs URL": "https://www.clarku.edu/programs/"
+  },
+  "Creighton University": {
+    "Graduate Programs URL": "https://www.creighton.edu/graduate",
+    "Undergraduate Programs URL": "https://www.creighton.edu/programs/undergraduate-majors-and-minors"
+  },
+  "Dallas Baptist University": {
+    "Graduate Programs URL": "https://catalog.dbu.edu/programs/BBS.ENTR",
+    "Undergraduate Programs URL": "https://www.dbu.edu/undergraduate-programs/majors.html"
+  },
+  "Duquesne University": {
+    "Graduate Programs URL": "https://www.duq.edu/academics/explore-all-programs/index.php",
+    "Undergraduate Programs URL": "https://www.duq.edu/academics/university-catalogs/2025-2026-catalog/undergraduate/academic-programs/index.php"
+  },
+  "East Tennessee State University": {
+    "Graduate Programs URL": "https://www.etsu.edu/ehome/majors/graduate/",
+    "Undergraduate Programs URL": "https://www.etsu.edu/ehome/majors/bachelors/"
+  },
+  "Graceland University": {
+    "Graduate Programs URL": "https://www.graceland.edu/admissions-aid/graduate-admissions/",
+    "Undergraduate Programs URL": "https://www.graceland.edu/academics/academic-catalogs/undergraduate-catalog/"
+  },
+  "Hawaii Pacific University": {
+    "Graduate Programs URL": "https://www.hpu.edu/cob/grad-programs/index.html",
+    "Undergraduate Programs URL": "https://www.hpu.edu/undergraduate-admissions/index.html"
+  },
+  "Indiana Wesleyan University": {
+    "Graduate Programs URL": "https://www.indwes.edu/find-your-program",
+    "Undergraduate Programs URL": "https://www.franklin.edu/affordable-colleges-near/bachelors-programs/indiana/marion/business-administration-bachelors-degrees"
+  },
+  "Iowa State University": {
+    "Graduate Programs URL": "https://catalog.iastate.edu/graduatemajors-alpha/",
+    "Undergraduate Programs URL": "https://www.ans.iastate.edu/undergraduate-programs"
+  },
+  "Jacksonville State University": {
+    "Graduate Programs URL": "https://jsu.edu/graduate/index.html",
+    "Undergraduate Programs URL": "https://www.jsu.edu/degreelist.html"
+  },
+  "James Madison University": {
+    "Graduate Programs URL": "https://www.jmu.edu/grad/programs/education.shtml",
+    "Undergraduate Programs URL": "https://www.jmu.edu/academics/undergraduate/majors/index.shtml"
+  },
+  "Johnson & Wales University": {
+    "Graduate Programs URL": "https://catalog.jwu.edu/programsofstudy/food-innovation-technology/culinary-arts-bs/",
+    "Undergraduate Programs URL": "https://www.jwu.edu/admissions/future-students/undergraduate.html"
+  },
+  "Kennesaw State University": {
+    "Graduate Programs URL": "https://goizueta.emory.edu/events/kennesaw-state-university-graduate-school-fair-1760452200",
+    "Undergraduate Programs URL": "https://www.kennesaw.edu/degrees-programs/bachelor-degrees/index.php"
+  },
+  "Kent State University": {
+    "Graduate Programs URL": "https://onlinedegrees.kent.edu/blog/heat-and-human-health",
+    "Undergraduate Programs URL": "https://catalog.kent.edu/programs/"
+  },
+  "Kutztown University of Pennsylvania": {
+    "Graduate Programs URL": "https://www.kutztown.edu/about-ku/administrative-offices/career-development-center/for-graduate-students.html",
+    "Undergraduate Programs URL": "https://www.kutztown.edu/academics/program-finder.html"
+  },
+  "Middle Tennessee State University": {
+    "Graduate Programs URL": "https://www.mtsu.edu/graduate/",
+    "Undergraduate Programs URL": "https://www.mtsu.edu/search-program/"
+  },
+  "Midwestern State University": {
+    "Graduate Programs URL": "https://msutexas.edu/academics/graduate-school/exercise-physiology.php",
+    "Undergraduate Programs URL": "https://msutexas.edu/academics/scienceandmath/chemistry/undergraduate-programs.php"
+  },
+  "Millikin University": {
+    "Graduate Programs URL": "https://millikin.edu/admission/admission-information/graduate-programs",
+    "Undergraduate Programs URL": "https://millikin.edu/academic-programs"
+  },
+  "Montclair State University": {
+    "Graduate Programs URL": "https://www.montclair.edu/graduate/programs-of-study/speech-language-pathology-ma/",
+    "Undergraduate Programs URL": "https://www.montclair.edu/admissions/summer-bridge-program/"
+  },
+  "National Louis University": {
+    "Graduate Programs URL": "https://www.cscc.pitt.edu/graduate-program/national-louis-university/",
+    "Undergraduate Programs URL": "https://nl.edu/undergraduate-college/programs/"
+  },
+  "Nazareth University": {
+    "Graduate Programs URL": "https://www2.naz.edu/academics/grad/msw-social-work-degree-program/",
+    "Undergraduate Programs URL": "https://www2.naz.edu/academics/undergraduate-programs"
+  },
+  "Northeastern University": {
+    "Graduate Programs URL": "https://graduate.northeastern.edu/",
+    "Undergraduate Programs URL": "https://admissions.northeastern.edu/academics/specialized-entry-programs/nu-immerse/"
+  },
+  "Northern Kentucky University": {
+    "Graduate Programs URL": "https://nku.academia.edu/Departments/Graduate_Programs",
+    "Undergraduate Programs URL": "https://www.nku.edu/admissions/online/future-students/undergrad-programs.html"
+  },
+  "Northwest Missouri State University": {
+    "Graduate Programs URL": "https://www.nwmissouri.edu/graduate/index.htm",
+    "Undergraduate Programs URL": "https://www.nwmissouri.edu/academics/majors.htm"
+  },
+  "Oklahoma State University": {
+    "Graduate Programs URL": "https://go.okstate.edu/graduate-academics/programs/",
+    "Undergraduate Programs URL": "https://osuonline.okstate.edu/programs/undergraduate/rn-to-bsn-nursing.html"
+  },
+  "Pacific Lutheran University": {
+    "Graduate Programs URL": "https://www.plu.edu/admission-graduate/",
+    "Undergraduate Programs URL": "https://www.plu.edu/nursing/undergraduate-programs/"
+  },
+  "Post University": {
+    "Graduate Programs URL": "https://post.edu/academics/online-graduate-degrees/",
+    "Undergraduate Programs URL": "https://merage.uci.edu/news/2024/04/Undergraduate-Programs-supports-students-innovative-programming-teamwork.html"
+  },
+  "Purdue University Northwest": {
+    "Graduate Programs URL": "https://www.pnw.edu/graduate-studies/admission/",
+    "Undergraduate Programs URL": "https://www.pnw.edu/program-finder/"
+  },
+  "Quinnipiac University": {
+    "Graduate Programs URL": "https://graduate.quinnipiac.edu/register/petersons",
+    "Undergraduate Programs URL": "https://www.qu.edu/academics/about-our-programs/undergraduate-programs/"
+  },
+  "Radford University": {
+    "Graduate Programs URL": "https://www.radford.edu/admissions/graduate/index.html",
+    "Undergraduate Programs URL": "https://psych.pages.roanoke.edu/2018/02/10/applications-open-for-radford-universitys-graduate-programs-in-psychology/"
+  },
+  "Rutgers University-Camden": {
+    "Graduate Programs URL": "https://graduateschool.camden.rutgers.edu/graduate-programs/",
+    "Undergraduate Programs URL": "https://camden.rutgers.edu/academics/undergraduate-programs?field_name_alpha=L"
+  },
+  "San Jose State University": {
+    "Graduate Programs URL": "https://www.sjsu.edu/graduateprograms",
+    "Undergraduate Programs URL": "https://www.sjsu.edu/design/undergraduate-programs/animation-illustration/community.php"
+  },
+  "Southeast Missouri State University": {
+    "Graduate Programs URL": "https://semo.edu/news/2022/05/southeasts-spring-commencement-celebrates-1391-graduates.html",
+    "Undergraduate Programs URL": "https://semo.edu/student-support/academic-support/registrar/bulletin/majors"
+  },
+  "Stony Brook University": {
+    "Graduate Programs URL": "https://energy.stonybrook.edu/commcms/grad/admissions/apply/graduate-programs.php",
+    "Undergraduate Programs URL": "https://www.stonybrook.edu/undergraduate-admissions/programs/index.php"
+  },
+  "SUNY University at Albany": {
+    "Graduate Programs URL": "https://www.albany.edu/graduate/graduate-programs",
+    "Undergraduate Programs URL": "https://albany.academia.edu/Departments/Undergraduate"
+  },
+  "The English Language Program, University of North Florida": {
+    "Graduate Programs URL": "https://english.wsu.edu/graduate-studies/current-graduate-manual/graduate-manual-2-programs/",
+    "Undergraduate Programs URL": "https://www.park.edu/academics/undergraduate-programs/"
+  },
+  "The University of Akron": {
+    "Graduate Programs URL": "https://www.uakron.edu/graduate/",
+    "Undergraduate Programs URL": "https://www.uakron.edu/academics_majors/undergraduate/"
+  },
+  "The University of Alabama": {
+    "Graduate Programs URL": "https://graduate.ua.edu/",
+    "Undergraduate Programs URL": "https://catalog.ua.edu/undergraduate/about/academic-regulations/curriculum/majors-degrees/"
+  },
+  "Tiffin University": {
+    "Graduate Programs URL": "https://go.tiffin.edu/masters-programs/",
+    "Undergraduate Programs URL": "https://www.tiffin.edu/academics/view-all-programs/"
+  },
+  "Troy University": {
+    "Graduate Programs URL": "https://www.troy.edu/academics/colleges-schools/graduate-school/index.html",
+    "Undergraduate Programs URL": "https://www.troy.edu/academics/academic-programs/index.html"
+  },
+  "Truman State University": {
+    "Graduate Programs URL": "https://www.truman.edu/majors-programs/graduate-studies/",
+    "Undergraduate Programs URL": "https://www.truman.edu/majors-programs/"
+  },
+  "University at Buffalo - SUNY": {
+    "Graduate Programs URL": "https://ubwp.buffalo.edu/spplab/graduate-students/",
+    "Undergraduate Programs URL": "https://www.buffalo.edu/home/academics/degree_programs.html"
+  },
+  "University of Central Missouri": {
+    "Graduate Programs URL": "https://www.ucmo.edu/graduate/",
+    "Undergraduate Programs URL": "https://www.ucmo.edu/academics/programs/"
+  },
+  "University of Cincinnati": {
+    "Graduate Programs URL": "https://www.uc.edu/majors-programs.html",
+    "Undergraduate Programs URL": "https://www.uc.edu/majors-programs.html"
+  },
+  "University of Colorado at Denver": {
+    "Graduate Programs URL": "https://www.ucdenver.edu/graduate-education",
+    "Undergraduate Programs URL": "https://www.ucdenver.edu/academics/degrees-programs"
+  },
+  "University of Detroit Mercy": {
+    "Graduate Programs URL": "https://www.udmercy.edu/admission/graduate/",
+    "Undergraduate Programs URL": "https://chass.udmercy.edu/undergraduate.php"
+  },
+  "University of Findlay": {
+    "Graduate Programs URL": "https://online.findlay.edu/programs/",
+    "Undergraduate Programs URL": "https://www.findlay.edu/academics/undergraduate"
+  },
+  "University of Illinois Chicago": {
+    "Graduate Programs URL": "https://psch.uic.edu/programs/graduate-studies/community-and-applied-developmental-psychology/community-prevention-centers-initiatives/",
+    "Undergraduate Programs URL": "https://publish.illinois.edu/hergenrother-lab/alumni-former-undergraduate-students/"
+  },
+  "University of Indianapolis": {
+    "Graduate Programs URL": "https://uindy.edu/graduate-admissions/masters-degree-programs",
+    "Undergraduate Programs URL": "https://uindy.edu/fye/programs"
+  },
+  "University of Louisville": {
+    "Graduate Programs URL": "https://graduate.louisville.edu/",
+    "Undergraduate Programs URL": "https://catalog.louisville.edu/undergraduate/university-wide-unit-specific-policies/undergrad-grad-courses/"
+  },
+  "University of Maryland, Baltimore County": {
+    "Graduate Programs URL": "https://gradschool.umd.edu/graduate-programs",
+    "Undergraduate Programs URL": "https://umbc.edu/programs/"
+  },
+  "University of Massachusetts Dartmouth": {
+    "Graduate Programs URL": "https://www.umassd.edu/graduate/",
+    "Undergraduate Programs URL": "https://www.umassd.edu/programs/"
+  },
+  "University of Memphis": {
+    "Graduate Programs URL": "https://www.memphis.edu/gradschool/programs/index.php",
+    "Undergraduate Programs URL": "https://www.memphis.edu/academics/ugmajors.php"
+  },
+  "University of Nebraska-Lincoln": {
+    "Graduate Programs URL": "https://catalog.unl.edu/graduate-professional/programs/",
+    "Undergraduate Programs URL": "https://online.unl.edu/programs/"
+  },
+  "University of New Hampshire": {
+    "Graduate Programs URL": "https://catalog.unh.edu/graduate/programs/",
+    "Undergraduate Programs URL": "https://catalog.unh.edu/programs/"
+  },
+  "University of North Alabama": {
+    "Graduate Programs URL": "https://www.una.edu/arts-sciences-engineering/graduate-programs.html",
+    "Undergraduate Programs URL": "https://catalog.una.edu/undergraduate/colleges-programs/"
+  },
+  "University of North Carolina Greensboro": {
+    "Graduate Programs URL": "https://catalog.uncg.edu/admissions/graduate-admissions/",
+    "Undergraduate Programs URL": "https://abtech.edu/college-resources/advising/contact-my-advisor/i-know-my-program-study/4-year-college-transfer-5"
+  },
+  "University of North Carolina Wilmington": {
+    "Graduate Programs URL": "https://uncw.edu/academics/graduate-school/",
+    "Undergraduate Programs URL": "https://uncw.edu/admissions/undergraduate/"
+  },
+  "University of North Georgia": {
+    "Graduate Programs URL": "https://ung.edu/degrees/graduate/nursing-practice-dnp.php",
+    "Undergraduate Programs URL": "https://ung.edu/degrees/bachelors/nursing.php"
+  },
+  "University of North Texas": {
+    "Graduate Programs URL": "https://online.unt.edu/programs/graduate/index.html",
+    "Undergraduate Programs URL": "https://cob.unt.edu/undergrad/explore-degrees/index.html"
+  },
+  "University of South Dakota": {
+    "Graduate Programs URL": "https://www.usd.edu/Admissions-and-Aid/Graduate-Admissions/How-to-Apply",
+    "Undergraduate Programs URL": "https://www.usd.edu/Academics/Undergraduate-Programs"
+  },
+  "University of St. Thomas": {
+    "Graduate Programs URL": "https://www.stthomas.edu/academics/graduate/",
+    "Undergraduate Programs URL": "https://www.stthomas.edu/academics/undergraduate/"
+  },
+  "University of Tampa": {
+    "Graduate Programs URL": "https://www.ut.edu/graduate-degrees",
+    "Undergraduate Programs URL": "https://www.ut.edu/academics/degree-programs"
+  },
+  "University of Tennessee, Knoxville": {
+    "Graduate Programs URL": "https://gradschool.utk.edu/future-students/degrees-and-programs/",
+    "Undergraduate Programs URL": "https://admissions.utk.edu/why-ut/undergraduate-programs-majors/"
+  },
+  "University of the Pacific": {
+    "Graduate Programs URL": "https://www.pacific.edu/academics/graduate-programs",
+    "Undergraduate Programs URL": "https://www.pacific.edu/academics/undergraduate-programs"
+  },
+  "University of Tulsa": {
+    "Graduate Programs URL": "https://utulsa.edu/academics/graduate/",
+    "Undergraduate Programs URL": "https://utulsa.edu/programs/"
+  },
+  "University of Wisconsin La Crosse": {
+    "Graduate Programs URL": "https://www.uwlax.edu/gel/graduate-education/graduate-programs/",
+    "Undergraduate Programs URL": "https://www.uwlax.edu/admissions/explore/majors-and-programs/"
+  },
+  "University of Wisconsin-Eau Claire": {
+    "Graduate Programs URL": "https://catalog.uwec.edu/degree-programs/",
+    "Undergraduate Programs URL": "https://www.uwec.edu/academics/majors-minors"
+  },
+  "University of Wisconsin-Milwaukee": {
+    "Graduate Programs URL": "https://uwm.edu/graduateschool/",
+    "Undergraduate Programs URL": "https://catalog.uwm.edu/programs/"
+  },
+  "University Study": {
+    "Graduate Programs URL": "https://www.yale.edu/academics/graduate-professional-study",
+    "Undergraduate Programs URL": "https://www.bu.edu/academics/questrom/programs/undergrad/study-abroad-and-internship-programs/"
+  },
+  "University Study Inc.": {
+    "Graduate Programs URL": "https://www.newhaven.edu/admissions/graduate/programs.php",
+    "Undergraduate Programs URL": "https://www.park.edu/academics/undergraduate-programs/"
+  },
+  "Vanderbilt University": {
+    "Graduate Programs URL": "https://gradschool.vanderbilt.edu/academics/programs-departments/",
+    "Undergraduate Programs URL": "https://admissions.vanderbilt.edu/major/"
+  },
+  "Virginia Commonwealth University": {
+    "Graduate Programs URL": "https://graduate.vcu.edu/programs/",
+    "Undergraduate Programs URL": "https://www.vcu.edu/programs/"
+  },
+  "Virginia Commonwealth University School of the Arts in Qatar": {
+    "Graduate Programs URL": "https://bulletin.vcu.edu/undergraduate/arts/school-arts-qatar/",
+    "Undergraduate Programs URL": "https://qatar.vcu.edu/academics/undergraduate-programs/"
+  },
+  "Washington University of Science and Technology": {
+    "Graduate Programs URL": "https://www.wust.edu/graduate-program",
+    "Undergraduate Programs URL": "https://www.wust.edu/undergraduate"
+  },
+  "Webster University": {
+    "Graduate Programs URL": "https://www.webster.edu/academics/graduate/index.php",
+    "Undergraduate Programs URL": "https://www.webster.edu/academics/undergraduate/index.php"
+  },
+  "Western Kentucky University": {
+    "Graduate Programs URL": "https://www.wku.edu/graduate/",
+    "Undergraduate Programs URL": "https://catalog.wku.edu/undergraduate/programs/programs.pdf"
+  },
+  "Western New England University": {
+    "Graduate Programs URL": "https://wne.edu/academics/graduate/index.cfm",
+    "Undergraduate Programs URL": "https://wne.edu/academics/undergraduate/index.cfm"
+  },
+  "Wichita State University": {
+    "Graduate Programs URL": "https://www.wichita.edu/academics/business/graduateprogramsevents2024.php",
+    "Undergraduate Programs URL": "https://www.wichita.edu/academics/majors/majors.php"
+  },
+  "William Paterson University of New Jersey": {
+    "Graduate Programs URL": "https://www.wpunj.edu/admissions/graduate/programs.html",
+    "Undergraduate Programs URL": "https://www.wpunj.edu/admissions/undergraduate/"
+  },
+  "AIMS Education College of Health Sciences": {
+    "Graduate Programs URL": "https://aimseducation.edu/programs",
+    "Undergraduate Programs URL": "https://aimseducation.edu/programs"
+  },
+  "Butte College": {
+    "Graduate Programs URL": "https://programs.butte.edu/ProgramInfo/10/2183",
+    "Undergraduate Programs URL": "https://programs.butte.edu/ProgramInfo/10/2183"
+  },
+  "Cascadia College": {
+    "Graduate Programs URL": "https://catalog.cascadia.edu/degree-programs",
+    "Undergraduate Programs URL": "https://www.cascadia.edu/academic-programs/"
+  },
+  "College Contact GmbH": {
+    "Graduate Programs URL": "https://www.newhaven.edu/admissions/graduate/programs.php",
+    "Undergraduate Programs URL": "https://www.newhaven.edu/academics/programs/index.php"
+  },
+  "College of the Canyons": {
+    "Graduate Programs URL": "https://www.canyons.edu/administration/universitycenter/programs/index.php",
+    "Undergraduate Programs URL": "https://www.canyons.edu/academics/schools/careereducation/programs.php"
+  },
+  "College of the Desert": {
+    "Graduate Programs URL": "https://www.apu.edu/graduateprofessionalcenter/admissions/professional-transfers/plans/schools/?school=college-of-the-desert",
+    "Undergraduate Programs URL": "https://catalog.collegeofthedesert.edu/programs/nursing/"
+  },
+  "Collegepond Counsellors Private Limited": {
+    "Graduate Programs URL": "https://www.newhaven.edu/admissions/graduate/programs.php",
+    "Undergraduate Programs URL": "https://www.newhaven.edu/academics/programs/index.php"
+  },
+  "Collegepond Counsellors Pvt Ltd": {
+    "Graduate Programs URL": "https://www.newhaven.edu/admissions/graduate/programs.php",
+    "Undergraduate Programs URL": "https://www.newhaven.edu/academics/programs/index.php"
+  },
+  "Curry College": {
+    "Graduate Programs URL": "https://www.curry.edu/academics/continuing-education-and-graduate-programs/graduate-studies/master-of-education/med-needham-public-schools-elementary-education",
+    "Undergraduate Programs URL": "https://www.curry.edu/academics/undergraduate-degrees-and-programs"
+  },
+  "Foothill and De Anza Colleges": {
+    "Graduate Programs URL": "https://www.deanza.edu/academics/degrees-and-certificates.html",
+    "Undergraduate Programs URL": "https://www.deanza.edu/academics/degrees-and-certificates.html"
+  },
+  "Kansas City Kansas Community College": {
+    "Graduate Programs URL": null,
+    "Undergraduate Programs URL": "https://www.kckcc.edu/academics/explore-programs/programs/"
+  },
+  "Lees-McRae College": {
+    "Graduate Programs URL": "https://www.lmc.edu/online-programs/index.htm",
+    "Undergraduate Programs URL": "https://www.lmc.edu/academics/programs/index.htm"
+  },
+  "Merrimack College": {
+    "Graduate Programs URL": "https://www.merrimack.edu/admission/graduate/information/",
+    "Undergraduate Programs URL": "https://www.merrimack.edu/academics/program-finder/"
+  },
+  "New England College": {
+    "Graduate Programs URL": "https://www.nec.edu/admission/graduateadmissions",
+    "Undergraduate Programs URL": "https://www.neco.edu/admissions/apply-to-programs/34-accelerated-program/"
+  },
+  "San Mateo Colleges of Silicon Valley (San Mateo Community College District)": {
+    "Graduate Programs URL": "https://www.newhaven.edu/admissions/graduate/programs.php",
+    "Undergraduate Programs URL": "https://www.newhaven.edu/academics/programs/index.php"
+  },
+  "SCAD (Savannah College of Art and Design)": {
+    "Graduate Programs URL": "https://www.scad.edu/academics/programs",
+    "Undergraduate Programs URL": "https://www.scad.edu/academics/programs"
+  },
+  "Shoreline Community College": {
+    "Graduate Programs URL": "https://www.shoreline.edu/programs/default.aspx",
+    "Undergraduate Programs URL": "https://www.shoreline.edu/programs/nursing/lpn-rn-aas-t.aspx"
+  },
+  "The Evergreen State College": {
+    "Graduate Programs URL": "https://www.evergreen.edu/academics/graduate-studies",
+    "Undergraduate Programs URL": "https://www.evergreen.edu/catalog/offering/undergraduate-research-with-m-paros-38498"
+  },
+  "Alfa Beta Institute Pvt. Ltd.": {
+    "Graduate Programs URL": "https://msutexas.edu/academics/graduate-school/graduate-degrees.php",
+    "Undergraduate Programs URL": "https://www.baypath.edu/academics/undergraduate-programs/undergraduate-online-programs/areas-of-studies/"
+  },
+  "California Institute of Advanced Management": {
+    "Graduate Programs URL": "https://www.ciam.edu/graduate-programs",
+    "Undergraduate Programs URL": null
+  },
+  "Keck Graduate Institute": {
+    "Graduate Programs URL": "https://www.claremont.edu/home/keck-graduate-institute/",
+    "Undergraduate Programs URL": "https://www.kgi.edu/news/2024/keck-graduate-institute-ranked-the-3-masters-program-in-the-nation-for-2025.html"
+  },
+  "New Jersey Institute of Technology": {
+    "Graduate Programs URL": "https://www.njit.edu/admissions/graduate-admissions",
+    "Undergraduate Programs URL": "https://catalog.njit.edu/undergraduate/computing-sciences/informatics/human-computer-interaction-bs/"
+  },
+  "Oxford International Digital Institute": {
+    "Graduate Programs URL": "https://www.callutheran.edu/admission/graduate/international-students.html",
+    "Undergraduate Programs URL": "https://ww1.oswego.edu/international/undergraduate-applicants"
+  }
+}

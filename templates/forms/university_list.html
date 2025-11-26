@@ -53,6 +53,9 @@
           <td style="padding: 0.65rem;">{{ row.Email or "—" }}</td>
           <td style="padding: 0.65rem; white-space: nowrap;">
             <a href="{{ url_for('forms.university_edit', college_id=row.CollegeID) }}">Edit</a>
+            <form method="post" action="{{ url_for('forms.university_delete', college_id=row.CollegeID) }}" style="display: inline;" onsubmit="return confirm('Delete this college and related details?');">
+              <button type="submit" style="margin-left: 0.5rem; background: none; border: none; color: #b23; cursor: pointer; font-weight: 600;">Delete</button>
+            </form>
           </td>
         </tr>
         {% endfor %}

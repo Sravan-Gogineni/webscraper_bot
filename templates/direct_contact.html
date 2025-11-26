@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Direct Contact Extract | OneGrad{% endblock %}
+{% block content %}
+<section class="card" style="max-width: 900px; margin: 0 auto;">
+  <h2 style="margin-top: 0;">Direct Contact & Address Extract</h2>
+  <p class="form-hint">
+    Paste a single institutional page URL. We’ll fetch the page, send it to Gemini with a predefined prompt,
+    and return a JSON object with address and contact fields. You can review, adjust, and save into the database.
+  </p>
+  <form method="post" class="form-layout">
+    <div class="form-section">
+      <div class="field">
+        <label for="url">Page URL</label>
+        <input
+          type="url"
+          id="url"
+          name="url"
+          value="{{ url }}"
+          placeholder="https://www.example.edu/about"
+          required
+        />
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit">Extract Contact & Address</button>
+    </div>
+  </form>
+
+  {% if llm_output %}
+  <section class="result-section" style="margin-top: 1.5rem;">
+    <h3>Gemini JSON Output</h3>
+    <pre>{{ llm_output }}</pre>
+  </section>
+  {% endif %}
+
+  {% if review_fields_address or review_fields_contact or review_fields_social %}
+  <section class="result-section" style="margin-top: 1.5rem;">
+    <h3>Review & Save</h3>
+    <p class="form-hint">
+      Choose the target college, adjust any field values, and save Address, Contact & Social Media to the database
+      in one step.
+    </p>
+    <form method="post" action="{{ url_for('extract.direct_contact_confirm_save') }}" class="form-layout form-layout--wide">
+      <input type="hidden" name="url" value="{{ url }}" />
+      <div class="form-section">
+        <div class="field">
+          <label for="college_id_direct_select">College</label>
+          <select id="college_id_direct_select" name="college_id_direct_select" style="min-height: 36px;">
+            <option value="">— Select College —</option>
+            {% for cid, label in college_options %}
+            <option value="{{ cid }}" {% if matched_college and matched_college.CollegeID == cid %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>College Name (if creating new)</label>
+          <input type="text" name="college_name" value="{{ matched_college.CollegeName if matched_college else '' }}" />
+        </div>
+        <input type="hidden" name="college_id" value="{{ matched_college.CollegeID if matched_college else '' }}" />
+      </div>
+
+      {% if review_fields_address %}
+      <div class="form-section">
+        <div class="section-header">
+          <h3>Primary Location</h3>
+          <p class="section-description">Address fields for the main campus.</p>
+        </div>
+        <div class="field-grid">
+          {% for field in review_fields_address %}
+          <div class="field">
+            <label>{{ field.label }} <span style="color:#7b86aa; font-weight: 400;">({{ field.column }})</span></label>
+            <input
+              type="text"
+              name="override_addr.{{ field.column }}"
+              value="{{ field.llm_value }}"
+              placeholder="Value from Gemini or leave blank"
+            />
+            {% if field.existing_value %}
+            <div class="form-hint" style="font-size: 0.8rem; margin-top: 0.25rem;">
+              Existing: {{ field.existing_value }}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if review_fields_contact %}
+      <div class="form-section">
+        <div class="section-header">
+          <h3>Contact & Online Presence</h3>
+          <p class="section-description">Phones, emails, and key URLs.</p>
+        </div>
+        <div class="field-grid">
+          {% for field in review_fields_contact %}
+          <div class="field">
+            <label>{{ field.label }} <span style="color:#7b86aa; font-weight: 400;">({{ field.column }})</span></label>
+            <input
+              type="text"
+              name="override_contact.{{ field.column }}"
+              value="{{ field.llm_value }}"
+              placeholder="Value from Gemini or leave blank"
+            />
+            {% if field.existing_value %}
+            <div class="form-hint" style="font-size: 0.8rem; margin-top: 0.25rem;">
+              Existing: {{ field.existing_value }}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if review_fields_social %}
+      <div class="form-section">
+        <div class="section-header">
+          <h3>Social Media Profiles</h3>
+          <p class="section-description">Official social media profile URLs.</p>
+        </div>
+        <div class="field-grid">
+          {% for field in review_fields_social %}
+          <div class="field">
+            <label>{{ field.label }} <span style="color:#7b86aa; font-weight: 400;">({{ field.column }})</span></label>
+            <input
+              type="text"
+              name="override_social.{{ field.column }}"
+              value="{{ field.llm_value }}"
+              placeholder="Value from Gemini or leave blank"
+            />
+            {% if field.existing_value %}
+            <div class="form-hint" style="font-size: 0.8rem; margin-top: 0.25rem;">
+              Existing: {{ field.existing_value }}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="form-actions">
+        <button type="submit">Save Address, Contact & Social Media to DB</button>
+      </div>
+    </form>
+  </section>
+  {% endif %}
+</section>
+{% endblock %}
+
+

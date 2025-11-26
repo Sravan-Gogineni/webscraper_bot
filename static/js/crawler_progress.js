@@ -66,14 +66,26 @@
       }
     } else if (payload.type === "processing") {
       if (processingFill && processingStatus) {
+        const processed = Number(payload.processed || 0);
+        const total = Number(payload.total || 0);
         if (payload.stage === "start") {
           processingFill.classList.remove("complete");
-          processingFill.style.width = "35%";
-          processingStatus.textContent = "Consolidating literal and heuristic matches…";
+          const pct = total > 0 ? Math.max(5, Math.round((processed / total) * 100)) : 5;
+          processingFill.style.width = `${pct}%`;
+          processingStatus.textContent = total > 0
+            ? `Processing ${processed}/${total} pages… (${pct}%)`
+            : "Consolidating literal and heuristic matches…";
+        } else if (payload.stage === "progress") {
+          const pct = total > 0 ? Math.min(99, Math.round((processed / total) * 100)) : 50;
+          processingFill.classList.remove("complete");
+          processingFill.style.width = `${pct}%`;
+          processingStatus.textContent = total > 0
+            ? `Processing ${processed}/${total} pages… (${pct}%)`
+            : "Processing…";
         } else if (payload.stage === "done") {
           processingFill.classList.add("complete");
           processingFill.style.width = "100%";
-          processingStatus.textContent = "Entity extraction complete. Rendering results…";
+          processingStatus.textContent = "Entity extraction complete. Rendering results… (100%)";
         } else if (payload.stage === "error") {
           processingFill.classList.remove("complete");
           processingFill.style.width = "100%";

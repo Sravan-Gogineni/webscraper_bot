@@ -1,0 +1,1222 @@
+{% extends "base.html" %}
+{% block title %}Extract Departments | OneGrad{% endblock %}
+{% block content %}
+<section class="card" style="max-width: 1200px; margin: 0 auto;">
+  <h2 style="margin-top: 0;">Extract Department Details</h2>
+  
+  <!-- Direct Extract Section -->
+  <div style="background: #f8f9fa; border: 2px solid #3e6acb; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+    <h3 style="margin-top: 0; margin-bottom: 1rem; color: #1d2e53;">Direct Extract (Recommended)</h3>
+    <p class="form-hint" style="margin-bottom: 1rem;">
+      Provide a direct link to an <strong>Undergraduate Admissions</strong> or <strong>Graduate Admissions</strong> office page.
+      We'll extract: <strong>Office Location</strong> (building, address), <strong>Email</strong>, and <strong>Phone Number</strong>.
+    </p>
+    <form id="direct-extract-form" class="form-layout">
+      <div class="form-section">
+        <div class="field">
+          <label for="direct_url">Office/Department Page URL</label>
+          <input
+            type="url"
+            id="direct_url"
+            name="direct_url"
+            value="{{ direct_url or '' }}"
+            placeholder="https://www.example.edu/admissions/undergraduate"
+            required
+          />
+          <small style="color: #7b86aa; display: block; margin-top: 0.25rem;">Direct link to Undergraduate Admissions or Graduate Admissions office page</small>
+        </div>
+        <div class="field">
+          <label for="custom_prompt">Custom Prompt (Optional)</label>
+          <textarea
+            id="custom_prompt"
+            name="custom_prompt"
+            rows="4"
+            placeholder="Leave empty to use default prompt for extracting office building name, address, email, and phone number."
+          >{{ custom_prompt or '' }}</textarea>
+          <small style="color: #7b86aa; display: block; margin-top: 0.25rem;">Customize the extraction prompt if needed</small>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" id="btn-direct-extract" style="background: #2f4f8f;">Extract Office Details</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Advanced Options -->
+  <details style="margin-bottom: 1.5rem;">
+    <summary style="cursor: pointer; color: #3e6acb; font-weight: 600; font-size: 1.1rem; padding: 0.75rem; background: #f5f7fb; border-radius: 6px;">Advanced: Extract Multiple Departments</summary>
+    <div style="padding: 1rem; margin-top: 0.5rem;">
+      <p class="form-hint">
+        You can either provide direct URLs for undergraduate and graduate admissions pages, or provide a main university URL to automatically find admissions links.
+        We'll extract building addresses, URLs, and email contacts for each admissions office.
+      </p>
+      <form id="extract-form" class="form-layout">
+        <div class="form-section">
+          <h3 style="margin-top: 0; margin-bottom: 1rem; color: #1d2e53;">Direct Admissions URLs</h3>
+          <div class="field">
+            <label for="undergrad_url">Undergraduate Admissions URL</label>
+            <input
+              type="url"
+              id="undergrad_url"
+              name="undergrad_url"
+              value="{{ undergrad_url or '' }}"
+              placeholder="https://www.example.edu/admissions/undergraduate"
+            />
+            <small style="color: #7b86aa; display: block; margin-top: 0.25rem;">Direct link to undergraduate admissions page</small>
+          </div>
+          <div class="field">
+            <label for="grad_url">Graduate Admissions URL</label>
+            <input
+              type="url"
+              id="grad_url"
+              name="grad_url"
+              value="{{ grad_url or '' }}"
+              placeholder="https://www.example.edu/admissions/graduate"
+            />
+            <small style="color: #7b86aa; display: block; margin-top: 0.25rem;">Direct link to graduate admissions page</small>
+          </div>
+        </div>
+        <div class="form-section" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #e0e6ed;">
+          <h3 style="margin-top: 0; margin-bottom: 1rem; color: #1d2e53;">OR: Auto-Find from Main University URL</h3>
+          <div class="field">
+            <label for="url">University URL (to auto-find admissions links)</label>
+            <input
+              type="url"
+              id="url"
+              name="url"
+              value="{{ url }}"
+              placeholder="https://www.example.edu"
+            />
+            <small style="color: #7b86aa; display: block; margin-top: 0.25rem;">We'll crawl this page to find admissions links</small>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" id="btn-extract-undergrad" style="background: #2f4f8f; margin-right: 0.5rem;">Extract Undergraduate Admissions</button>
+          <button type="button" id="btn-extract-grad" style="background: #2f4f8f; margin-right: 0.5rem;">Extract Graduate Admissions</button>
+          <button type="submit" id="extract-btn" style="background: #6c757d;">Extract All Departments</button>
+        </div>
+      </form>
+    </div>
+  </details>
+
+  <!-- Progress Bar -->
+  <div id="progress-container" style="display: none; margin-top: 1.5rem;">
+    <div style="background: #f5f7fb; border-radius: 8px; padding: 1rem;">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+        <span id="progress-text" style="font-weight: 600; color: #1d2e53;">Extracting departments...</span>
+        <span id="progress-percent" style="color: #7b86aa;">0%</span>
+      </div>
+      <div style="background: #e0e6ed; border-radius: 999px; height: 24px; overflow: hidden;">
+        <div id="progress-bar" style="background: linear-gradient(135deg, #2f4f8f, #3e6acb); height: 100%; width: 0%; transition: width 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.85rem; font-weight: 600;"></div>
+      </div>
+      <div id="progress-status" style="margin-top: 0.5rem; font-size: 0.9rem; color: #7b86aa;"></div>
+    </div>
+  </div>
+
+  <div id="results-container">
+    {% if admissions_links %}
+    <section class="result-section" style="margin-top: 1.5rem;">
+      <h3>Found Admissions Links ({{ admissions_links|length }})</h3>
+      {% set undergrad_count = admissions_links|selectattr("type", "equalto", "undergraduate")|list|length %}
+      {% set grad_count = admissions_links|selectattr("type", "equalto", "graduate")|list|length %}
+      {% if undergrad_count > 0 or grad_count > 0 %}
+      <div style="background: #e8f4f8; padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; border-left: 4px solid #3e6acb;">
+        <strong>Found:</strong>
+        {% if undergrad_count > 0 %}
+        <span style="color: #2d5aa0; font-weight: 600;">{{ undergrad_count }} Undergraduate Admissions</span>
+        {% endif %}
+        {% if undergrad_count > 0 and grad_count > 0 %}<span style="color: #7b86aa;"> • </span>{% endif %}
+        {% if grad_count > 0 %}
+        <span style="color: #2d5aa0; font-weight: 600;">{{ grad_count }} Graduate Admissions</span>
+        {% endif %}
+      </div>
+      {% endif %}
+      <ul style="list-style: none; padding: 0;">
+        {% for link in admissions_links %}
+        <li style="margin: 0.5rem 0; padding: 0.5rem; background: #f5f7fb; border-radius: 6px; border-left: 4px solid {% if link.type == 'undergraduate' %}#2d5aa0{% elif link.type == 'graduate' %}#3e6acb{% else %}#7b86aa{% endif %};">
+          <strong style="color: {% if link.type == 'undergraduate' %}#2d5aa0{% elif link.type == 'graduate' %}#3e6acb{% else %}#7b86aa{% endif %};">{{ link.type|title }}:</strong> 
+          <a href="{{ link.url }}" target="_blank">{{ link.text }}</a>
+          <span style="color: #7b86aa; font-size: 0.9rem;">({{ link.url }})</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    {% if extracted_departments %}
+  <section class="result-section" style="margin-top: 1.5rem;">
+    <h3>Review & Save Extracted Departments</h3>
+    <p class="form-hint">
+      Review the extracted department details below. Adjust any field values, select the target college, and save to the database.
+    </p>
+    <form id="save-form" method="post" action="{{ url_for('extract.extract_departments_save') }}" class="form-layout form-layout--wide">
+      <div class="form-section">
+        <div class="field">
+          <label for="college_id_dept_select">College</label>
+          <select id="college_id_dept_select" name="college_id_dept_select" style="min-height: 36px;">
+            <option value="">— Select College —</option>
+            {% for cid, label in college_options %}
+            <option value="{{ cid }}" {% if matched_college and matched_college.CollegeID == cid %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>College Name (if creating new)</label>
+          <input type="text" name="college_name" value="{{ matched_college.CollegeName if matched_college else '' }}" />
+        </div>
+        <input type="hidden" name="college_id" value="{{ matched_college.CollegeID if matched_college else '' }}" />
+      </div>
+
+      {% for dept in extracted_departments %}
+      {% if dept.error %}
+      <div class="form-section" style="border-color: #e74c3c;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+          <input type="checkbox" name="dept_select_{{ loop.index0 }}" value="1" disabled style="width: 18px; height: 18px; cursor: not-allowed;" />
+          <h4 style="color: #e74c3c; margin: 0;">Error extracting from: {{ dept.link_text }}</h4>
+        </div>
+        <p style="color: #c0392b;">{{ dept.error }}</p>
+      </div>
+      {% else %}
+      <div class="form-section">
+        <div class="section-header" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+          <input type="checkbox" name="dept_select_{{ loop.index0 }}" value="1" checked style="width: 20px; height: 20px; cursor: pointer; flex-shrink: 0;" />
+          <div style="flex: 1;">
+            <h3 style="margin: 0;">{{ dept.parsed.DepartmentName or dept.type|title }} Admissions</h3>
+            <p class="section-description" style="margin: 0.25rem 0 0 0;">
+              <strong>Source:</strong> <a href="{{ dept.url }}" target="_blank">{{ dept.link_text }}</a>
+            </p>
+          </div>
+        </div>
+        
+        {% if dept.llm_output %}
+        <details style="margin-bottom: 1rem;">
+          <summary style="cursor: pointer; color: #3e6acb; font-weight: 600;">View LLM JSON Output</summary>
+          <pre style="background: #f5f7fb; padding: 1rem; border-radius: 6px; overflow-x: auto; margin-top: 0.5rem;">{{ dept.llm_output }}</pre>
+        </details>
+        {% endif %}
+
+        <div class="field-grid">
+          <div class="field">
+            <label>Department Name *</label>
+            <input
+              type="text"
+              name="dept_{{ loop.index0 }}_DepartmentName"
+              value="{{ dept.parsed.DepartmentName or '' }}"
+              required
+            />
+          </div>
+          <div class="field">
+            <label>Description</label>
+            <textarea
+              name="dept_{{ loop.index0 }}_Description"
+              rows="2"
+            >{{ dept.parsed.Description or '' }}</textarea>
+          </div>
+          <div class="field">
+            <label>Building Name</label>
+            <input
+              type="text"
+              name="dept_{{ loop.index0 }}_BuildingName"
+              value="{{ dept.parsed.BuildingName or '' }}"
+            />
+          </div>
+          <div class="field">
+            <label>Street1</label>
+            <input
+              type="text"
+              name="dept_{{ loop.index0 }}_Street1"
+              value="{{ dept.parsed.Street1 or '' }}"
+            />
+          </div>
+          <div class="field">
+            <label>Street2</label>
+            <input
+              type="text"
+              name="dept_{{ loop.index0 }}_Street2"
+              value="{{ dept.parsed.Street2 or '' }}"
+            />
+          </div>
+          <div class="field">
+            <label>City</label>
+            <input
+              type="text"
+              name="dept_{{ loop.index0 }}_City"
+              value="{{ dept.parsed.City or '' }}"
+            />
+          </div>
+          <div class="field">
+            <label>State</label>
+            <input
+              type="text"
+              name="dept_{{ loop.index0 }}_State"
+              value="{{ dept.parsed.State or '' }}"
+            />
+          </div>
+          <div class="field">
+            <label>Zip Code</label>
+            <input
+              type="text"
+              name="dept_{{ loop.index0 }}_ZipCode"
+              value="{{ dept.parsed.ZipCode or '' }}"
+            />
+          </div>
+          <div class="field">
+            <label>Country</label>
+            <input
+              type="text"
+              name="dept_{{ loop.index0 }}_Country"
+              value="{{ dept.parsed.Country or 'USA' }}"
+            />
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input
+              type="email"
+              name="dept_{{ loop.index0 }}_Email"
+              value="{{ dept.parsed.Email or '' }}"
+            />
+          </div>
+          <div class="field">
+            <label>Phone Number</label>
+            <input
+              type="text"
+              name="dept_{{ loop.index0 }}_PhoneNumber"
+              value="{{ dept.parsed.PhoneNumber or '' }}"
+            />
+          </div>
+          <div class="field">
+            <label>Admission URL</label>
+            <input
+              type="url"
+              name="dept_{{ loop.index0 }}_AdmissionUrl"
+              value="{{ dept.parsed.AdmissionUrl or dept.url }}"
+            />
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+
+      <div class="form-actions">
+        <button type="button" id="select-all-btn" style="background: #6c757d; margin-right: 0.5rem;">Select All</button>
+        <button type="button" id="deselect-all-btn" style="background: #6c757d; margin-right: 0.5rem;">Deselect All</button>
+        <button type="submit" id="save-btn">Save Selected Departments to DB</button>
+      </div>
+    </form>
+  </section>
+  {% endif %}
+</section>
+
+<script>
+// Pass server-side data to JavaScript
+const serverCollegeOptions = {{ college_options|tojson|safe }};
+
+document.addEventListener('DOMContentLoaded', function() {
+  const directExtractForm = document.getElementById('direct-extract-form');
+  const extractForm = document.getElementById('extract-form');
+  const extractBtn = document.getElementById('extract-btn');
+  const progressContainer = document.getElementById('progress-container');
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+  const progressPercent = document.getElementById('progress-percent');
+  const progressStatus = document.getElementById('progress-status');
+  const selectAllBtn = document.getElementById('select-all-btn');
+  const deselectAllBtn = document.getElementById('deselect-all-btn');
+
+  // Handle direct extract form
+  if (directExtractForm) {
+    directExtractForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const directUrl = document.getElementById('direct_url')?.value?.trim() || '';
+      const customPrompt = document.getElementById('custom_prompt')?.value?.trim() || '';
+      
+      if (!directUrl) {
+        alert('Please provide a URL');
+        return;
+      }
+
+      const btnDirectExtract = document.getElementById('btn-direct-extract');
+      if (btnDirectExtract) {
+        btnDirectExtract.disabled = true;
+        btnDirectExtract.textContent = 'Extracting...';
+      }
+
+      try {
+        const response = await fetch('{{ url_for("extract.extract_department_direct") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            direct_url: directUrl,
+            custom_prompt: customPrompt
+          })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Extraction failed');
+        }
+
+        const data = await response.json();
+        
+        // Handle both single department and multiple departments
+        if (data.extracted_departments && Array.isArray(data.extracted_departments)) {
+          // Multiple departments extracted
+          data.extracted_departments.forEach(dept => {
+            appendDepartmentResult(dept, data.matched_college);
+          });
+          alert(`Successfully extracted ${data.extracted_departments.length} admissions office(s)!`);
+        } else if (data.extracted_department) {
+          // Single department
+          appendDepartmentResult(data.extracted_department, data.matched_college);
+          alert('Office details extracted successfully!');
+        } else {
+          throw new Error('No department data received from server');
+        }
+        
+        if (btnDirectExtract) {
+          btnDirectExtract.disabled = false;
+          btnDirectExtract.textContent = 'Extract Office Details';
+        }
+      } catch (error) {
+        if (btnDirectExtract) {
+          btnDirectExtract.disabled = false;
+          btnDirectExtract.textContent = 'Extract Office Details';
+        }
+        alert('Extraction failed: ' + error.message);
+      }
+    });
+  }
+
+  // Helper function to append a single department to results
+  function appendDepartmentResult(deptData, matchedCollege) {
+    const container = document.getElementById('results-container');
+    if (!container) return;
+    
+    // Check if save form already exists, if not create it
+    let saveForm = document.getElementById('save-form');
+    if (!saveForm) {
+      let html = `<section class="result-section" style="margin-top: 1.5rem;">
+        <h3>Review & Save Extracted Departments</h3>
+        <p class="form-hint">
+          Review the extracted department details below. Adjust any field values, select the target college, and save to the database.
+        </p>
+        <form id="save-form" method="post" action="{{ url_for('extract.extract_departments_save') }}" class="form-layout form-layout--wide">
+          <div class="form-section">
+            <div class="field">
+              <label for="college_id_dept_select">College</label>
+              <select id="college_id_dept_select" name="college_id_dept_select" style="min-height: 36px;">
+                <option value="">— Select College —</option>`;
+      
+      serverCollegeOptions.forEach(opt => {
+        const [cid, label] = opt;
+        const selected = matchedCollege && matchedCollege.CollegeID == cid ? 'selected' : '';
+        html += `<option value="${cid}" ${selected}>${label}</option>`;
+      });
+      
+      html += `</select>
+            </div>
+            <div class="field">
+              <label>College Name (if creating new)</label>
+              <input type="text" name="college_name" value="${matchedCollege ? matchedCollege.CollegeName : ''}" />
+            </div>
+            <input type="hidden" name="college_id" value="${matchedCollege ? matchedCollege.CollegeID : ''}" />
+          </div>
+          <div id="departments-list"></div>
+          <div class="form-actions">
+            <button type="button" id="select-all-btn" style="background: #6c757d; margin-right: 0.5rem;">Select All</button>
+            <button type="button" id="deselect-all-btn" style="background: #6c757d; margin-right: 0.5rem;">Deselect All</button>
+            <button type="submit" id="save-btn">Save Selected Departments to DB</button>
+          </div>
+        </form>
+      </section>`;
+      container.insertAdjacentHTML('beforeend', html);
+      saveForm = document.getElementById('save-form');
+      
+      // Re-attach select all/deselect all handlers
+      const selectAllBtn = document.getElementById('select-all-btn');
+      const deselectAllBtn = document.getElementById('deselect-all-btn');
+      if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', function() {
+          document.querySelectorAll('input[name^="dept_select_"]:not([disabled])').forEach(cb => {
+            cb.checked = true;
+          });
+        });
+      }
+      if (deselectAllBtn) {
+        deselectAllBtn.addEventListener('click', function() {
+          document.querySelectorAll('input[name^="dept_select_"]:not([disabled])').forEach(cb => {
+            cb.checked = false;
+          });
+        });
+      }
+      
+      // Attach save form handler
+      if (saveForm && !saveForm.dataset.listenerAttached) {
+        saveForm.dataset.listenerAttached = 'true';
+        saveForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          const checked = document.querySelectorAll('input[name^="dept_select_"]:checked').length;
+          if (checked === 0) {
+            alert('Please select at least one department to save.');
+            return;
+          }
+          
+          const formData = new FormData(saveForm);
+          const saveBtn = document.getElementById('save-btn');
+          if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+          }
+          
+          try {
+            const response = await fetch('{{ url_for("extract.extract_departments_save") }}', {
+              method: 'POST',
+              headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+              },
+              body: formData
+            });
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+              const text = await response.text();
+              throw new Error('Unexpected response format');
+            }
+
+            const result = await response.json();
+            
+            if (result.ok) {
+              alert(result.message || 'Departments saved successfully!');
+              // Optionally clear the form or show success message
+            } else {
+              alert(result.message || 'Failed to save departments.');
+            }
+          } catch (error) {
+            alert('Save failed: ' + error.message);
+          } finally {
+            if (saveBtn) {
+              saveBtn.disabled = false;
+              saveBtn.textContent = 'Save Selected Departments to DB';
+            }
+          }
+        });
+      }
+    }
+    
+    const deptList = document.getElementById('departments-list');
+    if (!deptList) return;
+    
+    // Get current index (count existing departments)
+    const existingDepts = deptList.querySelectorAll('.form-section');
+    const idx = existingDepts.length;
+    
+    const dept = deptData;
+    const parsed = dept.parsed || {};
+    
+    let deptHtml = `<div class="form-section">
+      <div class="section-header" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+        <input type="checkbox" name="dept_select_${idx}" value="1" checked style="width: 20px; height: 20px; cursor: pointer; flex-shrink: 0;" />
+        <div style="flex: 1;">
+          <h3 style="margin: 0;">${parsed.DepartmentName || (dept.type ? dept.type.charAt(0).toUpperCase() + dept.type.slice(1) : '')} Admissions</h3>
+          <p class="section-description" style="margin: 0.25rem 0 0 0;">
+            <strong>Source:</strong> <a href="${dept.url}" target="_blank">${dept.link_text || dept.url}</a>
+          </p>
+        </div>
+      </div>`;
+    
+    if (dept.llm_output) {
+      deptHtml += `<details style="margin-bottom: 1rem;">
+        <summary style="cursor: pointer; color: #3e6acb; font-weight: 600;">View LLM JSON Output</summary>
+        <pre style="background: #f5f7fb; padding: 1rem; border-radius: 6px; overflow-x: auto; margin-top: 0.5rem;">${dept.llm_output}</pre>
+      </details>`;
+    }
+
+    deptHtml += `<div class="field-grid">
+      <div class="field">
+        <label>Department Name *</label>
+        <input type="text" name="dept_${idx}_DepartmentName" value="${parsed.DepartmentName || ''}" required />
+      </div>
+      <div class="field">
+        <label>Description</label>
+        <textarea name="dept_${idx}_Description" rows="2">${parsed.Description || ''}</textarea>
+      </div>
+      <div class="field">
+        <label>Building Name</label>
+        <input type="text" name="dept_${idx}_BuildingName" value="${parsed.BuildingName || ''}" />
+      </div>
+      <div class="field">
+        <label>Street1</label>
+        <input type="text" name="dept_${idx}_Street1" value="${parsed.Street1 || ''}" />
+      </div>
+      <div class="field">
+        <label>Street2</label>
+        <input type="text" name="dept_${idx}_Street2" value="${parsed.Street2 || ''}" />
+      </div>
+      <div class="field">
+        <label>City</label>
+        <input type="text" name="dept_${idx}_City" value="${parsed.City || ''}" />
+      </div>
+      <div class="field">
+        <label>State</label>
+        <input type="text" name="dept_${idx}_State" value="${parsed.State || ''}" />
+      </div>
+      <div class="field">
+        <label>Zip Code</label>
+        <input type="text" name="dept_${idx}_ZipCode" value="${parsed.ZipCode || ''}" />
+      </div>
+      <div class="field">
+        <label>Country</label>
+        <input type="text" name="dept_${idx}_Country" value="${parsed.Country || 'USA'}" />
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" name="dept_${idx}_Email" value="${parsed.Email || ''}" />
+      </div>
+      <div class="field">
+        <label>Phone Number</label>
+        <input type="text" name="dept_${idx}_PhoneNumber" value="${parsed.PhoneNumber || ''}" />
+      </div>
+      <div class="field">
+        <label>Admission URL</label>
+        <input type="url" name="dept_${idx}_AdmissionUrl" value="${parsed.AdmissionUrl || dept.url}" />
+      </div>
+    </div>
+  </div>`;
+    
+    deptList.insertAdjacentHTML('beforeend', deptHtml);
+  }
+
+  // Handle separate undergraduate extraction
+  const btnExtractUndergrad = document.getElementById('btn-extract-undergrad');
+  if (btnExtractUndergrad) {
+    btnExtractUndergrad.addEventListener('click', async function() {
+      const undergradUrl = document.getElementById('undergrad_url')?.value?.trim() || '';
+      const mainUrl = document.getElementById('url')?.value?.trim() || '';
+      
+      if (!undergradUrl && !mainUrl) {
+        alert('Please provide an undergraduate admissions URL or main university URL');
+        return;
+      }
+
+      btnExtractUndergrad.disabled = true;
+      btnExtractUndergrad.textContent = 'Extracting...';
+
+      try {
+        const response = await fetch('{{ url_for("extract.api_extract_undergrad") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            undergrad_url: undergradUrl,
+            url: mainUrl
+          })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Extraction failed');
+        }
+
+        const data = await response.json();
+        appendDepartmentResult(data.extracted_department, data.matched_college);
+        
+        btnExtractUndergrad.disabled = false;
+        btnExtractUndergrad.textContent = 'Extract Undergraduate Admissions';
+        alert('Undergraduate admissions extracted successfully!');
+      } catch (error) {
+        btnExtractUndergrad.disabled = false;
+        btnExtractUndergrad.textContent = 'Extract Undergraduate Admissions';
+        alert('Extraction failed: ' + error.message);
+      }
+    });
+  }
+
+  // Handle separate graduate extraction
+  const btnExtractGrad = document.getElementById('btn-extract-grad');
+  if (btnExtractGrad) {
+    btnExtractGrad.addEventListener('click', async function() {
+      const gradUrl = document.getElementById('grad_url')?.value?.trim() || '';
+      const mainUrl = document.getElementById('url')?.value?.trim() || '';
+      
+      if (!gradUrl && !mainUrl) {
+        alert('Please provide a graduate admissions URL or main university URL');
+        return;
+      }
+
+      btnExtractGrad.disabled = true;
+      btnExtractGrad.textContent = 'Extracting...';
+
+      try {
+        const response = await fetch('{{ url_for("extract.api_extract_grad") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            grad_url: gradUrl,
+            url: mainUrl
+          })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Extraction failed');
+        }
+
+        const data = await response.json();
+        appendDepartmentResult(data.extracted_department, data.matched_college);
+        
+        btnExtractGrad.disabled = false;
+        btnExtractGrad.textContent = 'Extract Graduate Admissions';
+        alert('Graduate admissions extracted successfully!');
+      } catch (error) {
+        btnExtractGrad.disabled = false;
+        btnExtractGrad.textContent = 'Extract Graduate Admissions';
+        alert('Extraction failed: ' + error.message);
+      }
+    });
+  }
+
+  // Handle form submission with AJAX (for extracting all)
+  if (extractForm) {
+    extractForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const url = document.getElementById('url').value;
+      
+      if (!url) {
+        alert('Please provide a URL');
+        return;
+      }
+
+      // Show progress bar
+      progressContainer.style.display = 'block';
+      progressBar.style.width = '0%';
+      progressPercent.textContent = '0%';
+      progressText.textContent = 'Starting extraction...';
+      progressStatus.textContent = '';
+      extractBtn.disabled = true;
+      extractBtn.textContent = 'Extracting...';
+
+      try {
+        progressText.textContent = 'Fetching university page...';
+        progressBar.style.width = '10%';
+        progressPercent.textContent = '10%';
+
+        const undergradUrl = document.getElementById('undergrad_url')?.value?.trim() || '';
+        const gradUrl = document.getElementById('grad_url')?.value?.trim() || '';
+        const mainUrl = document.getElementById('url')?.value?.trim() || '';
+
+        const response = await fetch('{{ url_for("extract.api_extract_departments") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            url: mainUrl,
+            undergrad_url: undergradUrl,
+            grad_url: gradUrl
+          })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Extraction failed');
+        }
+
+        // Show progress while waiting for response
+        progressText.textContent = 'Finding admissions links and extracting details...';
+        progressBar.style.width = '50%';
+        progressPercent.textContent = '50%';
+        progressStatus.textContent = 'This may take a moment depending on the number of departments...';
+
+        const data = await response.json();
+        
+        progressText.textContent = 'Processing extracted data...';
+        progressBar.style.width = '90%';
+        progressPercent.textContent = '90%';
+        
+        progressBar.style.width = '100%';
+        progressPercent.textContent = '100%';
+        progressText.textContent = 'Extraction complete!';
+        progressStatus.textContent = `Found ${data.admissions_links.length} admissions link(s) and extracted ${data.extracted_departments.length} department(s).`;
+
+        // Hide progress after a moment and render results
+        setTimeout(() => {
+          progressContainer.style.display = 'none';
+          renderResults(data, url);
+          extractBtn.disabled = false;
+          extractBtn.textContent = 'Find & Extract Departments';
+        }, 1500);
+
+      } catch (error) {
+        progressText.textContent = 'Error: ' + error.message;
+        progressStatus.textContent = '';
+        progressBar.style.background = '#e74c3c';
+        extractBtn.disabled = false;
+        extractBtn.textContent = 'Find & Extract Departments';
+        alert('Extraction failed: ' + error.message);
+      }
+    });
+  }
+
+  // Select/Deselect All functionality
+  if (selectAllBtn) {
+    selectAllBtn.addEventListener('click', function() {
+      document.querySelectorAll('input[name^="dept_select_"]:not([disabled])').forEach(cb => {
+        cb.checked = true;
+      });
+    });
+  }
+
+  if (deselectAllBtn) {
+    deselectAllBtn.addEventListener('click', function() {
+      document.querySelectorAll('input[name^="dept_select_"]:not([disabled])').forEach(cb => {
+        cb.checked = false;
+      });
+    });
+  }
+
+  // Update save button text based on selection
+  const saveBtn = document.getElementById('save-btn');
+  if (saveBtn) {
+    function updateSaveButton() {
+      const checked = document.querySelectorAll('input[name^="dept_select_"]:checked').length;
+      const total = document.querySelectorAll('input[name^="dept_select_"]:not([disabled])').length;
+      if (checked > 0) {
+        saveBtn.textContent = `Save ${checked} Selected Department${checked !== 1 ? 's' : ''} to DB`;
+      } else {
+        saveBtn.textContent = 'Save Selected Departments to DB';
+      }
+    }
+
+    document.addEventListener('change', function(e) {
+      if (e.target.name && e.target.name.startsWith('dept_select_')) {
+        updateSaveButton();
+      }
+    });
+
+    updateSaveButton();
+  }
+
+  // Function to render extraction results dynamically
+  function renderResults(data, url) {
+    const container = document.getElementById('results-container');
+    if (!container) return;
+
+    // Check if there's already a form with departments - if so, append to it instead of replacing
+    const existingForm = document.getElementById('save-form');
+    const existingDeptList = document.getElementById('departments-list');
+    
+    if (existingForm && existingDeptList && data.extracted_departments && data.extracted_departments.length > 0) {
+      // Append to existing form
+      const existingDepts = existingDeptList.querySelectorAll('.form-section');
+      let startIdx = existingDepts.length;
+      
+      data.extracted_departments.forEach((dept) => {
+        if (!dept.error) {
+          const parsed = dept.parsed || {};
+          const idx = startIdx++;
+          
+          let deptHtml = `<div class="form-section" style="margin-top: 1.5rem; border-top: 2px solid #e0e6ed; padding-top: 1.5rem;">
+            <div class="section-header" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+              <input type="checkbox" name="dept_select_${idx}" value="1" checked style="width: 20px; height: 20px; cursor: pointer; flex-shrink: 0;" />
+              <div style="flex: 1;">
+                <h3 style="margin: 0;">${parsed.DepartmentName || (dept.type ? dept.type.charAt(0).toUpperCase() + dept.type.slice(1) : '')} Admissions</h3>
+                <p class="section-description" style="margin: 0.25rem 0 0 0;">
+                  <strong>Source:</strong> <a href="${dept.url}" target="_blank">${dept.link_text || dept.url}</a>
+                </p>
+              </div>
+            </div>`;
+          
+          if (dept.llm_output) {
+            deptHtml += `<details style="margin-bottom: 1rem;">
+              <summary style="cursor: pointer; color: #3e6acb; font-weight: 600;">View LLM JSON Output</summary>
+              <pre style="background: #f5f7fb; padding: 1rem; border-radius: 6px; overflow-x: auto; margin-top: 0.5rem;">${dept.llm_output}</pre>
+            </details>`;
+          }
+
+          deptHtml += `<div class="field-grid">
+            <div class="field">
+              <label>Department Name *</label>
+              <input type="text" name="dept_${idx}_DepartmentName" value="${parsed.DepartmentName || ''}" required />
+            </div>
+            <div class="field">
+              <label>Description</label>
+              <textarea name="dept_${idx}_Description" rows="2">${parsed.Description || ''}</textarea>
+            </div>
+            <div class="field">
+              <label>Building Name</label>
+              <input type="text" name="dept_${idx}_BuildingName" value="${parsed.BuildingName || ''}" />
+            </div>
+            <div class="field">
+              <label>Street1</label>
+              <input type="text" name="dept_${idx}_Street1" value="${parsed.Street1 || ''}" />
+            </div>
+            <div class="field">
+              <label>Street2</label>
+              <input type="text" name="dept_${idx}_Street2" value="${parsed.Street2 || ''}" />
+            </div>
+            <div class="field">
+              <label>City</label>
+              <input type="text" name="dept_${idx}_City" value="${parsed.City || ''}" />
+            </div>
+            <div class="field">
+              <label>State</label>
+              <input type="text" name="dept_${idx}_State" value="${parsed.State || ''}" />
+            </div>
+            <div class="field">
+              <label>Zip Code</label>
+              <input type="text" name="dept_${idx}_ZipCode" value="${parsed.ZipCode || ''}" />
+            </div>
+            <div class="field">
+              <label>Country</label>
+              <input type="text" name="dept_${idx}_Country" value="${parsed.Country || 'USA'}" />
+            </div>
+            <div class="field">
+              <label>Email</label>
+              <input type="email" name="dept_${idx}_Email" value="${parsed.Email || ''}" />
+            </div>
+            <div class="field">
+              <label>Phone Number</label>
+              <input type="text" name="dept_${idx}_PhoneNumber" value="${parsed.PhoneNumber || ''}" />
+            </div>
+            <div class="field">
+              <label>Admission URL</label>
+              <input type="url" name="dept_${idx}_AdmissionUrl" value="${parsed.AdmissionUrl || dept.url}" />
+            </div>
+          </div>
+        </div>`;
+          
+          existingDeptList.insertAdjacentHTML('beforeend', deptHtml);
+        }
+      });
+      
+      // Update save button
+      updateSaveButton();
+      return;
+    }
+
+    // Otherwise, render everything fresh
+    let html = '';
+
+    // Render admissions links
+    if (data.admissions_links && data.admissions_links.length > 0) {
+      const undergradCount = data.admissions_links.filter(l => l.type === 'undergraduate').length;
+      const gradCount = data.admissions_links.filter(l => l.type === 'graduate').length;
+      
+      html += `<section class="result-section" style="margin-top: 1.5rem;">
+        <h3>Found Admissions Links (${data.admissions_links.length})</h3>`;
+      
+      if (undergradCount > 0 || gradCount > 0) {
+        html += `<div style="background: #e8f4f8; padding: 0.75rem; border-radius: 6px; margin-bottom: 1rem; border-left: 4px solid #3e6acb;">
+          <strong>Found:</strong>`;
+        if (undergradCount > 0) {
+          html += `<span style="color: #2d5aa0; font-weight: 600;"> ${undergradCount} Undergraduate Admissions</span>`;
+        }
+        if (undergradCount > 0 && gradCount > 0) {
+          html += `<span style="color: #7b86aa;"> • </span>`;
+        }
+        if (gradCount > 0) {
+          html += `<span style="color: #2d5aa0; font-weight: 600;"> ${gradCount} Graduate Admissions</span>`;
+        }
+        html += `</div>`;
+      }
+      
+      html += `<ul style="list-style: none; padding: 0;">`;
+      data.admissions_links.forEach(link => {
+        const typeColor = link.type === 'undergraduate' ? '#2d5aa0' : (link.type === 'graduate' ? '#3e6acb' : '#7b86aa');
+        html += `<li style="margin: 0.5rem 0; padding: 0.5rem; background: #f5f7fb; border-radius: 6px; border-left: 4px solid ${typeColor};">
+          <strong style="color: ${typeColor};">${link.type.charAt(0).toUpperCase() + link.type.slice(1)}:</strong> 
+          <a href="${link.url}" target="_blank">${link.text || link.url}</a>
+          <span style="color: #7b86aa; font-size: 0.9rem;">(${link.url})</span>
+        </li>`;
+      });
+      html += `</ul></section>`;
+    }
+
+    // Render extracted departments form
+    if (data.extracted_departments && data.extracted_departments.length > 0) {
+      html += `<section class="result-section" style="margin-top: 1.5rem;">
+        <h3>Review & Save Extracted Departments</h3>
+        <p class="form-hint">
+          Review the extracted department details below. Adjust any field values, select the target college, and save to the database.
+        </p>
+        <form id="save-form" method="post" action="{{ url_for('extract.extract_departments_save') }}" class="form-layout form-layout--wide">
+          <div class="form-section">
+            <div class="field">
+              <label for="college_id_dept_select">College</label>
+              <select id="college_id_dept_select" name="college_id_dept_select" style="min-height: 36px;">
+                <option value="">— Select College —</option>`;
+      
+      // Add college options from server-side data
+      serverCollegeOptions.forEach(opt => {
+        const [cid, label] = opt;
+        const selected = data.matched_college && data.matched_college.CollegeID == cid ? 'selected' : '';
+        html += `<option value="${cid}" ${selected}>${label}</option>`;
+      });
+      
+      html += `</select>
+            </div>
+            <div class="field">
+              <label>College Name (if creating new)</label>
+              <input type="text" name="college_name" value="${data.matched_college ? data.matched_college.CollegeName : ''}" />
+            </div>
+            <input type="hidden" name="college_id" value="${data.matched_college ? data.matched_college.CollegeID : ''}" />
+          </div>
+          <div id="departments-list">`;
+
+      data.extracted_departments.forEach((dept, idx) => {
+        if (dept.error) {
+          html += `<div class="form-section" style="border-color: #e74c3c;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+              <input type="checkbox" name="dept_select_${idx}" value="1" disabled style="width: 18px; height: 18px; cursor: not-allowed;" />
+              <h4 style="color: #e74c3c; margin: 0;">Error extracting from: ${dept.link_text || dept.url}</h4>
+            </div>
+            <p style="color: #c0392b;">${dept.error}</p>
+          </div>`;
+        } else {
+          const parsed = dept.parsed || {};
+          html += `<div class="form-section">
+            <div class="section-header" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+              <input type="checkbox" name="dept_select_${idx}" value="1" checked style="width: 20px; height: 20px; cursor: pointer; flex-shrink: 0;" />
+              <div style="flex: 1;">
+                <h3 style="margin: 0;">${parsed.DepartmentName || (dept.type ? dept.type.charAt(0).toUpperCase() + dept.type.slice(1) : '')} Admissions</h3>
+                <p class="section-description" style="margin: 0.25rem 0 0 0;">
+                  <strong>Source:</strong> <a href="${dept.url}" target="_blank">${dept.link_text || dept.url}</a>
+                </p>
+              </div>
+            </div>`;
+          
+          if (dept.llm_output) {
+            html += `<details style="margin-bottom: 1rem;">
+              <summary style="cursor: pointer; color: #3e6acb; font-weight: 600;">View LLM JSON Output</summary>
+              <pre style="background: #f5f7fb; padding: 1rem; border-radius: 6px; overflow-x: auto; margin-top: 0.5rem;">${dept.llm_output}</pre>
+            </details>`;
+          }
+
+          html += `<div class="field-grid">
+            <div class="field">
+              <label>Department Name *</label>
+              <input type="text" name="dept_${idx}_DepartmentName" value="${parsed.DepartmentName || ''}" required />
+            </div>
+            <div class="field">
+              <label>Description</label>
+              <textarea name="dept_${idx}_Description" rows="2">${parsed.Description || ''}</textarea>
+            </div>
+            <div class="field">
+              <label>Building Name</label>
+              <input type="text" name="dept_${idx}_BuildingName" value="${parsed.BuildingName || ''}" />
+            </div>
+            <div class="field">
+              <label>Street1</label>
+              <input type="text" name="dept_${idx}_Street1" value="${parsed.Street1 || ''}" />
+            </div>
+            <div class="field">
+              <label>Street2</label>
+              <input type="text" name="dept_${idx}_Street2" value="${parsed.Street2 || ''}" />
+            </div>
+            <div class="field">
+              <label>City</label>
+              <input type="text" name="dept_${idx}_City" value="${parsed.City || ''}" />
+            </div>
+            <div class="field">
+              <label>State</label>
+              <input type="text" name="dept_${idx}_State" value="${parsed.State || ''}" />
+            </div>
+            <div class="field">
+              <label>Zip Code</label>
+              <input type="text" name="dept_${idx}_ZipCode" value="${parsed.ZipCode || ''}" />
+            </div>
+            <div class="field">
+              <label>Country</label>
+              <input type="text" name="dept_${idx}_Country" value="${parsed.Country || 'USA'}" />
+            </div>
+            <div class="field">
+              <label>Email</label>
+              <input type="email" name="dept_${idx}_Email" value="${parsed.Email || ''}" />
+            </div>
+            <div class="field">
+              <label>Phone Number</label>
+              <input type="text" name="dept_${idx}_PhoneNumber" value="${parsed.PhoneNumber || ''}" />
+            </div>
+            <div class="field">
+              <label>Admission URL</label>
+              <input type="url" name="dept_${idx}_AdmissionUrl" value="${parsed.AdmissionUrl || dept.url}" />
+            </div>
+          </div>
+        </div>`;
+        }
+      });
+
+      html += `</div>
+      <div class="form-actions">
+        <button type="button" id="select-all-btn" style="background: #6c757d; margin-right: 0.5rem;">Select All</button>
+        <button type="button" id="deselect-all-btn" style="background: #6c757d; margin-right: 0.5rem;">Deselect All</button>
+        <button type="submit" id="save-btn">Save Selected Departments to DB</button>
+      </div>
+    </form>
+  </section>`;
+    }
+
+    container.innerHTML = html;
+
+    // Re-attach event listeners
+    attachSaveFormListeners();
+    attachSelectAllListeners();
+    updateSaveButton();
+  }
+
+
+  function attachSaveFormListeners() {
+    const saveForm = document.getElementById('save-form');
+    if (saveForm && !saveForm.dataset.listenerAttached) {
+      saveForm.dataset.listenerAttached = 'true';
+      saveForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const checked = document.querySelectorAll('input[name^="dept_select_"]:checked').length;
+        if (checked === 0) {
+          alert('Please select at least one department to save.');
+          return;
+        }
+
+      const formData = new FormData(saveForm);
+
+      const saveBtn = document.getElementById('save-btn');
+      const originalText = saveBtn.textContent;
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+
+        try {
+          const response = await fetch('{{ url_for("extract.extract_departments_save") }}', {
+            method: 'POST',
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+          });
+
+          const contentType = response.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            throw new Error(`Server returned non-JSON response. Status: ${response.status}. Response: ${text.substring(0, 200)}`);
+          }
+
+          const data = await response.json();
+
+          if (data.ok) {
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = 'background: #d4edda; color: #155724; padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid #c3e6cb;';
+            messageDiv.textContent = data.message;
+            saveForm.insertBefore(messageDiv, saveForm.firstChild);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setTimeout(() => messageDiv.remove(), 5000);
+          } else {
+            alert('Error: ' + data.message);
+          }
+        } catch (error) {
+          alert('Failed to save: ' + error.message);
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = originalText;
+        }
+      });
+    }
+  }
+
+  function attachSelectAllListeners() {
+    const selectAllBtn = document.getElementById('select-all-btn');
+    const deselectAllBtn = document.getElementById('deselect-all-btn');
+    
+    if (selectAllBtn && !selectAllBtn.dataset.listenerAttached) {
+      selectAllBtn.dataset.listenerAttached = 'true';
+      selectAllBtn.addEventListener('click', function() {
+        document.querySelectorAll('input[name^="dept_select_"]:not([disabled])').forEach(cb => {
+          cb.checked = true;
+        });
+        updateSaveButton();
+      });
+    }
+
+    if (deselectAllBtn && !deselectAllBtn.dataset.listenerAttached) {
+      deselectAllBtn.dataset.listenerAttached = 'true';
+      deselectAllBtn.addEventListener('click', function() {
+        document.querySelectorAll('input[name^="dept_select_"]:not([disabled])').forEach(cb => {
+          cb.checked = false;
+        });
+        updateSaveButton();
+      });
+    }
+  }
+
+  // Handle save form submission with AJAX (for initial page load)
+  const saveForm = document.getElementById('save-form');
+  if (saveForm) {
+    saveForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const checked = document.querySelectorAll('input[name^="dept_select_"]:checked').length;
+      if (checked === 0) {
+        alert('Please select at least one department to save.');
+        return;
+      }
+
+      const formData = new FormData(saveForm);
+
+      const saveBtn = document.getElementById('save-btn');
+      const originalText = saveBtn.textContent;
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Saving...';
+
+      try {
+        const response = await fetch('{{ url_for("extract.extract_departments_save") }}', {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+          },
+          body: formData
+        });
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          const text = await response.text();
+          throw new Error(`Server returned non-JSON response. Status: ${response.status}. Response: ${text.substring(0, 200)}`);
+        }
+
+        const data = await response.json();
+
+        if (data.ok) {
+          // Show success message
+          const messageDiv = document.createElement('div');
+          messageDiv.style.cssText = 'background: #d4edda; color: #155724; padding: 1rem; border-radius: 8px; margin: 1rem 0; border: 1px solid #c3e6cb;';
+          messageDiv.textContent = data.message;
+          saveForm.insertBefore(messageDiv, saveForm.firstChild);
+
+          // Scroll to top
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+
+          // Remove message after 5 seconds
+          setTimeout(() => {
+            messageDiv.remove();
+          }, 5000);
+        } else {
+          alert('Error: ' + data.message);
+        }
+      } catch (error) {
+        alert('Failed to save: ' + error.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+      }
+    });
+  }
+});
+</script>
+{% endblock %}
+

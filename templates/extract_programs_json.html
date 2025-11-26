@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Import Programs from JSON | OneGrad{% endblock %}
+{% block content %}
+<section class="card" style="max-width: 1400px; margin: 0 auto;">
+  <h2 style="margin-top: 0;">Import Programs from JSON</h2>
+  <p class="form-hint">
+    Paste a JSON array of program objects. Each program should have the following structure:
+    <ul style="margin-left: 2rem; margin-top: 0.5rem;">
+      <li><strong>Program Snapshot</strong>: Program Name, Level, Concentration, Description, Program Website URL, Accreditation, Qs World Ranking</li>
+      <li><strong>Application Checklist</strong>: Requirements, test scores, GPA, etc.</li>
+      <li><strong>Term & Investment</strong>: College ID, Term, Fees, Cost Per Credit, etc.</li>
+      <li><strong>Department Placement</strong>: College Department ID</li>
+      <li><strong>Minimum Test Scores</strong>: Minimum scores for various tests</li>
+    </ul>
+  </p>
+  
+  <form method="post" class="form-layout">
+    <div class="form-section">
+      <div class="field">
+        <label for="college_id">Assign to College (Optional)</label>
+        <select id="college_id" name="college_id" style="min-height: 36px;">
+          <option value="">— Use College from JSON data —</option>
+          {% for cid, label in college_options %}
+          <option value="{{ cid }}" {% if request.form.get('college_id') == cid|string %}selected{% endif %}>
+            {{ label }}
+          </option>
+          {% endfor %}
+        </select>
+        <small style="color: #7b86aa; display: block; margin-top: 0.25rem;">
+          Select a college to assign all programs to. If not selected, the system will use the CollegeID from the JSON data.
+        </small>
+      </div>
+      <div class="field">
+        <label for="json_data">Program JSON Data</label>
+        <textarea
+          id="json_data"
+          name="json_data"
+          rows="20"
+          style="width: 100%; font-family: monospace; font-size: 0.9rem; padding: 1rem; border: 1px solid #e0e6ed; border-radius: 8px;"
+          placeholder='[
+  {
+    "Program Snapshot": {
+      "Program Name": "Master of Science in Data Science",
+      "Level": "Master",
+      ...
+    },
+    ...
+  }
+]'
+          required
+        >{{ request.form.get('json_data', '') }}</textarea>
+        <small style="color: #7b86aa; display: block; margin-top: 0.25rem;">
+          Paste your JSON array here. The system will automatically map the fields to the database structure.
+        </small>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" style="background: #2f4f8f;">Import Programs</button>
+      <a href="{{ url_for('forms.program_list') }}" class="button" style="background: #6c757d; text-decoration: none; display: inline-block;">Cancel</a>
+    </div>
+  </form>
+  
+  {% if request.method == 'GET' %}
+  <section style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; border: 1px solid #e0e6ed;">
+    <h3 style="margin-top: 0;">Example JSON Format</h3>
+    <pre style="background: #fff; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 0.85rem;">[
+  {
+    "Program Snapshot": {
+      "Program Name": "Master of Social Work (MSW)",
+      "Level": "Master",
+      "Concentration": null,
+      "Description": "Prepares students for advanced, autonomous social work practice.",
+      "Program Website URL": "https://www.example.edu/programs/msw",
+      "Accreditation": "WASC, CSWE",
+      "Qs World Ranking": "1401+ (World), 201-210 (US)"
+    },
+    "Application Checklist": {
+      "Resume": true,
+      "Statement Of Purpose": true,
+      "Gre Or Gmat": false,
+      "English Score": true,
+      "Requirements": "Bachelor's degree, 3 Letters of Recommendation...",
+      "Min G P A": 3.0,
+      "Is I E L T S Required": true,
+      "Is T O E F L I B Required": true
+    },
+    "Term & Investment": {
+      "College I D": "California State University, Sacramento",
+      "Term": "Fall",
+      "Fees": 8928,
+      "Cost Per Credit": 396
+    },
+    "Department Placement": {
+      "College Department I D": "California State University, Sacramento — Graduate Admissions"
+    },
+    "Minimum Test Scores": {
+      "Minimum I E L T S Score": 6.5,
+      "Minimum T O E F L Score": 80
+    }
+  }
+]</pre>
+  </section>
+  {% endif %}
+</section>
+{% endblock %}
+

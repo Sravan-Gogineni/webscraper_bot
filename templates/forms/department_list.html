@@ -21,42 +21,198 @@
       >Add Department</a
     >
   </div>
-  {% if not rows %}
+  
+  <!-- Bulk Delete Form -->
+  {% if grouped_departments and rows %}
+  <div style="margin-top: 1.5rem; padding: 1rem; background: #f8f9fb; border: 1px solid #d7dff3; border-radius: 8px;">
+    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+      <form method="post" action="{{ url_for('forms.bulk_delete_college_departments') }}" id="bulk-delete-form" style="display: inline;">
+        <button type="submit" id="bulk-delete-btn" disabled style="background: #dc3545; color: #ffffff; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; opacity: 0.5;">
+          Delete Selected Departments
+        </button>
+      </form>
+      <div style="color: #7b86aa; font-size: 0.9rem;">
+        <span id="selected-count">0</span> department(s) selected
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  
+  {% if not grouped_departments or not rows %}
   <p style="margin-top: 1.5rem;">No departments found.</p>
   {% else %}
-  <div style="overflow-x: auto; margin-top: 1.5rem;">
-    <table
-      style="
-        width: 100%;
-        border-collapse: collapse;
-        min-width: 720px;
-        font-size: 0.95rem;
-      "
-    >
-      <thead>
-        <tr style="background-color: #eef3ff; text-align: left;">
-          <th style="padding: 0.75rem; border-bottom: 1px solid #d7dff3;">Department</th>
-          <th style="padding: 0.75rem; border-bottom: 1px solid #d7dff3;">College</th>
-          <th style="padding: 0.75rem; border-bottom: 1px solid #d7dff3;">Description</th>
-          <th style="padding: 0.75rem; border-bottom: 1px solid #d7dff3;">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in rows %}
-        <tr style="border-bottom: 1px solid #e4e9f5;">
-          <td style="padding: 0.65rem;">{{ row.DepartmentName or ("Department #" ~ row.DepartmentID) }}</td>
-          <td style="padding: 0.65rem;">{{ row.CollegeName or "—" }}</td>
-          <td style="padding: 0.65rem;">{{ row.Description or "—" }}</td>
-          <td style="padding: 0.65rem; white-space: nowrap;">
-            <a href="{{ url_for('forms.department_edit', department_id=row.DepartmentID) }}">Edit</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div style="margin-top: 2rem;">
+    {% for college_name, dept_rows in grouped_departments.items() %}
+    <!-- University Section -->
+    <div style="background: #f8f9fb; border: 2px solid #3e6acb; border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+      <h3 style="margin: 0 0 1rem 0; color: #1d2e53; font-size: 1.2rem; font-weight: 700;">
+        {{ college_name }}
+      </h3>
+      <p style="margin: 0 0 1rem 0; color: #7b86aa; font-size: 0.9rem;">
+        {{ dept_rows|length }} department{{ 's' if dept_rows|length != 1 else '' }}
+      </p>
+      
+      <!-- Departments Table for this University -->
+      <div style="overflow-x: auto;">
+        <table
+          style="
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 720px;
+            font-size: 0.95rem;
+            background: #ffffff;
+            border-radius: 6px;
+            overflow: hidden;
+          "
+        >
+          <thead>
+            <tr style="background-color: #eef3ff; text-align: left;">
+              <th style="padding: 0.75rem; border-bottom: 1px solid #d7dff3; width: 40px;">
+                <input type="checkbox" class="select-all-checkbox" title="Select all departments in this section">
+              </th>
+              <th style="padding: 0.75rem; border-bottom: 1px solid #d7dff3;">Department</th>
+              <th style="padding: 0.75rem; border-bottom: 1px solid #d7dff3;">Building/Address</th>
+              <th style="padding: 0.75rem; border-bottom: 1px solid #d7dff3;">Email</th>
+              <th style="padding: 0.75rem; border-bottom: 1px solid #d7dff3;">Phone</th>
+              <th style="padding: 0.75rem; border-bottom: 1px solid #d7dff3;">Description</th>
+              <th style="padding: 0.75rem; border-bottom: 1px solid #d7dff3;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in dept_rows %}
+            <tr style="border-bottom: 1px solid #e4e9f5;">
+              <td style="padding: 0.65rem;">
+                {% if row.CollegeDepartmentID %}
+                <input type="checkbox" name="college_department_ids" value="{{ row.CollegeDepartmentID }}" class="dept-checkbox">
+                {% endif %}
+              </td>
+              <td style="padding: 0.65rem; font-weight: 600;">{{ row.DepartmentName or ("Department #" ~ row.DepartmentID) }}</td>
+              <td style="padding: 0.65rem; font-size: 0.9rem;">
+                {% if row.BuildingName or row.Street1 or row.City %}
+                <div>
+                  {% if row.BuildingName %}<strong>{{ row.BuildingName }}</strong><br>{% endif %}
+                  {% if row.Street1 %}{{ row.Street1 }}{% endif %}
+                  {% if row.Street2 %}, {{ row.Street2 }}{% endif %}
+                  {% if row.City or row.State or row.ZipCode %}<br>
+                    {% if row.City %}{{ row.City }}{% endif %}
+                    {% if row.State %}{% if row.City %}, {% endif %}{{ row.State }}{% endif %}
+                    {% if row.ZipCode %} {{ row.ZipCode }}{% endif %}
+                  {% endif %}
+                  {% if row.Country and row.Country != 'USA' %}<br>{{ row.Country }}{% endif %}
+                </div>
+                {% else %}
+                <span style="color: #7b86aa;">—</span>
+                {% endif %}
+              </td>
+              <td style="padding: 0.65rem;">
+                {% if row.Email %}
+                <a href="mailto:{{ row.Email }}" style="color: #3e6acb; text-decoration: none;">{{ row.Email }}</a>
+                {% else %}
+                <span style="color: #7b86aa;">—</span>
+                {% endif %}
+              </td>
+              <td style="padding: 0.65rem;">
+                {% if row.PhoneNumber %}
+                <a href="tel:{{ row.PhoneNumber }}" style="color: #3e6acb; text-decoration: none;">{{ row.PhoneNumber }}</a>
+                {% else %}
+                <span style="color: #7b86aa;">—</span>
+                {% endif %}
+              </td>
+              <td style="padding: 0.65rem;">{{ row.Description or "—" }}</td>
+              <td style="padding: 0.65rem; white-space: nowrap;">
+                {% if row.CollegeDepartmentID %}
+                <a href="{{ url_for('forms.college_department_edit', college_department_id=row.CollegeDepartmentID) }}">Edit</a>
+                <form method="post" action="{{ url_for('forms.college_department_delete', college_department_id=row.CollegeDepartmentID) }}" style="display: inline;" onsubmit="return confirm('Delete this admissions office link?');">
+                  <button type="submit" style="margin-left: 0.5rem; background: none; border: none; color: #b23; cursor: pointer; font-weight: 600;">Delete</button>
+                </form>
+                {% else %}
+                <a href="{{ url_for('forms.department_edit', department_id=row.DepartmentID) }}">Edit</a>
+                <form method="post" action="{{ url_for('forms.department_delete', department_id=row.DepartmentID) }}" style="display: inline;" onsubmit="return confirm('Delete this department?');">
+                  <button type="submit" style="margin-left: 0.5rem; background: none; border: none; color: #b23; cursor: pointer; font-weight: 600;">Delete</button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endfor %}
   </div>
   {% endif %}
 </section>
+
+<script>
+  // Handle select all checkboxes
+  document.querySelectorAll('.select-all-checkbox').forEach(selectAll => {
+    selectAll.addEventListener('change', function() {
+      const table = this.closest('table');
+      const checkboxes = table.querySelectorAll('.dept-checkbox');
+      checkboxes.forEach(cb => cb.checked = this.checked);
+      updateSelectedCount();
+    });
+  });
+
+  // Handle individual checkboxes
+  document.querySelectorAll('.dept-checkbox').forEach(checkbox => {
+    checkbox.addEventListener('change', updateSelectedCount);
+  });
+
+  function updateSelectedCount() {
+    const selected = document.querySelectorAll('.dept-checkbox:checked').length;
+    document.getElementById('selected-count').textContent = selected;
+    
+    const deleteBtn = document.getElementById('bulk-delete-btn');
+    if (deleteBtn) {
+      deleteBtn.disabled = selected === 0;
+      deleteBtn.style.opacity = selected === 0 ? '0.5' : '1';
+    }
+  }
+
+  function getSelectedCollegeDepartmentIds() {
+    const checkboxes = document.querySelectorAll('.dept-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+  }
+
+  function populateFormInputs(formId, ids) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+    
+    // Remove existing hidden inputs
+    form.querySelectorAll('input[name="college_department_ids"]').forEach(input => input.remove());
+    
+    // Add new hidden inputs for each ID
+    ids.forEach(id => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'college_department_ids';
+      input.value = id;
+      form.appendChild(input);
+    });
+  }
+
+  // Handle bulk delete form submission
+  document.getElementById('bulk-delete-form')?.addEventListener('submit', function(e) {
+    const ids = getSelectedCollegeDepartmentIds();
+    if (ids.length === 0) {
+      e.preventDefault();
+      alert('Please select at least one department to delete.');
+      return false;
+    }
+    
+    // Populate form with selected IDs
+    populateFormInputs('bulk-delete-form', ids);
+    
+    const count = ids.length;
+    const message = count === 1 
+      ? 'Are you sure you want to delete this department link? This action cannot be undone.'
+      : `Are you sure you want to delete ${count} department link(s)? This action cannot be undone.`;
+    
+    if (!confirm(message)) {
+      e.preventDefault();
+      return false;
+    }
+  });
+</script>
 {% endblock %}
-
-

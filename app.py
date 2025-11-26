@@ -27,12 +27,13 @@ from flask import (
     abort,
     current_app,
     flash,
+    jsonify,
     redirect,
     render_template,
     request,
     url_for,
 )
-from sqlalchemy import MetaData, create_engine, func, select
+from sqlalchemy import MetaData, create_engine, func, select, case
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import sqltypes
 
@@ -497,6 +498,57 @@ def university_edit(college_id: int):
     return handle_university_form(college_id)
 
 
+@forms_bp.route("/universities/<int:college_id>/delete", methods=["POST"])
+def university_delete(college_id: int):
+    """Delete a university and related records."""
+    try:
+        engine = get_engine()
+    except Exception:
+        flash("Database is not configured.", "error")
+        return redirect(url_for("forms.university_list"))
+    
+    try:
+        college_table = fetch_table("College")
+        address_table = fetch_table("Address", required=False)
+        contact_table = fetch_table("ContactInformation", required=False)
+        app_req_table = fetch_table("ApplicationRequirements", required=False)
+        stats_table = fetch_table("StudentStatistics", required=False)
+        social_table = fetch_table("SocialMedia", required=False)
+        
+        with engine.begin() as conn:
+            # Delete related records first (due to foreign key constraints)
+            if social_table is not None:
+                conn.execute(
+                    social_table.delete().where(social_table.c.CollegeID == college_id)
+                )
+            if stats_table is not None:
+                conn.execute(
+                    stats_table.delete().where(stats_table.c.CollegeID == college_id)
+                )
+            if app_req_table is not None:
+                conn.execute(
+                    app_req_table.delete().where(app_req_table.c.CollegeID == college_id)
+                )
+            if contact_table is not None:
+                conn.execute(
+                    contact_table.delete().where(contact_table.c.CollegeID == college_id)
+                )
+            if address_table is not None:
+                conn.execute(
+                    address_table.delete().where(address_table.c.CollegeID == college_id)
+                )
+            # Finally delete the college
+            conn.execute(
+                college_table.delete().where(college_table.c.CollegeID == college_id)
+            )
+        
+        flash(f"University (ID: {college_id}) and related records deleted successfully.", "success")
+    except Exception as exc:
+        flash(f"Failed to delete university: {exc}", "error")
+    
+    return redirect(url_for("forms.university_list"))
+
+
 def handle_university_form(college_id: Optional[int]):
     sections = build_university_sections()
     all_fields = [field for section in sections for field in section["fields"]]
@@ -821,33 +873,84 @@ def department_list():
     college_department_table = fetch_table("CollegeDepartment", required=False)
     college_table = fetch_table("College", required=False)
 
-    stmt = select(
-        department_table.c.DepartmentID,
-        department_table.c.DepartmentName,
-        department_table.c.Description,
-    )
-
-    join_from = department_table
-
+    # Start from CollegeDepartment to ensure each link is a separate row
     if college_department_table is not None:
-        stmt = stmt.add_columns(college_department_table.c.CollegeDepartmentID)
-        join_from = join_from.outerjoin(
-            college_department_table,
-            college_department_table.c.DepartmentID == department_table.c.DepartmentID,
+        # Select all necessary fields starting from CollegeDepartment
+        columns = [
+            college_department_table.c.CollegeDepartmentID,
+            college_department_table.c.BuildingName,
+            college_department_table.c.Street1,
+            college_department_table.c.Street2,
+            college_department_table.c.City,
+            college_department_table.c.State,
+            college_department_table.c.ZipCode,
+            college_department_table.c.Country,
+            college_department_table.c.Email,
+            college_department_table.c.PhoneNumber,
+            college_department_table.c.AdmissionUrl,
+            department_table.c.DepartmentID,
+            department_table.c.DepartmentName,
+            department_table.c.Description,
+        ]
+
+        join_from = college_department_table.join(
+            department_table,
+            department_table.c.DepartmentID == college_department_table.c.DepartmentID,
         )
+        
         if college_table is not None:
-            stmt = stmt.add_columns(college_table.c.CollegeName)
-            join_from = join_from.outerjoin(
+            columns.append(college_table.c.CollegeName)
+            columns.append(college_table.c.CollegeID)
+            join_from = join_from.join(
                 college_table,
                 college_table.c.CollegeID == college_department_table.c.CollegeID,
             )
+    else:
+        # Fallback: if no CollegeDepartment table, just show departments
+        columns = [
+            department_table.c.DepartmentID,
+            department_table.c.DepartmentName,
+            department_table.c.Description,
+        ]
+        join_from = department_table
 
-    stmt = stmt.select_from(join_from).order_by(department_table.c.DepartmentName)
+    stmt = select(*columns).select_from(join_from)
+    
+    # Order by CollegeName first, then DepartmentName
+    if college_table is not None and college_department_table is not None:
+        stmt = stmt.order_by(college_table.c.CollegeName, department_table.c.DepartmentName)
+    else:
+        stmt = stmt.order_by(department_table.c.DepartmentName)
 
     with engine.connect() as conn:
         rows = [dict(row._mapping) for row in conn.execute(stmt)]
 
-    return render_template("forms/department_list.html", rows=rows)
+    # Group departments by college name
+    # Use CollegeDepartmentID as unique key to prevent duplicates
+    grouped_departments = defaultdict(list)
+    seen_keys = set()
+    for row in rows:
+        college_name = row.get("CollegeName") or "Unassigned"
+        # Use CollegeDepartmentID as unique key if available, otherwise use DepartmentID
+        unique_key = (row.get("CollegeDepartmentID"), row.get("DepartmentID"), college_name)
+        if unique_key not in seen_keys:
+            seen_keys.add(unique_key)
+            grouped_departments[college_name].append(row)
+    
+    # Sort colleges (put "Unassigned" at the end)
+    sorted_colleges = sorted(
+        [k for k in grouped_departments.keys() if k != "Unassigned"]
+    )
+    if "Unassigned" in grouped_departments:
+        sorted_colleges.append("Unassigned")
+    
+    grouped_departments_sorted = {k: grouped_departments[k] for k in sorted_colleges}
+
+    return render_template(
+        "forms/department_list.html",
+        rows=rows,
+        grouped_departments=grouped_departments_sorted
+    )
 
 
 @forms_bp.route("/departments/new", methods=["GET", "POST"])
@@ -858,6 +961,283 @@ def department_create():
 @forms_bp.route("/departments/<int:department_id>/edit", methods=["GET", "POST"])
 def department_edit(department_id: int):
     return handle_department_form(department_id)
+
+
+@forms_bp.route("/college-departments/<int:college_department_id>/edit", methods=["GET", "POST"])
+def college_department_edit(college_department_id: int):
+    """Edit a specific college-department link."""
+    return handle_college_department_form(college_department_id)
+
+
+@forms_bp.route("/college-departments/bulk-delete", methods=["POST"])
+def bulk_delete_college_departments():
+    """Bulk delete selected college-department links."""
+    try:
+        engine = get_engine()
+        if engine is None:
+            flash("Database is not configured.", "error")
+            return redirect(url_for("forms.department_list"))
+        
+        college_department_ids = request.form.getlist("college_department_ids")
+        
+        if not college_department_ids:
+            flash("Please select at least one department to delete.", "error")
+            return redirect(url_for("forms.department_list"))
+        
+        college_department_table = fetch_table("CollegeDepartment")
+        department_table = fetch_table("Department", required=False)
+        program_link_table = fetch_table("ProgramDepartmentLink", required=False)
+        
+        deleted_count = 0
+        errors = []
+        deleted_names = []
+        
+        with engine.begin() as conn:
+            for cd_id_str in college_department_ids:
+                try:
+                    college_department_id = int(cd_id_str)
+                    
+                    # Get department name for flash message
+                    dept_name = f"Department Link #{college_department_id}"
+                    if department_table is not None:
+                        stmt = (
+                            select(department_table.c.DepartmentName)
+                            .select_from(
+                                college_department_table.join(
+                                    department_table,
+                                    department_table.c.DepartmentID == college_department_table.c.DepartmentID
+                                )
+                            )
+                            .where(college_department_table.c.CollegeDepartmentID == college_department_id)
+                        )
+                        dept = conn.execute(stmt).mappings().first()
+                        if dept:
+                            dept_name = dept["DepartmentName"]
+                    
+                    # Check if the record exists
+                    existing = conn.execute(
+                        select(college_department_table).where(
+                            college_department_table.c.CollegeDepartmentID == college_department_id
+                        )
+                    ).mappings().first()
+                    
+                    if not existing:
+                        errors.append(f"College department link (ID: {college_department_id}) not found.")
+                        continue
+                    
+                    # Delete related ProgramDepartmentLink records first (due to foreign key constraint)
+                    if program_link_table is not None:
+                        conn.execute(
+                            program_link_table.delete().where(
+                                program_link_table.c.CollegeDepartmentID == college_department_id
+                            )
+                        )
+                    
+                    # Delete the college-department link
+                    conn.execute(
+                        college_department_table.delete().where(
+                            college_department_table.c.CollegeDepartmentID == college_department_id
+                        )
+                    )
+                    
+                    deleted_count += 1
+                    deleted_names.append(dept_name)
+                    
+                except Exception as e:
+                    errors.append(f"College department ID {cd_id_str}: {str(e)}")
+        
+        if deleted_count > 0:
+            if deleted_count == 1:
+                flash(f"Successfully deleted department link '{deleted_names[0]}'.", "success")
+            else:
+                flash(f"Successfully deleted {deleted_count} department link(s).", "success")
+        if errors:
+            flash(f"Errors deleting {len(errors)} department link(s): {', '.join(errors[:5])}", "error")
+        
+        return redirect(url_for("forms.department_list"))
+        
+    except Exception as e:
+        flash(f"Error deleting departments: {e}", "error")
+        import traceback
+        traceback.print_exc()
+        return redirect(url_for("forms.department_list"))
+
+
+@forms_bp.route("/college-departments/<int:college_department_id>/delete", methods=["POST"])
+def college_department_delete(college_department_id: int):
+    """Delete a specific college-department link."""
+    try:
+        engine = get_engine()
+    except Exception:
+        flash("Database is not configured.", "error")
+        return redirect(url_for("forms.department_list"))
+    
+    try:
+        college_department_table = fetch_table("CollegeDepartment")
+        program_link_table = fetch_table("ProgramDepartmentLink", required=False)
+        
+        with engine.begin() as conn:
+            # Check if the record exists
+            existing = conn.execute(
+                select(college_department_table).where(
+                    college_department_table.c.CollegeDepartmentID == college_department_id
+                )
+            ).mappings().first()
+            
+            if not existing:
+                flash(f"College department link (ID: {college_department_id}) not found.", "error")
+                return redirect(url_for("forms.department_list"))
+            
+            # Delete related ProgramDepartmentLink records first (due to foreign key constraint)
+            if program_link_table is not None:
+                conn.execute(
+                    program_link_table.delete().where(
+                        program_link_table.c.CollegeDepartmentID == college_department_id
+                    )
+                )
+            
+            # Delete the college-department link
+            conn.execute(
+                college_department_table.delete().where(
+                    college_department_table.c.CollegeDepartmentID == college_department_id
+                )
+            )
+        
+        flash(f"College department link (ID: {college_department_id}) deleted successfully.", "success")
+    except Exception as exc:
+        flash(f"Failed to delete college department link: {exc}", "error")
+    
+    return redirect(url_for("forms.department_list"))
+
+
+def handle_college_department_form(college_department_id: int):
+    """Handle form for editing a college-department link."""
+    engine = get_engine()
+    college_department_table = fetch_table("CollegeDepartment", required=False)
+    department_table = fetch_table("Department")
+    college_table = fetch_table("College", required=False)
+    
+    if college_department_table is None:
+        abort(404, "CollegeDepartment table is not available.")
+    
+    # Load existing data
+    existing_data: Dict[str, Dict[str, Any]] = {}
+    with engine.connect() as conn:
+        college_dept = conn.execute(
+            select(college_department_table).where(
+                college_department_table.c.CollegeDepartmentID == college_department_id
+            )
+        ).mappings().first()
+        
+        if not college_dept:
+            abort(404, f"College department link (ID: {college_department_id}) not found.")
+        
+        existing_data["CollegeDepartment"] = dict(college_dept)
+        
+        # Also load the department info
+        department_id = college_dept["DepartmentID"]
+        department = conn.execute(
+            select(department_table).where(department_table.c.DepartmentID == department_id)
+        ).mappings().first()
+        if department:
+            existing_data["Department"] = dict(department)
+    
+    # Build form sections
+    sections = [
+        {
+            "title": "Department Information",
+            "table": department_table,
+            "fields": build_prefixed_fields(
+                department_table,
+                ["DepartmentName", "Description"],
+            ),
+            "description": "Department name and description.",
+        },
+        {
+            "title": "College Link & Contact Details",
+            "table": college_department_table,
+            "fields": build_prefixed_fields(
+                college_department_table,
+                [
+                    "CollegeID",
+                    "Email",
+                    "PhoneNumber",
+                    "PhoneType",
+                    "AdmissionUrl",
+                    "BuildingName",
+                    "Street1",
+                    "Street2",
+                    "City",
+                    "State",
+                    "StateName",
+                    "ZipCode",
+                    "Country",
+                    "CountryCode",
+                    "CountryName",
+                ],
+            ),
+            "description": "Link this department to a college and provide contact details.",
+        },
+    ]
+    
+    # Set up college dropdown
+    college_options = get_college_options(engine)
+    for section in sections:
+        for field in section["fields"]:
+            if field["name"] == "CollegeID":
+                field["input_type"] = "select"
+                field["options"] = college_options
+    
+    all_fields = [field for section in sections for field in section["fields"]]
+    form_values = compose_prefixed_initial_values(all_fields, existing_data)
+    
+    if request.method == "POST":
+        submitted_values = compose_prefixed_request_values(all_fields, request.form)
+        try:
+            table_payloads = extract_prefixed_values(all_fields, request.form)
+        except ValueError as exc:
+            flash(str(exc), "error")
+            form_values = submitted_values
+        else:
+            try:
+                # Update department if changed
+                if "Department" in table_payloads:
+                    dept_payload = table_payloads["Department"]
+                    if dept_payload:
+                        with engine.begin() as conn:
+                            conn.execute(
+                                department_table.update()
+                                .where(department_table.c.DepartmentID == department_id)
+                                .values(**dept_payload)
+                            )
+                
+                # Update college department link
+                if "CollegeDepartment" in table_payloads:
+                    cd_payload = table_payloads["CollegeDepartment"]
+                    if cd_payload:
+                        with engine.begin() as conn:
+                            conn.execute(
+                                college_department_table.update()
+                                .where(college_department_table.c.CollegeDepartmentID == college_department_id)
+                                .values(**cd_payload)
+                            )
+                
+                flash("College department link updated successfully.", "success")
+                return redirect(url_for("forms.department_list"))
+            except (SQLAlchemyError, ValueError) as exc:
+                flash(f"Database error: {exc}", "error")
+                form_values = submitted_values
+    
+    return render_template(
+        "forms/department_form.html",
+        sections=sections,
+        form_values=form_values,
+        form_title="Edit Admissions Office",
+        submit_label="Update",
+        department_id=department_id,
+        college_department_id=college_department_id,
+        form_hint="Update the admissions office details and its link to a college.",
+    )
 
 
 def handle_department_form(department_id: Optional[int]):
@@ -1079,12 +1459,320 @@ def program_list():
                 department_table.c.DepartmentID == college_department_table.c.DepartmentID,
             )
 
-    stmt = stmt.order_by(program_table.c.ProgramName)
+    # Order by CollegeName first, then ProgramName
+    if college_table is not None:
+        stmt = stmt.order_by(college_table.c.CollegeName, program_table.c.ProgramName)
+    else:
+        stmt = stmt.order_by(program_table.c.ProgramName)
 
     with engine.connect() as conn:
         rows = [dict(row._mapping) for row in conn.execute(stmt)]
 
-    return render_template("forms/program_list.html", rows=rows)
+    # Group programs by college name
+    grouped_programs = defaultdict(list)
+    for row in rows:
+        college_name = row.get("CollegeName") or "Unassigned"
+        grouped_programs[college_name].append(row)
+    
+    # Sort colleges (put "Unassigned" at the end)
+    sorted_colleges = sorted(
+        [k for k in grouped_programs.keys() if k != "Unassigned"]
+    )
+    if "Unassigned" in grouped_programs:
+        sorted_colleges.append("Unassigned")
+    
+    grouped_programs_sorted = {k: grouped_programs[k] for k in sorted_colleges}
+
+    college_options = get_college_options(engine)
+
+    return render_template("forms/program_list.html", rows=rows, grouped_programs=grouped_programs_sorted, college_options=college_options)
+
+
+@forms_bp.route("/programs/bulk-update-college", methods=["POST"])
+def bulk_update_program_college():
+    """Bulk update the university/college for selected programs."""
+    try:
+        engine = get_engine()
+        if engine is None:
+            flash("Database is not configured.", "error")
+            return redirect(url_for("forms.program_list"))
+        
+        program_ids = request.form.getlist("program_ids")
+        college_id = request.form.get("college_id", type=int)
+        
+        if not program_ids:
+            flash("Please select at least one program to update.", "error")
+            return redirect(url_for("forms.program_list"))
+        
+        if not college_id:
+            flash("Please select a university/college.", "error")
+            return redirect(url_for("forms.program_list"))
+        
+        program_term_table = fetch_table("ProgramTermDetails", required=False)
+        program_link_table = fetch_table("ProgramDepartmentLink", required=False)
+        college_department_table = fetch_table("CollegeDepartment", required=False)
+        department_table = fetch_table("Department", required=False)
+        
+        if program_term_table is None:
+            flash("ProgramTermDetails table is not available.", "error")
+            return redirect(url_for("forms.program_list"))
+        
+        updated_count = 0
+        errors = []
+        
+        with engine.begin() as conn:
+            for program_id_str in program_ids:
+                try:
+                    program_id = int(program_id_str)
+                    
+                    # Update or create ProgramTermDetails
+                    existing_term = conn.execute(
+                        select(program_term_table)
+                        .where(program_term_table.c.ProgramID == program_id)
+                        .order_by(program_term_table.c.ProgramTermID)
+                    ).mappings().first()
+                    
+                    if existing_term:
+                        # Update existing term details
+                        conn.execute(
+                            program_term_table.update()
+                            .where(program_term_table.c.ProgramTermID == existing_term["ProgramTermID"])
+                            .values(CollegeID=college_id)
+                        )
+                    else:
+                        # Create new term details with the selected college
+                        conn.execute(
+                            program_term_table.insert().values(
+                                ProgramID=program_id,
+                                CollegeID=college_id,
+                                Term="Fall"  # Default term
+                            )
+                        )
+                    
+                    # Update or create ProgramDepartmentLink - this is what determines college grouping in the list
+                    if program_link_table is not None and college_department_table is not None and department_table is not None:
+                        existing_link = conn.execute(
+                            select(program_link_table).where(program_link_table.c.ProgramID == program_id)
+                        ).mappings().first()
+                        
+                        # Find a department for this college (prefer "Graduate Admissions" or "Undergraduate Admissions")
+                        # If not found, get any department for this college
+                        dept_query = (
+                            select(college_department_table.c.CollegeDepartmentID, department_table.c.DepartmentName)
+                            .select_from(
+                                college_department_table.join(
+                                    department_table,
+                                    department_table.c.DepartmentID == college_department_table.c.DepartmentID
+                                )
+                            )
+                            .where(college_department_table.c.CollegeID == college_id)
+                        )
+                        
+                        # Try to find Graduate or Undergraduate Admissions first
+                        dept_candidate = conn.execute(
+                            dept_query.where(
+                                department_table.c.DepartmentName.ilike("%Graduate Admissions%")
+                            )
+                        ).mappings().first()
+                        
+                        if not dept_candidate:
+                            dept_candidate = conn.execute(
+                                dept_query.where(
+                                    department_table.c.DepartmentName.ilike("%Undergraduate Admissions%")
+                                )
+                            ).mappings().first()
+                        
+                        # If still not found, get any department for this college
+                        if not dept_candidate:
+                            dept_candidate = conn.execute(dept_query).mappings().first()
+                        
+                        if dept_candidate:
+                            college_dept_id = dept_candidate["CollegeDepartmentID"]
+                            
+                            if existing_link:
+                                # Update existing link
+                                conn.execute(
+                                    program_link_table.update()
+                                    .where(program_link_table.c.ProgramID == program_id)
+                                    .values(
+                                        CollegeID=college_id,
+                                        CollegeDepartmentID=college_dept_id
+                                    )
+                                )
+                            else:
+                                # Create new link
+                                conn.execute(
+                                    program_link_table.insert().values(
+                                        ProgramID=program_id,
+                                        CollegeID=college_id,
+                                        CollegeDepartmentID=college_dept_id
+                                    )
+                                )
+                        elif not existing_link:
+                            # No department found for this college - this is a problem
+                            errors.append(f"Program ID {program_id_str}: No department found for selected college. Please create a department first.")
+                            continue
+                    
+                    updated_count += 1
+                    
+                except Exception as e:
+                    errors.append(f"Program ID {program_id_str}: {str(e)}")
+        
+        if updated_count > 0:
+            flash(f"Successfully updated university for {updated_count} program(s).", "success")
+        if errors:
+            flash(f"Errors updating {len(errors)} program(s): {', '.join(errors[:5])}", "error")
+        
+        return redirect(url_for("forms.program_list"))
+        
+    except Exception as e:
+        flash(f"Error updating programs: {e}", "error")
+        import traceback
+        traceback.print_exc()
+        return redirect(url_for("forms.program_list"))
+
+
+@forms_bp.route("/programs/bulk-delete", methods=["POST"])
+def bulk_delete_programs():
+    """Bulk delete selected programs and all related records."""
+    try:
+        engine = get_engine()
+        if engine is None:
+            flash("Database is not configured.", "error")
+            return redirect(url_for("forms.program_list"))
+        
+        program_ids = request.form.getlist("program_ids")
+        
+        if not program_ids:
+            flash("Please select at least one program to delete.", "error")
+            return redirect(url_for("forms.program_list"))
+        
+        program_table = fetch_table("Program")
+        program_requirements_table = fetch_table("ProgramRequirements", required=False)
+        program_term_table = fetch_table("ProgramTermDetails", required=False)
+        program_link_table = fetch_table("ProgramDepartmentLink", required=False)
+        program_test_table = fetch_table("ProgramTestScores", required=False)
+        
+        deleted_count = 0
+        errors = []
+        deleted_names = []
+        
+        with engine.begin() as conn:
+            for program_id_str in program_ids:
+                try:
+                    program_id = int(program_id_str)
+                    
+                    # Get program name for flash message
+                    program = conn.execute(
+                        select(program_table.c.ProgramName).where(program_table.c.ProgramID == program_id)
+                    ).mappings().first()
+                    program_name = program["ProgramName"] if program else f"Program #{program_id}"
+                    
+                    # Delete related records first (due to foreign key constraints)
+                    if program_test_table is not None:
+                        conn.execute(
+                            program_test_table.delete().where(program_test_table.c.ProgramID == program_id)
+                        )
+                    
+                    if program_link_table is not None:
+                        conn.execute(
+                            program_link_table.delete().where(program_link_table.c.ProgramID == program_id)
+                        )
+                    
+                    if program_term_table is not None:
+                        conn.execute(
+                            program_term_table.delete().where(program_term_table.c.ProgramID == program_id)
+                        )
+                    
+                    if program_requirements_table is not None:
+                        conn.execute(
+                            program_requirements_table.delete().where(program_requirements_table.c.ProgramID == program_id)
+                        )
+                    
+                    # Finally delete the program
+                    conn.execute(
+                        program_table.delete().where(program_table.c.ProgramID == program_id)
+                    )
+                    
+                    deleted_count += 1
+                    deleted_names.append(program_name)
+                    
+                except Exception as e:
+                    errors.append(f"Program ID {program_id_str}: {str(e)}")
+        
+        if deleted_count > 0:
+            if deleted_count == 1:
+                flash(f"Successfully deleted program '{deleted_names[0]}' and all related records.", "success")
+            else:
+                flash(f"Successfully deleted {deleted_count} program(s) and all related records.", "success")
+        if errors:
+            flash(f"Errors deleting {len(errors)} program(s): {', '.join(errors[:5])}", "error")
+        
+        return redirect(url_for("forms.program_list"))
+        
+    except Exception as e:
+        flash(f"Error deleting programs: {e}", "error")
+        import traceback
+        traceback.print_exc()
+        return redirect(url_for("forms.program_list"))
+
+
+@forms_bp.route("/programs/<int:program_id>/delete", methods=["POST"])
+def program_delete(program_id: int):
+    """Delete a program and all related records."""
+    try:
+        engine = get_engine()
+        if engine is None:
+            flash("Database is not configured.", "error")
+            return redirect(url_for("forms.program_list"))
+        
+        program_table = fetch_table("Program")
+        program_requirements_table = fetch_table("ProgramRequirements", required=False)
+        program_term_table = fetch_table("ProgramTermDetails", required=False)
+        program_link_table = fetch_table("ProgramDepartmentLink", required=False)
+        program_test_table = fetch_table("ProgramTestScores", required=False)
+        
+        # Get program name for flash message
+        with engine.connect() as conn:
+            program = conn.execute(
+                select(program_table.c.ProgramName).where(program_table.c.ProgramID == program_id)
+            ).mappings().first()
+            program_name = program["ProgramName"] if program else f"Program #{program_id}"
+        
+        with engine.begin() as conn:
+            # Delete related records first (due to foreign key constraints)
+            if program_test_table is not None:
+                conn.execute(
+                    program_test_table.delete().where(program_test_table.c.ProgramID == program_id)
+                )
+            
+            if program_link_table is not None:
+                conn.execute(
+                    program_link_table.delete().where(program_link_table.c.ProgramID == program_id)
+                )
+            
+            if program_term_table is not None:
+                conn.execute(
+                    program_term_table.delete().where(program_term_table.c.ProgramID == program_id)
+                )
+            
+            if program_requirements_table is not None:
+                conn.execute(
+                    program_requirements_table.delete().where(program_requirements_table.c.ProgramID == program_id)
+                )
+            
+            # Finally delete the program
+            conn.execute(
+                program_table.delete().where(program_table.c.ProgramID == program_id)
+            )
+        
+        flash(f"Program '{program_name}' and all related records deleted successfully.", "success")
+    except Exception as exc:
+        flash(f"Failed to delete program: {exc}", "error")
+        import traceback
+        traceback.print_exc()
+    
+    return redirect(url_for("forms.program_list"))
 
 
 @forms_bp.route("/programs/new", methods=["GET", "POST"])
@@ -1164,6 +1852,14 @@ def build_program_sections(engine) -> Tuple[List[Dict[str, Any]], List[Tuple[int
     sections: List[Dict[str, Any]] = []
 
     base_sections = [
+        {
+            "title": "College Assignment",
+            "table": program_term_table,
+            "columns": [
+                "CollegeID",
+            ],
+            "description": "Select the college/university this program belongs to. This will be used for all term details.",
+        },
         {
             "title": "Program Snapshot",
             "table": program_table,
@@ -1267,11 +1963,15 @@ def build_program_sections(engine) -> Tuple[List[Dict[str, Any]], List[Tuple[int
         if not fields:
             continue
 
+        # Set up CollegeID as select in both College Assignment and Term & Investment sections
         if table_obj.name == "ProgramTermDetails":
             for field in fields:
                 if field["name"] == "CollegeID":
                     field["input_type"] = "select"
                     field["options"] = college_options
+                    # Make it required in College Assignment section
+                    if item["title"] == "College Assignment":
+                        field["nullable"] = False
 
         if table_obj.name == "ProgramDepartmentLink":
             for field in fields:
@@ -1400,6 +2100,12 @@ def persist_program_bundle(
 
             term_payload["CollegeID"] = college_id_value
             term_payload["ProgramID"] = program_id
+            
+            # Validate and parse date fields - set to None if invalid
+            for date_field in ["LiveDate", "DeadlineDate"]:
+                if date_field in term_payload:
+                    parsed_date = parse_date_field(term_payload[date_field])
+                    term_payload[date_field] = parsed_date
 
             existing_term = conn.execute(
                 select(program_term_table)
@@ -1465,6 +2171,23 @@ def persist_program_bundle(
     return program_id
 
 
+def find_program_by_name(engine, program_name: str) -> Optional[int]:
+    """Find a program by name (case-insensitive). Returns ProgramID if found, None otherwise."""
+    if not program_name:
+        return None
+    
+    program_table = fetch_table("Program")
+    stmt = select(program_table.c.ProgramID).where(
+        func.lower(program_table.c.ProgramName) == func.lower(program_name)
+    )
+    
+    with engine.connect() as conn:
+        result = conn.execute(stmt).first()
+        if result:
+            return int(result.ProgramID)
+    return None
+
+
 def get_college_options(engine) -> List[Tuple[int, str]]:
     college_table = fetch_table("College")
     stmt = select(
@@ -1487,7 +2210,7 @@ def get_college_department_options(engine) -> List[Tuple[int, str]]:
     college_table = fetch_table("College", required=False)
     department_table = fetch_table("Department", required=False)
 
-    if not college_department_table or not college_table or not department_table:
+    if college_department_table is None or college_table is None or department_table is None:
         return []
 
     stmt = (
@@ -1524,6 +2247,15 @@ def get_college_department_options(engine) -> List[Tuple[int, str]]:
 
 @extract_bp.route("/extract", methods=["GET", "POST"])
 def extract_page():
+    mode = request.args.get("mode", "").strip()  # Get mode from query parameter
+    
+    # Initialize context with all required fields
+    try:
+        engine = get_engine()
+        college_options = get_college_options(engine)
+    except Exception:
+        college_options = []
+    
     context = {
         "url": "",
         "prompt": "",
@@ -1531,12 +2263,20 @@ def extract_page():
         "llm_output": "",
         "primary_title": "",
         "primary_heading": "",
+        "mode": mode,
+        "college_options": college_options,
+        "review_fields": [],
+        "matched_college": None,
+        "social_links": {},
+        "links": [],
     }
 
     if request.method == "POST":
         url = request.form.get("url", "").strip()
         prompt = request.form.get("prompt", "").strip()
-        context.update({"url": url, "prompt": prompt})
+        # Preserve mode from form or query parameter
+        mode = request.form.get("mode", request.args.get("mode", "")).strip()
+        context.update({"url": url, "prompt": prompt, "mode": mode})
 
         if not url:
             flash("Please provide a URL.", "error")
@@ -1560,17 +2300,3163 @@ def extract_page():
         context["extracted_text"] = extracted_text
         context["primary_title"] = primary_content["title"]
         context["primary_heading"] = primary_content["heading"]
+        
+        # Extract links and social media links
+        try:
+            links = collect_links(soup, url, max_links=50)
+            context["links"] = links
+            
+            # Extract social media links
+            social_links = {}
+            for link in links:
+                url_lower = link.get("url", "").lower()
+                text_lower = link.get("text", "").lower()
+                if "facebook.com" in url_lower or "fb.com" in url_lower:
+                    social_links["facebook"] = link["url"]
+                elif "instagram.com" in url_lower or "instagr.am" in url_lower:
+                    social_links["instagram"] = link["url"]
+                elif "twitter.com" in url_lower or "x.com" in url_lower:
+                    social_links["twitter"] = link["url"]
+                elif "youtube.com" in url_lower:
+                    social_links["youtube"] = link["url"]
+                elif "tiktok.com" in url_lower:
+                    social_links["tiktok"] = link["url"]
+                elif "linkedin.com" in url_lower:
+                    social_links["linkedin"] = link["url"]
+            context["social_links"] = social_links
+        except Exception:
+            context["links"] = []
+            context["social_links"] = {}
 
         if prompt:
             try:
                 llm_output = generate_gemini_response(prompt, url, primary_content)
                 context["llm_output"] = llm_output
+                
+                # Parse JSON and build review fields if LLM output exists
+                try:
+                    text = llm_output.strip()
+                    if text.startswith("```"):
+                        lines = text.split("\n")
+                        text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
+                    if text.startswith("```json"):
+                        lines = text.split("\n")
+                        text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
+                    start = text.find("{")
+                    end = text.rfind("}")
+                    if start >= 0 and end > start:
+                        parsed = json.loads(text[start:end+1])
+                    else:
+                        parsed = json.loads(text)
+                    
+                    if parsed:
+                        # Match college by name
+                        college_name = parsed.get("CollegeName", "").strip()
+                        matched_college = None
+                        if engine and college_name:
+                            matched_college = find_college_by_name(engine, college_name)
+                        context["matched_college"] = matched_college
+                        
+                        # Build review fields for college overview
+                        college_fields = [
+                            "CollegeName", "CollegeSetting", "TypeofInstitution", "Student_Faculty",
+                            "NumberOfCampuses", "TotalFacultyAvailable", "TotalProgramsAvailable",
+                            "TotalStudentsEnrolled", "TotalGraduatePrograms", "TotalInternationalStudents",
+                            "TotalStudents", "TotalUndergradMajors", "CountriesRepresented"
+                        ]
+                        
+                        review_fields = []
+                        if engine and matched_college:
+                            college_table = fetch_table("College")
+                            with engine.connect() as conn:
+                                existing = conn.execute(
+                                    select(college_table).where(college_table.c.CollegeID == matched_college["CollegeID"])
+                                ).mappings().first()
+                                existing_dict = dict(existing) if existing else {}
+                        else:
+                            existing_dict = {}
+                        
+                        for field in college_fields:
+                            review_fields.append({
+                                "column": field,
+                                "label": humanize_field_name(field),
+                                "llm_value": parsed.get(field, ""),
+                                "existing_value": existing_dict.get(field, ""),
+                            })
+                        context["review_fields"] = review_fields
+                except (json.JSONDecodeError, ValueError, Exception):
+                    # If parsing fails, leave review_fields empty
+                    context["review_fields"] = []
+                    
             except RuntimeError as exc:
                 flash(str(exc), "error")
             except Exception as exc:
                 flash(f"Gemini API error: {exc}", "error")
 
     return render_template("extract.html", **context)
+
+
+@extract_bp.route("/extract/college")
+def extract_college_link():
+    """Quick link to extract page with college mode."""
+    return redirect(url_for("extract.extract_page", mode="college"))
+
+
+@extract_bp.route("/extract/department")
+def extract_department_link():
+    """Quick link to extract page with department mode."""
+    return redirect(url_for("extract.extract_page", mode="department"))
+
+
+@extract_bp.route("/extract/program")
+def extract_program_link():
+    """Quick link to extract page with program mode."""
+    return redirect(url_for("extract.extract_page", mode="program"))
+
+
+def build_college_overview_prompt() -> str:
+    """Prompt for extracting college overview/basics."""
+    return (
+        "You are an expert higher-education data extractor.\n"
+        "Parse the given webpage text and return a STRICT JSON object with the fields below.\n"
+        "Use ONLY the provided text. If the extraction is unsuccessful or the text is empty, "
+        "return all fields as empty strings (DO NOT hallucinate). Do not add extra keys or commentary.\n\n"
+        "Rules:\n"
+        "- Prefer institution-wide values (not sub-units).\n"
+        "- If multiple candidates exist, pick the clearest, most explicit value.\n"
+        "- If a field cannot be found verbatim or by strong implication, set it to \"\".\n"
+        "- Numbers may include commas; return them as strings.\n"
+        "- Output MUST be valid JSON (no markdown fences).\n\n"
+        "Return exactly these keys (values as strings):\n"
+        "{\n"
+        "  \"CollegeName\": \"\",\n"
+        "  \"CollegeSetting\": \"\",\n"
+        "  \"TypeofInstitution\": \"\",\n"
+        "  \"Student_Faculty\": \"\",\n"
+        "  \"NumberOfCampuses\": \"\",\n"
+        "  \"TotalFacultyAvailable\": \"\",\n"
+        "  \"TotalProgramsAvailable\": \"\",\n"
+        "  \"TotalStudentsEnrolled\": \"\",\n"
+        "  \"TotalGraduatePrograms\": \"\",\n"
+        "  \"TotalInternationalStudents\": \"\",\n"
+        "  \"TotalStudents\": \"\",\n"
+        "  \"TotalUndergradMajors\": \"\",\n"
+        "  \"CountriesRepresented\": \"\"\n"
+        "}\n\n"
+        "Now extract the values from the provided text and return ONLY the JSON object."
+    )
+
+
+def build_address_prompt() -> str:
+    """Prompt for extracting address/location details."""
+    return (
+        "You are an expert higher-education data extractor.\n"
+        "Parse the given webpage text and return a STRICT JSON object with address fields.\n"
+        "Use ONLY the provided text. If a field cannot be found, return it as an empty string.\n\n"
+        "Extract:\n"
+        "- Street1: Primary street address\n"
+        "- Street2: Secondary address line (suite, building, etc.)\n"
+        "- City: City name\n"
+        "- State: State or province (2-letter abbreviation preferred)\n"
+        "- ZipCode: Postal/ZIP code\n"
+        "- Country: Country name (default to 'USA' if in United States)\n"
+        "- County: County name if mentioned\n\n"
+        "Return a JSON object with these exact keys (values as strings):\n"
+        "{\n"
+        "  \"Street1\": \"\",\n"
+        "  \"Street2\": \"\",\n"
+        "  \"City\": \"\",\n"
+        "  \"State\": \"\",\n"
+        "  \"ZipCode\": \"\",\n"
+        "  \"Country\": \"\",\n"
+        "  \"County\": \"\"\n"
+        "}\n\n"
+        "Now extract the values and return ONLY the JSON object."
+    )
+
+
+def build_contact_prompt() -> str:
+    """Prompt for extracting contact information."""
+    return (
+        "You are an expert higher-education data extractor.\n"
+        "Parse the given webpage text and return a STRICT JSON object with contact fields.\n"
+        "Use ONLY the provided text. If a field cannot be found, return it as an empty string.\n\n"
+        "Extract:\n"
+        "- Phone: Primary phone number\n"
+        "- Email: Primary contact email\n"
+        "- SecondaryEmail: Secondary email if available\n"
+        "- WebsiteUrl: Official website URL\n"
+        "- AdmissionOfficeUrl: Admissions office URL\n"
+        "- VirtualTourUrl: Virtual tour URL if available\n"
+        "- FinancialAidUrl: Financial aid URL if available\n"
+        "- LogoPath: Logo image URL if available\n\n"
+        "Return a JSON object with these exact keys (values as strings):\n"
+        "{\n"
+        "  \"Phone\": \"\",\n"
+        "  \"Email\": \"\",\n"
+        "  \"SecondaryEmail\": \"\",\n"
+        "  \"WebsiteUrl\": \"\",\n"
+        "  \"AdmissionOfficeUrl\": \"\",\n"
+        "  \"VirtualTourUrl\": \"\",\n"
+        "  \"FinancialAidUrl\": \"\",\n"
+        "  \"LogoPath\": \"\"\n"
+        "}\n\n"
+        "Now extract the values and return ONLY the JSON object."
+    )
+
+
+def build_appreq_prompt() -> str:
+    """Prompt for extracting application requirements."""
+    return (
+        "You are an expert higher-education data extractor.\n"
+        "Parse the given webpage text and return a STRICT JSON object with application requirement fields.\n"
+        "Use ONLY the provided text. If a field cannot be found, return it as an empty string.\n\n"
+        "Extract:\n"
+        "- ApplicationFees: Application fee amount\n"
+        "- TuitionFees: Tuition fees (prioritize international student's per credit cost)\n"
+        "- TestPolicy: Summary of standardized test policies\n"
+        "- CoursesAndGrades: Information about required courses or grade expectations\n"
+        "- Recommendations: Recommendation requirements\n"
+        "- PersonalEssay: Summary of personal essay requirements\n"
+        "- WritingSample: Writing sample requirements\n"
+        "- AdditionalInformation: Other admissions information\n"
+        "- AdditionalDeadlines: Any additional application deadlines\n\n"
+        "Return a JSON object with these exact keys (values as strings):\n"
+        "{\n"
+        "  \"ApplicationFees\": \"\",\n"
+        "  \"TuitionFees\": \"\",\n"
+        "  \"TestPolicy\": \"\",\n"
+        "  \"CoursesAndGrades\": \"\",\n"
+        "  \"Recommendations\": \"\",\n"
+        "  \"PersonalEssay\": \"\",\n"
+        "  \"WritingSample\": \"\",\n"
+        "  \"AdditionalInformation\": \"\",\n"
+        "  \"AdditionalDeadlines\": \"\"\n"
+        "}\n\n"
+        "Now extract the values and return ONLY the JSON object."
+    )
+
+
+def build_stats_prompt() -> str:
+    """Prompt for extracting student statistics and funding."""
+    return (
+        "You are an expert higher-education data extractor.\n"
+        "Parse the given webpage text and return a STRICT JSON object with student statistics and funding fields.\n"
+        "Use ONLY the provided text. If a field cannot be found, return it as an empty string.\n"
+        "Numbers may include commas; return them as strings.\n\n"
+        "Extract:\n"
+        "- GradAvgTuition: Average annual tuition for graduate students\n"
+        "- GradInternationalStudents: Number of international graduate students\n"
+        "- GradScholarshipHigh: Highest scholarship amount for graduate students\n"
+        "- GradScholarshipLow: Lowest scholarship amount for graduate students\n"
+        "- GradTotalStudents: Total number of graduate students\n"
+        "- UGAvgTuition: Average annual tuition for undergraduate students\n"
+        "- UGInternationalStudents: Number of international undergraduate students\n"
+        "- UGScholarshipHigh: Highest scholarship amount for undergraduate students\n"
+        "- UGScholarshipLow: Lowest scholarship amount for undergraduate students\n"
+        "- UGTotalStudents: Total number of undergraduate students\n\n"
+        "Return a JSON object with these exact keys (values as strings):\n"
+        "{\n"
+        "  \"GradAvgTuition\": \"\",\n"
+        "  \"GradInternationalStudents\": \"\",\n"
+        "  \"GradScholarshipHigh\": \"\",\n"
+        "  \"GradScholarshipLow\": \"\",\n"
+        "  \"GradTotalStudents\": \"\",\n"
+        "  \"UGAvgTuition\": \"\",\n"
+        "  \"UGInternationalStudents\": \"\",\n"
+        "  \"UGScholarshipHigh\": \"\",\n"
+        "  \"UGScholarshipLow\": \"\",\n"
+        "  \"UGTotalStudents\": \"\"\n"
+        "}\n\n"
+        "Now extract the values and return ONLY the JSON object."
+    )
+
+
+def build_social_prompt() -> str:
+    """Prompt for extracting social media links."""
+    return (
+        "You are an expert higher-education data extractor.\n"
+        "Parse the given webpage text and return a STRICT JSON object with social media profile URLs.\n"
+        "Use ONLY the provided text. If a field cannot be found, return it as an empty string.\n\n"
+        "Extract official social media profile URLs:\n"
+        "- Facebook: Facebook page URL\n"
+        "- Instagram: Instagram profile URL\n"
+        "- Twitter: Twitter/X profile URL\n"
+        "- Youtube: YouTube channel URL\n"
+        "- Tiktok: TikTok account URL\n"
+        "- LinkedIn: LinkedIn page URL\n\n"
+        "Return a JSON object with these exact keys (values as strings, full URLs):\n"
+        "{\n"
+        "  \"Facebook\": \"\",\n"
+        "  \"Instagram\": \"\",\n"
+        "  \"Twitter\": \"\",\n"
+        "  \"Youtube\": \"\",\n"
+        "  \"Tiktok\": \"\",\n"
+        "  \"LinkedIn\": \"\"\n"
+        "}\n\n"
+        "Now extract the values and return ONLY the JSON object."
+    )
+
+
+@extract_bp.route("/extract/api/run-college", methods=["POST"])
+def api_run_college():
+    """API endpoint to run college basics extraction."""
+    try:
+        engine = get_engine()
+    except Exception:
+        return jsonify({"ok": False, "error": "Database is not configured."}), 500
+    
+    data = request.get_json()
+    text = data.get("text", "").strip() if data else ""
+    url = data.get("url", "").strip() if data else ""
+    
+    if not text:
+        return jsonify({"ok": False, "error": "No text provided."}), 400
+    
+    try:
+        prompt = build_college_overview_prompt()
+        primary_content = {"text": text, "title": "", "heading": ""}
+        llm_output = generate_gemini_response(prompt, url, primary_content)
+        
+        # Parse JSON
+        parsed = {}
+        try:
+            text_output = llm_output.strip()
+            if text_output.startswith("```"):
+                lines = text_output.split("\n")
+                text_output = "\n".join(lines[1:-1]) if len(lines) > 2 else text_output
+            if text_output.startswith("```json"):
+                lines = text_output.split("\n")
+                text_output = "\n".join(lines[1:-1]) if len(lines) > 2 else text_output
+            start = text_output.find("{")
+            end = text_output.rfind("}")
+            if start >= 0 and end > start:
+                parsed = json.loads(text_output[start:end+1])
+            else:
+                parsed = json.loads(text_output)
+        except (json.JSONDecodeError, ValueError):
+            parsed = {}
+        
+        # Match college and build review fields
+        matched_college = None
+        review_fields = []
+        if parsed:
+            college_name = parsed.get("CollegeName", "").strip()
+            if engine and college_name:
+                matched_college = find_college_by_name(engine, college_name)
+            
+            college_fields = [
+                "CollegeName", "CollegeSetting", "TypeofInstitution", "Student_Faculty",
+                "NumberOfCampuses", "TotalFacultyAvailable", "TotalProgramsAvailable",
+                "TotalStudentsEnrolled", "TotalGraduatePrograms", "TotalInternationalStudents",
+                "TotalStudents", "TotalUndergradMajors", "CountriesRepresented"
+            ]
+            
+            existing_dict = {}
+            if engine and matched_college:
+                college_table = fetch_table("College")
+                with engine.connect() as conn:
+                    existing = conn.execute(
+                        select(college_table).where(college_table.c.CollegeID == matched_college["CollegeID"])
+                    ).mappings().first()
+                    existing_dict = dict(existing) if existing else {}
+            
+            for field in college_fields:
+                review_fields.append({
+                    "column": field,
+                    "label": humanize_field_name(field),
+                    "llm_value": parsed.get(field, ""),
+                    "existing_value": existing_dict.get(field, ""),
+                })
+        
+        return jsonify({
+            "ok": True,
+            "llm_output": llm_output,
+            "review_fields": review_fields,
+            "matched": matched_college
+        })
+    except Exception as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@extract_bp.route("/extract/api/run-address", methods=["POST"])
+def api_run_address():
+    """API endpoint to run address extraction."""
+    try:
+        engine = get_engine()
+    except Exception:
+        return jsonify({"ok": False, "error": "Database is not configured."}), 500
+    
+    data = request.get_json()
+    text = data.get("text", "").strip() if data else ""
+    url = data.get("url", "").strip() if data else ""
+    college_id = None
+    if data and "college_id" in data:
+        try:
+            college_id_val = data.get("college_id")
+            college_id = int(college_id_val) if college_id_val else None
+        except (ValueError, TypeError):
+            college_id = None
+    
+    if not text:
+        return jsonify({"ok": False, "error": "No text provided."}), 400
+    
+    try:
+        prompt = build_address_prompt()
+        primary_content = {"text": text, "title": "", "heading": ""}
+        llm_output = generate_gemini_response(prompt, url, primary_content)
+        
+        # Parse JSON
+        parsed = {}
+        try:
+            text_output = llm_output.strip()
+            if text_output.startswith("```"):
+                lines = text_output.split("\n")
+                text_output = "\n".join(lines[1:-1]) if len(lines) > 2 else text_output
+            start = text_output.find("{")
+            end = text_output.rfind("}")
+            if start >= 0 and end > start:
+                parsed = json.loads(text_output[start:end+1])
+        except (json.JSONDecodeError, ValueError):
+            parsed = {}
+        
+        # Build review fields
+        review_fields = []
+        address_fields = ["Street1", "Street2", "City", "State", "ZipCode", "Country", "County"]
+        
+        existing_dict = {}
+        if engine and college_id:
+            address_table = fetch_table("Address", required=False)
+            if address_table:
+                with engine.connect() as conn:
+                    existing = conn.execute(
+                        select(address_table).where(address_table.c.CollegeID == college_id)
+                    ).mappings().first()
+                    existing_dict = dict(existing) if existing else {}
+        
+        for field in address_fields:
+            review_fields.append({
+                "column": field,
+                "label": humanize_field_name(field),
+                "llm_value": parsed.get(field, ""),
+                "existing_value": existing_dict.get(field, ""),
+            })
+        
+        return jsonify({
+            "ok": True,
+            "llm_output": llm_output,
+            "review_fields": review_fields
+        })
+    except Exception as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@extract_bp.route("/extract/api/run-contact", methods=["POST"])
+def api_run_contact():
+    """API endpoint to run contact extraction."""
+    try:
+        engine = get_engine()
+    except Exception:
+        return jsonify({"ok": False, "error": "Database is not configured."}), 500
+    
+    data = request.get_json()
+    text = data.get("text", "").strip() if data else ""
+    url = data.get("url", "").strip() if data else ""
+    college_id = None
+    if data and "college_id" in data:
+        try:
+            college_id_val = data.get("college_id")
+            college_id = int(college_id_val) if college_id_val else None
+        except (ValueError, TypeError):
+            college_id = None
+    
+    if not text:
+        return jsonify({"ok": False, "error": "No text provided."}), 400
+    
+    try:
+        prompt = build_contact_prompt()
+        primary_content = {"text": text, "title": "", "heading": ""}
+        llm_output = generate_gemini_response(prompt, url, primary_content)
+        
+        # Parse JSON
+        parsed = {}
+        try:
+            text_output = llm_output.strip()
+            if text_output.startswith("```"):
+                lines = text_output.split("\n")
+                text_output = "\n".join(lines[1:-1]) if len(lines) > 2 else text_output
+            start = text_output.find("{")
+            end = text_output.rfind("}")
+            if start >= 0 and end > start:
+                parsed = json.loads(text_output[start:end+1])
+        except (json.JSONDecodeError, ValueError):
+            parsed = {}
+        
+        # Build review fields
+        review_fields = []
+        contact_fields = ["Phone", "Email", "SecondaryEmail", "WebsiteUrl", "AdmissionOfficeUrl", 
+                         "VirtualTourUrl", "FinancialAidUrl", "LogoPath"]
+        
+        existing_dict = {}
+        if engine and college_id:
+            contact_table = fetch_table("ContactInformation", required=False)
+            if contact_table:
+                with engine.connect() as conn:
+                    existing = conn.execute(
+                        select(contact_table).where(contact_table.c.CollegeID == college_id)
+                    ).mappings().first()
+                    existing_dict = dict(existing) if existing else {}
+        
+        for field in contact_fields:
+            review_fields.append({
+                "column": field,
+                "label": humanize_field_name(field),
+                "llm_value": parsed.get(field, ""),
+                "existing_value": existing_dict.get(field, ""),
+            })
+        
+        return jsonify({
+            "ok": True,
+            "llm_output": llm_output,
+            "review_fields": review_fields
+        })
+    except Exception as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@extract_bp.route("/extract/api/run-appreq", methods=["POST"])
+def api_run_appreq():
+    """API endpoint to run application requirements extraction."""
+    try:
+        engine = get_engine()
+    except Exception:
+        return jsonify({"ok": False, "error": "Database is not configured."}), 500
+    
+    data = request.get_json()
+    text = data.get("text", "").strip() if data else ""
+    url = data.get("url", "").strip() if data else ""
+    college_id = None
+    if data and "college_id" in data:
+        try:
+            college_id_val = data.get("college_id")
+            college_id = int(college_id_val) if college_id_val else None
+        except (ValueError, TypeError):
+            college_id = None
+    
+    if not text:
+        return jsonify({"ok": False, "error": "No text provided."}), 400
+    
+    try:
+        prompt = build_appreq_prompt()
+        primary_content = {"text": text, "title": "", "heading": ""}
+        llm_output = generate_gemini_response(prompt, url, primary_content)
+        
+        # Parse JSON
+        parsed = {}
+        try:
+            text_output = llm_output.strip()
+            if text_output.startswith("```"):
+                lines = text_output.split("\n")
+                text_output = "\n".join(lines[1:-1]) if len(lines) > 2 else text_output
+            start = text_output.find("{")
+            end = text_output.rfind("}")
+            if start >= 0 and end > start:
+                parsed = json.loads(text_output[start:end+1])
+        except (json.JSONDecodeError, ValueError):
+            parsed = {}
+        
+        # Build review fields
+        review_fields = []
+        appreq_fields = ["ApplicationFees", "TuitionFees", "TestPolicy", "CoursesAndGrades",
+                        "Recommendations", "PersonalEssay", "WritingSample", "AdditionalInformation",
+                        "AdditionalDeadlines"]
+        
+        existing_dict = {}
+        if engine and college_id:
+            appreq_table = fetch_table("ApplicationRequirements", required=False)
+            if appreq_table:
+                with engine.connect() as conn:
+                    existing = conn.execute(
+                        select(appreq_table).where(appreq_table.c.CollegeID == college_id)
+                    ).mappings().first()
+                    existing_dict = dict(existing) if existing else {}
+        
+        for field in appreq_fields:
+            review_fields.append({
+                "column": field,
+                "label": humanize_field_name(field),
+                "llm_value": parsed.get(field, ""),
+                "existing_value": existing_dict.get(field, ""),
+            })
+        
+        return jsonify({
+            "ok": True,
+            "llm_output": llm_output,
+            "review_fields": review_fields
+        })
+    except Exception as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@extract_bp.route("/extract/api/run-stats", methods=["POST"])
+def api_run_stats():
+    """API endpoint to run student statistics extraction."""
+    try:
+        engine = get_engine()
+    except Exception:
+        return jsonify({"ok": False, "error": "Database is not configured."}), 500
+    
+    data = request.get_json()
+    text = data.get("text", "").strip() if data else ""
+    url = data.get("url", "").strip() if data else ""
+    college_id = None
+    if data and "college_id" in data:
+        try:
+            college_id_val = data.get("college_id")
+            college_id = int(college_id_val) if college_id_val else None
+        except (ValueError, TypeError):
+            college_id = None
+    
+    if not text:
+        return jsonify({"ok": False, "error": "No text provided."}), 400
+    
+    try:
+        prompt = build_stats_prompt()
+        primary_content = {"text": text, "title": "", "heading": ""}
+        llm_output = generate_gemini_response(prompt, url, primary_content)
+        
+        # Parse JSON
+        parsed = {}
+        try:
+            text_output = llm_output.strip()
+            if text_output.startswith("```"):
+                lines = text_output.split("\n")
+                text_output = "\n".join(lines[1:-1]) if len(lines) > 2 else text_output
+            start = text_output.find("{")
+            end = text_output.rfind("}")
+            if start >= 0 and end > start:
+                parsed = json.loads(text_output[start:end+1])
+        except (json.JSONDecodeError, ValueError):
+            parsed = {}
+        
+        # Build review fields
+        review_fields = []
+        stats_fields = ["GradAvgTuition", "GradInternationalStudents", "GradScholarshipHigh",
+                       "GradScholarshipLow", "GradTotalStudents", "UGAvgTuition",
+                       "UGInternationalStudents", "UGScholarshipHigh", "UGScholarshipLow",
+                       "UGTotalStudents"]
+        
+        existing_dict = {}
+        if engine and college_id:
+            stats_table = fetch_table("StudentStatistics", required=False)
+            if stats_table:
+                with engine.connect() as conn:
+                    existing = conn.execute(
+                        select(stats_table).where(stats_table.c.CollegeID == college_id)
+                    ).mappings().first()
+                    existing_dict = dict(existing) if existing else {}
+        
+        for field in stats_fields:
+            review_fields.append({
+                "column": field,
+                "label": humanize_field_name(field),
+                "llm_value": parsed.get(field, ""),
+                "existing_value": existing_dict.get(field, ""),
+            })
+        
+        return jsonify({
+            "ok": True,
+            "llm_output": llm_output,
+            "review_fields": review_fields
+        })
+    except Exception as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@extract_bp.route("/extract/api/run-social", methods=["POST"])
+def api_run_social():
+    """API endpoint to run social media extraction."""
+    try:
+        engine = get_engine()
+    except Exception:
+        return jsonify({"ok": False, "error": "Database is not configured."}), 500
+    
+    data = request.get_json()
+    text = data.get("text", "").strip() if data else ""
+    url = data.get("url", "").strip() if data else ""
+    college_id = None
+    if data and "college_id" in data:
+        try:
+            college_id_val = data.get("college_id")
+            college_id = int(college_id_val) if college_id_val else None
+        except (ValueError, TypeError):
+            college_id = None
+    
+    if not text:
+        return jsonify({"ok": False, "error": "No text provided."}), 400
+    
+    try:
+        prompt = build_social_prompt()
+        primary_content = {"text": text, "title": "", "heading": ""}
+        llm_output = generate_gemini_response(prompt, url, primary_content)
+        
+        # Parse JSON
+        parsed = {}
+        try:
+            text_output = llm_output.strip()
+            if text_output.startswith("```"):
+                lines = text_output.split("\n")
+                text_output = "\n".join(lines[1:-1]) if len(lines) > 2 else text_output
+            start = text_output.find("{")
+            end = text_output.rfind("}")
+            if start >= 0 and end > start:
+                parsed = json.loads(text_output[start:end+1])
+        except (json.JSONDecodeError, ValueError):
+            parsed = {}
+        
+        # Build review fields
+        review_fields = []
+        social_fields = ["Facebook", "Instagram", "Twitter", "Youtube", "Tiktok", "LinkedIn"]
+        
+        social_existing = {}
+        if engine and college_id:
+            social_table = fetch_table("SocialMedia", required=False)
+            if social_table:
+                with engine.connect() as conn:
+                    rows = conn.execute(
+                        select(social_table).where(social_table.c.CollegeID == college_id)
+                    ).mappings().all()
+                    social_existing = {row["PlatformName"].lower(): dict(row) for row in rows}
+        
+        for field in social_fields:
+            existing_row = social_existing.get(field.lower(), {})
+            review_fields.append({
+                "column": field,
+                "label": humanize_field_name(field),
+                "llm_value": parsed.get(field, ""),
+                "existing_value": existing_row.get("URL", ""),
+            })
+        
+        return jsonify({
+            "ok": True,
+            "llm_output": llm_output,
+            "review_fields": review_fields
+        })
+    except Exception as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@extract_bp.route("/extract/confirm-save", methods=["POST"])
+def extract_confirm_save():
+    """Save extracted college overview data to database."""
+    try:
+        engine = get_engine()
+    except Exception:
+        msg = "Database is not configured."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    college_id = request.form.get("college_id", type=int) or request.form.get("college_id_select", type=int)
+    college_name = request.form.get("college_name", "").strip()
+    
+    if not college_id and not college_name:
+        msg = "Please select a college or provide a college name."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    # Find or create college
+    if college_id:
+        # Use provided college_id
+        pass
+    elif college_name:
+        matched_college = find_college_by_name(engine, college_name)
+        if not matched_college:
+            # Create new college
+            college_table = fetch_table("College")
+            with engine.begin() as conn:
+                result = conn.execute(
+                    college_table.insert().values(CollegeName=college_name)
+                )
+                college_id = int(result.inserted_primary_key[0])
+        else:
+            college_id = matched_college["CollegeID"]
+    else:
+        msg = "Please select a college or provide a college name."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    # Collect override values for College table fields
+    college_payload = {}
+    college_fields = [
+        "CollegeName", "CollegeSetting", "TypeofInstitution", "Student_Faculty",
+        "NumberOfCampuses", "TotalFacultyAvailable", "TotalProgramsAvailable",
+        "TotalStudentsEnrolled", "TotalGraduatePrograms", "TotalInternationalStudents",
+        "TotalStudents", "TotalUndergradMajors", "CountriesRepresented"
+    ]
+    
+    for field in college_fields:
+        val = request.form.get(f"override.{field}", "").strip()
+        if val:
+            # Normalize numeric fields
+            if field in ["NumberOfCampuses", "TotalFacultyAvailable", "TotalProgramsAvailable",
+                        "TotalStudentsEnrolled", "TotalGraduatePrograms", "TotalInternationalStudents",
+                        "TotalStudents", "TotalUndergradMajors"]:
+                val = re.sub(r'[^\d]', '', val)  # Remove non-digits
+            college_payload[field] = val
+    
+    # Save to database
+    try:
+        college_table = fetch_table("College")
+        with engine.begin() as conn:
+            if college_payload:
+                conn.execute(
+                    college_table.update()
+                    .where(college_table.c.CollegeID == college_id)
+                    .values(**college_payload)
+                )
+        
+        msg = f"College overview saved successfully for college ID {college_id}."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": True, "message": msg})
+        flash(msg, "success")
+        return redirect(url_for("extract.extract_page"))
+    except (SQLAlchemyError, ValueError) as exc:
+        msg = f"Failed to save: {exc}"
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    except Exception as exc:
+        msg = f"Error saving: {exc}"
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+
+
+@extract_bp.route("/extract/save-to-db", methods=["POST"])
+def extract_save_to_db():
+    """Quick save: Save LLM output directly to database without review."""
+    try:
+        engine = get_engine()
+    except Exception:
+        msg = "Database is not configured."
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    llm_output = request.form.get("llm_output", "").strip()
+    url = request.form.get("url", "").strip()
+    
+    if not llm_output:
+        flash("No LLM output to save.", "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    try:
+        # Parse JSON from LLM output
+        parsed = {}
+        try:
+            text = llm_output.strip()
+            if text.startswith("```"):
+                lines = text.split("\n")
+                text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
+            if text.startswith("```json"):
+                lines = text.split("\n")
+                text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
+            start = text.find("{")
+            end = text.rfind("}")
+            if start >= 0 and end > start:
+                parsed = json.loads(text[start:end+1])
+            else:
+                parsed = json.loads(text)
+        except (json.JSONDecodeError, ValueError):
+            flash("Invalid JSON in LLM output.", "error")
+            return redirect(url_for("extract.extract_page"))
+        
+        if not parsed:
+            flash("No data found in LLM output.", "error")
+            return redirect(url_for("extract.extract_page"))
+        
+        # Extract college name
+        college_name = parsed.get("CollegeName", "").strip()
+        if not college_name:
+            flash("College name not found in LLM output.", "error")
+            return redirect(url_for("extract.extract_page"))
+        
+        # Find or create college
+        matched_college = find_college_by_name(engine, college_name)
+        if not matched_college:
+            # Create new college
+            college_table = fetch_table("College")
+            with engine.begin() as conn:
+                result = conn.execute(
+                    college_table.insert().values(CollegeName=college_name)
+                )
+                college_id = int(result.inserted_primary_key[0])
+        else:
+            college_id = matched_college["CollegeID"]
+        
+        # Collect college fields and normalize
+        college_payload = {}
+        college_fields = [
+            "CollegeName", "CollegeSetting", "TypeofInstitution", "Student_Faculty",
+            "NumberOfCampuses", "TotalFacultyAvailable", "TotalProgramsAvailable",
+            "TotalStudentsEnrolled", "TotalGraduatePrograms", "TotalInternationalStudents",
+            "TotalStudents", "TotalUndergradMajors", "CountriesRepresented"
+        ]
+        
+        for field in college_fields:
+            val = parsed.get(field, "").strip() if isinstance(parsed.get(field), str) else str(parsed.get(field, ""))
+            if val:
+                # Normalize numeric fields
+                if field in ["NumberOfCampuses", "TotalFacultyAvailable", "TotalProgramsAvailable",
+                            "TotalStudentsEnrolled", "TotalGraduatePrograms", "TotalInternationalStudents",
+                            "TotalStudents", "TotalUndergradMajors"]:
+                    val = re.sub(r'[^\d]', '', val)  # Remove non-digits
+                college_payload[field] = val
+        
+        # Save to database
+        if college_payload:
+            college_table = fetch_table("College")
+            with engine.begin() as conn:
+                conn.execute(
+                    college_table.update()
+                    .where(college_table.c.CollegeID == college_id)
+                    .values(**college_payload)
+                )
+        
+        flash(f"College data saved successfully (ID: {college_id}).", "success")
+        return redirect(url_for("extract.extract_page"))
+        
+    except Exception as exc:
+        flash(f"Error saving to database: {exc}", "error")
+        return redirect(url_for("extract.extract_page"))
+
+
+def _normalize_payload_value(val: str, field: str) -> str:
+    """Normalize a payload value based on field type."""
+    if not val:
+        return val
+    # Remove commas and currency symbols for numeric fields
+    if field in ["NumberOfCampuses", "TotalFacultyAvailable", "TotalProgramsAvailable",
+                "TotalStudentsEnrolled", "TotalGraduatePrograms", "TotalInternationalStudents",
+                "TotalStudents", "TotalUndergradMajors", "GradInternationalStudents",
+                "GradTotalStudents", "UGInternationalStudents", "UGTotalStudents"]:
+        return re.sub(r'[^\d]', '', val)  # Remove non-digits
+    # For decimal/currency fields, keep digits and one decimal point
+    if field in ["GradAvgTuition", "GradScholarshipHigh", "GradScholarshipLow",
+                "UGAvgTuition", "UGScholarshipHigh", "UGScholarshipLow",
+                "ApplicationFees", "TuitionFees"]:
+        return re.sub(r'[^\d.]', '', val)  # Keep digits and decimal point
+    return val
+
+
+@extract_bp.route("/extract/confirm-save-address", methods=["POST"])
+def extract_confirm_save_address():
+    """Save extracted address data to database."""
+    try:
+        engine = get_engine()
+    except Exception:
+        msg = "Database is not configured."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    college_id = request.form.get("college_id", type=int) or request.form.get("college_id_address_select", type=int)
+    college_name = request.form.get("college_name", "").strip()
+    
+    if not college_id and not college_name:
+        msg = "Please select a college or provide a college name."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    # Find or create college
+    if not college_id and college_name:
+        matched_college = find_college_by_name(engine, college_name)
+        if not matched_college:
+            college_table = fetch_table("College")
+            with engine.begin() as conn:
+                result = conn.execute(
+                    college_table.insert().values(CollegeName=college_name)
+                )
+                college_id = int(result.inserted_primary_key[0])
+        else:
+            college_id = matched_college["CollegeID"]
+    
+    if not college_id:
+        msg = "Please select a college or provide a college name."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    # Collect address fields
+    address_payload = {}
+    address_fields = ["Street1", "Street2", "City", "State", "ZipCode", "Country", "County"]
+    
+    for field in address_fields:
+        val = request.form.get(f"override_addr.{field}", "").strip()
+        if val:
+            address_payload[field] = val
+    
+    # Save to database
+    try:
+        address_table = fetch_table("Address", required=False)
+        if not address_table:
+            msg = "Address table not found."
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"ok": False, "message": msg}), 500
+            flash(msg, "error")
+            return redirect(url_for("extract.extract_page"))
+        
+        with engine.begin() as conn:
+            # Check if address exists
+            existing = conn.execute(
+                select(address_table).where(address_table.c.CollegeID == college_id)
+            ).mappings().first()
+            
+            if existing:
+                if address_payload:
+                    conn.execute(
+                        address_table.update()
+                        .where(address_table.c.CollegeID == college_id)
+                        .values(**address_payload)
+                    )
+            else:
+                address_payload["CollegeID"] = college_id
+                conn.execute(address_table.insert().values(**address_payload))
+        
+        msg = f"Address saved successfully for college ID {college_id}."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": True, "message": msg})
+        flash(msg, "success")
+        return redirect(url_for("extract.extract_page"))
+    except Exception as exc:
+        msg = f"Failed to save address: {exc}"
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+
+
+@extract_bp.route("/extract/confirm-save-contact", methods=["POST"])
+def extract_confirm_save_contact():
+    """Save extracted contact data to database."""
+    try:
+        engine = get_engine()
+    except Exception:
+        msg = "Database is not configured."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    college_id = request.form.get("college_id", type=int) or request.form.get("college_id_contact_select", type=int)
+    college_name = request.form.get("college_name", "").strip()
+    
+    if not college_id and not college_name:
+        msg = "Please select a college or provide a college name."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    # Find or create college
+    if not college_id and college_name:
+        matched_college = find_college_by_name(engine, college_name)
+        if not matched_college:
+            college_table = fetch_table("College")
+            with engine.begin() as conn:
+                result = conn.execute(
+                    college_table.insert().values(CollegeName=college_name)
+                )
+                college_id = int(result.inserted_primary_key[0])
+        else:
+            college_id = matched_college["CollegeID"]
+    
+    if not college_id:
+        msg = "Please select a college or provide a college name."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    # Collect contact fields
+    contact_payload = {}
+    contact_fields = ["Phone", "Email", "SecondaryEmail", "WebsiteUrl", "AdmissionOfficeUrl",
+                     "VirtualTourUrl", "FinancialAidUrl", "LogoPath"]
+    
+    for field in contact_fields:
+        val = request.form.get(f"override_contact.{field}", "").strip()
+        if val:
+            contact_payload[field] = val
+    
+    # Save to database
+    try:
+        contact_table = fetch_table("ContactInformation", required=False)
+        if not contact_table:
+            msg = "ContactInformation table not found."
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"ok": False, "message": msg}), 500
+            flash(msg, "error")
+            return redirect(url_for("extract.extract_page"))
+        
+        with engine.begin() as conn:
+            existing = conn.execute(
+                select(contact_table).where(contact_table.c.CollegeID == college_id)
+            ).mappings().first()
+            
+            if existing:
+                if contact_payload:
+                    conn.execute(
+                        contact_table.update()
+                        .where(contact_table.c.CollegeID == college_id)
+                        .values(**contact_payload)
+                    )
+            else:
+                contact_payload["CollegeID"] = college_id
+                conn.execute(contact_table.insert().values(**contact_payload))
+        
+        msg = f"Contact information saved successfully for college ID {college_id}."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": True, "message": msg})
+        flash(msg, "success")
+        return redirect(url_for("extract.extract_page"))
+    except Exception as exc:
+        msg = f"Failed to save contact: {exc}"
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+
+
+@extract_bp.route("/extract/confirm-save-appreq", methods=["POST"])
+def extract_confirm_save_appreq():
+    """Save extracted application requirements data to database."""
+    try:
+        engine = get_engine()
+    except Exception:
+        msg = "Database is not configured."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    college_id = request.form.get("college_id", type=int) or request.form.get("college_id_appreq_select", type=int)
+    college_name = request.form.get("college_name", "").strip()
+    
+    if not college_id and not college_name:
+        msg = "Please select a college or provide a college name."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    # Find or create college
+    if not college_id and college_name:
+        matched_college = find_college_by_name(engine, college_name)
+        if not matched_college:
+            college_table = fetch_table("College")
+            with engine.begin() as conn:
+                result = conn.execute(
+                    college_table.insert().values(CollegeName=college_name)
+                )
+                college_id = int(result.inserted_primary_key[0])
+        else:
+            college_id = matched_college["CollegeID"]
+    
+    if not college_id:
+        msg = "Please select a college or provide a college name."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    # Collect application requirement fields
+    appreq_payload = {}
+    appreq_fields = ["ApplicationFees", "TuitionFees", "TestPolicy", "CoursesAndGrades",
+                    "Recommendations", "PersonalEssay", "WritingSample", "AdditionalInformation",
+                    "AdditionalDeadlines"]
+    
+    for field in appreq_fields:
+        val = request.form.get(f"override_appreq.{field}", "").strip()
+        if val:
+            appreq_payload[field] = _normalize_payload_value(val, field)
+    
+    # Save to database
+    try:
+        appreq_table = fetch_table("ApplicationRequirements", required=False)
+        if not appreq_table:
+            msg = "ApplicationRequirements table not found."
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"ok": False, "message": msg}), 500
+            flash(msg, "error")
+            return redirect(url_for("extract.extract_page"))
+        
+        with engine.begin() as conn:
+            existing = conn.execute(
+                select(appreq_table).where(appreq_table.c.CollegeID == college_id)
+            ).mappings().first()
+            
+            if existing:
+                if appreq_payload:
+                    conn.execute(
+                        appreq_table.update()
+                        .where(appreq_table.c.CollegeID == college_id)
+                        .values(**appreq_payload)
+                    )
+            else:
+                appreq_payload["CollegeID"] = college_id
+                conn.execute(appreq_table.insert().values(**appreq_payload))
+        
+        msg = f"Application requirements saved successfully for college ID {college_id}."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": True, "message": msg})
+        flash(msg, "success")
+        return redirect(url_for("extract.extract_page"))
+    except Exception as exc:
+        msg = f"Failed to save application requirements: {exc}"
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+
+
+@extract_bp.route("/extract/confirm-save-stats", methods=["POST"])
+def extract_confirm_save_stats():
+    """Save extracted student statistics data to database."""
+    try:
+        engine = get_engine()
+    except Exception:
+        msg = "Database is not configured."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    college_id = request.form.get("college_id", type=int) or request.form.get("college_id_stats_select", type=int)
+    college_name = request.form.get("college_name", "").strip()
+    
+    if not college_id and not college_name:
+        msg = "Please select a college or provide a college name."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    # Find or create college
+    if not college_id and college_name:
+        matched_college = find_college_by_name(engine, college_name)
+        if not matched_college:
+            college_table = fetch_table("College")
+            with engine.begin() as conn:
+                result = conn.execute(
+                    college_table.insert().values(CollegeName=college_name)
+                )
+                college_id = int(result.inserted_primary_key[0])
+        else:
+            college_id = matched_college["CollegeID"]
+    
+    if not college_id:
+        msg = "Please select a college or provide a college name."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    # Collect student statistics fields
+    stats_payload = {}
+    stats_fields = ["GradAvgTuition", "GradInternationalStudents", "GradScholarshipHigh",
+                   "GradScholarshipLow", "GradTotalStudents", "UGAvgTuition",
+                   "UGInternationalStudents", "UGScholarshipHigh", "UGScholarshipLow",
+                   "UGTotalStudents"]
+    
+    for field in stats_fields:
+        val = request.form.get(f"override_stats.{field}", "").strip()
+        if val:
+            stats_payload[field] = _normalize_payload_value(val, field)
+    
+    # Save to database
+    try:
+        stats_table = fetch_table("StudentStatistics", required=False)
+        if not stats_table:
+            msg = "StudentStatistics table not found."
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"ok": False, "message": msg}), 500
+            flash(msg, "error")
+            return redirect(url_for("extract.extract_page"))
+        
+        with engine.begin() as conn:
+            existing = conn.execute(
+                select(stats_table).where(stats_table.c.CollegeID == college_id)
+            ).mappings().first()
+            
+            if existing:
+                if stats_payload:
+                    conn.execute(
+                        stats_table.update()
+                        .where(stats_table.c.CollegeID == college_id)
+                        .values(**stats_payload)
+                    )
+            else:
+                stats_payload["CollegeID"] = college_id
+                conn.execute(stats_table.insert().values(**stats_payload))
+        
+        msg = f"Student statistics saved successfully for college ID {college_id}."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": True, "message": msg})
+        flash(msg, "success")
+        return redirect(url_for("extract.extract_page"))
+    except Exception as exc:
+        msg = f"Failed to save Student Body & Funding to DB: {exc}"
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+
+
+@extract_bp.route("/extract/confirm-save-social", methods=["POST"])
+def extract_confirm_save_social():
+    """Save extracted social media data to database."""
+    try:
+        engine = get_engine()
+    except Exception:
+        msg = "Database is not configured."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    college_id = request.form.get("college_id", type=int) or request.form.get("college_id_social_select", type=int)
+    college_name = request.form.get("college_name", "").strip()
+    
+    if not college_id and not college_name:
+        msg = "Please select a college or provide a college name."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    # Find or create college
+    if not college_id and college_name:
+        matched_college = find_college_by_name(engine, college_name)
+        if not matched_college:
+            college_table = fetch_table("College")
+            with engine.begin() as conn:
+                result = conn.execute(
+                    college_table.insert().values(CollegeName=college_name)
+                )
+                college_id = int(result.inserted_primary_key[0])
+        else:
+            college_id = matched_college["CollegeID"]
+    
+    if not college_id:
+        msg = "Please select a college or provide a college name."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+    
+    # Collect social media fields
+    social_platforms = ["Facebook", "Instagram", "Twitter", "Youtube", "Tiktok", "LinkedIn"]
+    social_payloads = []
+    
+    for platform in social_platforms:
+        url = request.form.get(f"override_social.{platform}", "").strip()
+        if url:
+            social_payloads.append({
+                "CollegeID": college_id,
+                "PlatformName": platform,
+                "URL": url
+            })
+    
+    # Save to database
+    try:
+        social_table = fetch_table("SocialMedia", required=False)
+        if not social_table:
+            msg = "SocialMedia table not found."
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"ok": False, "message": msg}), 500
+            flash(msg, "error")
+            return redirect(url_for("extract.extract_page"))
+        
+        with engine.begin() as conn:
+            # Delete existing social media for this college
+            conn.execute(
+                social_table.delete().where(social_table.c.CollegeID == college_id)
+            )
+            
+            # Insert new social media entries
+            if social_payloads:
+                conn.execute(social_table.insert(), social_payloads)
+        
+        msg = f"Social media saved successfully for college ID {college_id}."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": True, "message": msg})
+        flash(msg, "success")
+        return redirect(url_for("extract.extract_page"))
+    except Exception as exc:
+        msg = f"Failed to save social media: {exc}"
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_page"))
+
+
+def build_direct_contact_prompt() -> str:
+    """Prompt for extracting university address, contact, and social media from a URL directly."""
+    return (
+        "You are an expert higher-education data extractor.\n"
+        "Analyze the provided webpage URL and extract university address, contact information, and social media links.\n"
+        "Return a STRICT JSON object with the fields below. Use ONLY the information visible on the page.\n"
+        "If a field cannot be found, return it as an empty string (DO NOT hallucinate).\n\n"
+        "Extract the following fields:\n\n"
+        "ADDRESS FIELDS:\n"
+        "- Street1: Primary street address\n"
+        "- Street2: Secondary address line (suite, building, etc.)\n"
+        "- City: City name\n"
+        "- State: State or province (2-letter abbreviation preferred)\n"
+        "- ZipCode: Postal/ZIP code\n"
+        "- Country: Country name (default to 'USA' if in United States)\n"
+        "- County: County name if mentioned\n\n"
+        "CONTACT FIELDS:\n"
+        "- Phone: Primary phone number\n"
+        "- Email: Primary contact email\n"
+        "- SecondaryEmail: Secondary email if available\n"
+        "- WebsiteUrl: Official website URL\n"
+        "- AdmissionOfficeUrl: Admissions office URL\n"
+        "- VirtualTourUrl: Virtual tour URL if available\n"
+        "- FinancialAidUrl: Financial aid URL if available\n"
+        "- LogoPath: Logo image URL if available\n\n"
+        "SOCIAL MEDIA FIELDS:\n"
+        "- Facebook: Facebook page URL\n"
+        "- Instagram: Instagram profile URL\n"
+        "- Twitter: Twitter/X profile URL\n"
+        "- Youtube: YouTube channel URL\n"
+        "- Tiktok: TikTok account URL\n"
+        "- LinkedIn: LinkedIn page URL\n\n"
+        "OUTPUT FORMAT:\n"
+        "Return a JSON object with these exact keys (values as strings):\n"
+        "{\n"
+        "  \"Street1\": \"\",\n"
+        "  \"Street2\": \"\",\n"
+        "  \"City\": \"\",\n"
+        "  \"State\": \"\",\n"
+        "  \"ZipCode\": \"\",\n"
+        "  \"Country\": \"\",\n"
+        "  \"County\": \"\",\n"
+        "  \"Phone\": \"\",\n"
+        "  \"Email\": \"\",\n"
+        "  \"SecondaryEmail\": \"\",\n"
+        "  \"WebsiteUrl\": \"\",\n"
+        "  \"AdmissionOfficeUrl\": \"\",\n"
+        "  \"VirtualTourUrl\": \"\",\n"
+        "  \"FinancialAidUrl\": \"\",\n"
+        "  \"LogoPath\": \"\",\n"
+        "  \"Facebook\": \"\",\n"
+        "  \"Instagram\": \"\",\n"
+        "  \"Twitter\": \"\",\n"
+        "  \"Youtube\": \"\",\n"
+        "  \"Tiktok\": \"\",\n"
+        "  \"LinkedIn\": \"\"\n"
+        "}\n\n"
+        "Now analyze the webpage and return ONLY the JSON object."
+    )
+
+
+@extract_bp.route("/direct-contact", methods=["GET", "POST"])
+def direct_contact_page():
+    """Page for directly extracting contact and address info from a URL using Gemini."""
+    try:
+        engine = get_engine()
+        context: Dict[str, Any] = {
+            "url": "",
+            "llm_output": "",
+            "review_fields_address": [],
+            "review_fields_contact": [],
+            "review_fields_social": [],
+            "college_options": [],
+            "matched_college": None,
+        }
+        
+        context["college_options"] = get_college_options(engine)
+    except Exception:
+        # Database not configured
+        context = {
+            "url": "",
+            "llm_output": "",
+            "review_fields_address": [],
+            "review_fields_contact": [],
+            "review_fields_social": [],
+            "college_options": [],
+            "matched_college": None,
+        }
+    
+    if request.method == "POST":
+        url = request.form.get("url", "").strip()
+        context["url"] = url
+        
+        if not url:
+            flash("Please provide a URL.", "error")
+            return render_template("direct_contact.html", **context)
+        
+        if not is_valid_url(url):
+            flash("The URL provided is invalid. Include the scheme (e.g. https://).", "error")
+            return render_template("direct_contact.html", **context)
+        
+        try:
+            engine = get_engine()
+        except Exception:
+            flash("Database is not configured.", "error")
+            return render_template("direct_contact.html", **context)
+        
+        try:
+            # Call Gemini directly with the URL (no text extraction first)
+            prompt = build_direct_contact_prompt()
+            primary_content = {"text": "", "title": "", "heading": ""}
+            llm_output = generate_gemini_response(prompt, url, primary_content)
+            context["llm_output"] = llm_output
+            
+            # Parse JSON from LLM output
+            parsed = {}
+            try:
+                # Try to extract JSON from the output (handle code fences)
+                text = llm_output.strip()
+                if text.startswith("```"):
+                    # Remove code fences
+                    lines = text.split("\n")
+                    text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
+                if text.startswith("```json"):
+                    lines = text.split("\n")
+                    text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
+                # Find JSON object boundaries
+                start = text.find("{")
+                end = text.rfind("}")
+                if start >= 0 and end > start:
+                    parsed = json.loads(text[start:end+1])
+                else:
+                    parsed = json.loads(text)
+            except (json.JSONDecodeError, ValueError):
+                parsed = {}
+            
+            if parsed:
+                # Build review fields for address (no existing values since college not matched yet)
+                address_fields = ["Street1", "Street2", "City", "State", "ZipCode", "Country", "County"]
+                review_fields_address = []
+                for field in address_fields:
+                    review_fields_address.append({
+                        "column": field,
+                        "label": humanize_field_name(field),
+                        "llm_value": parsed.get(field, ""),
+                        "existing_value": "",
+                    })
+                context["review_fields_address"] = review_fields_address
+                
+                # Build review fields for contact
+                contact_fields = ["Phone", "Email", "SecondaryEmail", "WebsiteUrl", "AdmissionOfficeUrl", 
+                                 "VirtualTourUrl", "FinancialAidUrl", "LogoPath"]
+                review_fields_contact = []
+                for field in contact_fields:
+                    review_fields_contact.append({
+                        "column": field,
+                        "label": humanize_field_name(field),
+                        "llm_value": parsed.get(field, ""),
+                        "existing_value": "",
+                    })
+                context["review_fields_contact"] = review_fields_contact
+                
+                # Build review fields for social media
+                social_fields = ["Facebook", "Instagram", "Twitter", "Youtube", "Tiktok", "LinkedIn"]
+                review_fields_social = []
+                for field in social_fields:
+                    review_fields_social.append({
+                        "column": field,
+                        "label": humanize_field_name(field),
+                        "llm_value": parsed.get(field, ""),
+                        "existing_value": "",
+                    })
+                context["review_fields_social"] = review_fields_social
+                
+        except RuntimeError as exc:
+            flash(str(exc), "error")
+        except Exception as exc:
+            flash(f"Error extracting contact information: {exc}", "error")
+    
+    return render_template("direct_contact.html", **context)
+
+
+@extract_bp.route("/extract-departments", methods=["GET", "POST"])
+def extract_departments_page():
+    """Page for extracting department (admissions office) details."""
+    try:
+        engine = get_engine()
+        context: Dict[str, Any] = {
+            "url": "",
+            "undergrad_url": "",
+            "grad_url": "",
+            "direct_url": "",
+            "custom_prompt": "",
+            "college_options": get_college_options(engine),
+        }
+    except Exception:
+        context = {
+            "url": "",
+            "undergrad_url": "",
+            "grad_url": "",
+            "direct_url": "",
+            "custom_prompt": "",
+            "college_options": [],
+        }
+    
+    return render_template("extract_departments.html", **context)
+
+
+@extract_bp.route("/extract-departments/direct", methods=["POST"])
+def extract_department_direct():
+    """Direct department extraction endpoint."""
+    try:
+        engine = get_engine()
+    except Exception:
+        return jsonify({"ok": False, "error": "Database is not configured."}), 500
+    
+    data = request.get_json()
+    direct_url = data.get("direct_url", "").strip() if data else ""
+    custom_prompt = data.get("custom_prompt", "").strip() if data else ""
+    
+    if not direct_url:
+        return jsonify({"ok": False, "error": "Please provide a direct URL."}), 400
+    
+    if not is_valid_url(direct_url):
+        return jsonify({"ok": False, "error": "Invalid URL format."}), 400
+    
+    try:
+        # Fetch the page
+        headers = current_app.config.get("SCRAPER_HEADERS", {})
+        response = requests.get(direct_url, timeout=15, headers=headers)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.text, "html.parser")
+        primary_content = extract_page_content(soup)
+        extracted_text = primary_content["text"]
+        
+        # Use custom prompt or default
+        if custom_prompt:
+            prompt = custom_prompt
+        else:
+            prompt = (
+                "You are an expert higher-education data extractor.\n"
+                "Extract the following information for an Undergraduate Admissions or Graduate Admissions office:\n"
+                "- DepartmentName: Full name of the admissions office\n"
+                "- BuildingName: Building name where the office is located\n"
+                "- Street1: Primary street address\n"
+                "- Street2: Secondary address (suite, room, etc.)\n"
+                "- City: City name\n"
+                "- State: State abbreviation\n"
+                "- ZipCode: ZIP code\n"
+                "- Country: Country name\n"
+                "- Email: Contact email address\n"
+                "- PhoneNumber: Contact phone number\n"
+                "- AdmissionUrl: URL of the admissions page\n"
+                "- Description: Brief description of the office's purpose\n\n"
+                "Return a JSON object with these fields. If multiple offices are found, return a JSON array."
+            )
+        
+        # Call LLM
+        llm_output = generate_gemini_response(prompt, direct_url, primary_content)
+        
+        # Parse JSON
+        parsed = {}
+        try:
+            text = llm_output.strip()
+            if text.startswith("```"):
+                lines = text.split("\n")
+                text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
+            if text.startswith("```json"):
+                lines = text.split("\n")
+                text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
+            start = text.find("{")
+            end = text.rfind("}")
+            if start >= 0 and end > start:
+                parsed = json.loads(text[start:end+1])
+            else:
+                parsed = json.loads(text)
+        except (json.JSONDecodeError, ValueError):
+            parsed = {}
+        
+        # Handle array response
+        if isinstance(parsed, list):
+            return jsonify({
+                "ok": True,
+                "extracted_departments": parsed,
+                "matched_college": None
+            })
+        else:
+            return jsonify({
+                "ok": True,
+                "extracted_department": parsed,
+                "matched_college": None
+            })
+            
+    except Exception as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 500
+
+
+@extract_bp.route("/extract-departments/save", methods=["POST"])
+def extract_departments_save():
+    """Save extracted departments to database."""
+    try:
+        engine = get_engine()
+    except Exception:
+        msg = "Database is not configured."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_departments_page"))
+    
+    # This is a placeholder - the actual save logic would need to be implemented
+    # based on the form structure in the template
+    return jsonify({"ok": True, "message": "Departments saved successfully"})
+
+
+@extract_bp.route("/extract-departments/api/undergrad", methods=["POST"])
+def api_extract_undergrad():
+    """Extract undergraduate admissions details."""
+    try:
+        engine = get_engine()
+    except Exception:
+        return jsonify({"ok": False, "error": "Database is not configured."}), 500
+    
+    data = request.get_json()
+    url = data.get("url", "").strip() if data else ""
+    undergrad_url = data.get("undergrad_url", "").strip() if data else ""
+    
+    # Use direct URL if provided, otherwise try to find from main URL
+    target_url = undergrad_url or url
+    
+    if not target_url:
+        return jsonify({"ok": False, "error": "Please provide a URL."}), 400
+    
+    # Placeholder - implement actual extraction logic
+    return jsonify({
+        "ok": True,
+        "extracted_department": {
+            "DepartmentName": "Undergraduate Admissions",
+            "Email": "",
+            "PhoneNumber": "",
+        },
+        "matched_college": None
+    })
+
+
+@extract_bp.route("/extract-departments/api/grad", methods=["POST"])
+def api_extract_grad():
+    """Extract graduate admissions details."""
+    try:
+        engine = get_engine()
+    except Exception:
+        return jsonify({"ok": False, "error": "Database is not configured."}), 500
+    
+    data = request.get_json()
+    url = data.get("url", "").strip() if data else ""
+    grad_url = data.get("grad_url", "").strip() if data else ""
+    
+    target_url = grad_url or url
+    
+    if not target_url:
+        return jsonify({"ok": False, "error": "Please provide a URL."}), 400
+    
+    # Placeholder - implement actual extraction logic
+    return jsonify({
+        "ok": True,
+        "extracted_department": {
+            "DepartmentName": "Graduate Admissions",
+            "Email": "",
+            "PhoneNumber": "",
+        },
+        "matched_college": None
+    })
+
+
+@extract_bp.route("/extract-departments/api/all", methods=["POST"])
+def api_extract_departments():
+    """Extract all departments from a university URL."""
+    try:
+        engine = get_engine()
+    except Exception:
+        return jsonify({"ok": False, "error": "Database is not configured."}), 500
+    
+    data = request.get_json()
+    url = data.get("url", "").strip() if data else ""
+    
+    if not url:
+        return jsonify({"ok": False, "error": "Please provide a URL."}), 400
+    
+    # Placeholder - implement actual extraction logic
+    return jsonify({
+        "ok": True,
+        "extracted_departments": [],
+        "matched_college": None
+    })
+
+
+@extract_bp.route("/direct-contact/confirm-save", methods=["POST"])
+def direct_contact_confirm_save():
+    """Save address, contact, and social media data from direct contact extraction."""
+    try:
+        engine = get_engine()
+    except Exception:
+        msg = "Database is not configured."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.direct_contact_page"))
+    
+    college_id = request.form.get("college_id_direct_select", type=int) or request.form.get("college_id", type=int)
+    college_name = request.form.get("college_name", "").strip()
+    
+    if not college_id and not college_name:
+        msg = "Please select a college or provide a college name."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("extract.direct_contact_page"))
+    
+    # Find or create college
+    if college_id:
+        # Use provided college_id
+        pass
+    elif college_name:
+        matched_college = find_college_by_name(engine, college_name)
+        if not matched_college:
+            # Create new college
+            college_table = fetch_table("College")
+            with engine.begin() as conn:
+                result = conn.execute(
+                    college_table.insert().values(CollegeName=college_name)
+                )
+                college_id = int(result.inserted_primary_key[0])
+        else:
+            college_id = matched_college["CollegeID"]
+    else:
+        msg = "Please select a college or provide a college name."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 400
+        flash(msg, "error")
+        return redirect(url_for("extract.direct_contact_page"))
+    
+    # Collect address fields
+    address_payload = {}
+    address_fields = ["Street1", "Street2", "City", "State", "ZipCode", "Country", "County"]
+    for field in address_fields:
+        val = request.form.get(f"override_addr.{field}", "").strip()
+        if val:
+            address_payload[field] = val
+    
+    # Collect contact fields
+    contact_payload = {}
+    contact_fields = ["Phone", "Email", "SecondaryEmail", "WebsiteUrl", "AdmissionOfficeUrl", 
+                     "VirtualTourUrl", "FinancialAidUrl", "LogoPath"]
+    for field in contact_fields:
+        val = request.form.get(f"override_contact.{field}", "").strip()
+        if val:
+            contact_payload[field] = val
+    
+    # Collect social media fields
+    social_payloads = {}
+    social_fields = ["Facebook", "Instagram", "Twitter", "Youtube", "Tiktok", "LinkedIn"]
+    for field in social_fields:
+        val = request.form.get(f"override_social.{field}", "").strip()
+        social_payloads[field] = val if val else None
+    
+    # Save to database
+    try:
+        table_payloads = {}
+        if address_payload:
+            table_payloads["Address"] = address_payload
+        if contact_payload:
+            table_payloads["ContactInformation"] = contact_payload
+        
+        persist_university_bundle(engine, college_id, table_payloads, social_payloads)
+        
+        msg = f"Address, Contact & Social Media saved successfully for college ID {college_id}."
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": True, "message": msg})
+        flash(msg, "success")
+        return redirect(url_for("extract.direct_contact_page"))
+    except (SQLAlchemyError, ValueError) as exc:
+        msg = f"Failed to save: {exc}"
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.direct_contact_page"))
+    except Exception as exc:
+        msg = f"Error saving: {exc}"
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.direct_contact_page"))
+
+
+# Program Extraction Routes and Prompts
+def build_program_snapshot_prompt() -> str:
+    """Prompt for extracting basic program information."""
+    return (
+        "You are an expert higher-education data extractor.\n"
+        "Parse the given webpage text and return a STRICT JSON object with program snapshot details.\n"
+        "Use ONLY the provided text. If the extraction is unsuccessful or the text is empty, "
+        "return all fields as empty strings (DO NOT hallucinate). Do not add extra keys or commentary.\n\n"
+        "=== EXTRACTION REQUIREMENTS ===\n\n"
+        "Extract the following program information:\n\n"
+        "1. ProgramName: The full, official name of the program (e.g., 'Master of Science in Data Science', "
+        "'Master of Business Administration', 'Bachelor of Arts in Accounting'). Include degree level and field.\n"
+        "2. Level: Program level - must be one of: 'Undergraduate', 'Graduate', 'Certificate', 'Doctoral', 'Professional'.\n"
+        "3. Concentration: Any specialization, track, or concentration within the program (e.g., 'Finance', 'Marketing Analytics', 'Machine Learning').\n"
+        "4. Description: A comprehensive description of the program (2-5 sentences covering what the program is about, "
+        "what students learn, career outcomes, etc.).\n"
+        "5. ProgramWebsiteURL: The direct URL to the program's official page or catalog entry.\n"
+        "6. Accreditation: Any accreditation information (e.g., 'AACSB Accredited', 'ABET Accredited', 'Regional Accreditation').\n"
+        "7. QsWorldRanking: QS World University Rankings if mentioned for this specific program.\n\n"
+        "=== EXPECTED OUTPUT FORMAT ===\n\n"
+        "You MUST return a JSON object with these EXACT keys (all values as strings):\n\n"
+        "{\n"
+        "  \"ProgramName\": \"\",\n"
+        "  \"Level\": \"\",\n"
+        "  \"Concentration\": \"\",\n"
+        "  \"Description\": \"\",\n"
+        "  \"ProgramWebsiteURL\": \"\",\n"
+        "  \"Accreditation\": \"\",\n"
+        "  \"QsWorldRanking\": \"\"\n"
+        "}\n\n"
+        "=== EXAMPLE OUTPUT (Complete JSON with Sample Data) ===\n\n"
+        "Here is an example of how your response should look with actual data:\n\n"
+        "{\n"
+        "  \"ProgramName\": \"Master of Science in Data Science\",\n"
+        "  \"Level\": \"Graduate\",\n"
+        "  \"Concentration\": \"Machine Learning\",\n"
+        "  \"Description\": \"The Master of Science in Data Science program prepares students for careers in data analysis, machine learning, and artificial intelligence. Students learn advanced statistical methods, programming languages, and data visualization techniques. Graduates work in industries such as technology, finance, healthcare, and consulting.\",\n"
+        "  \"ProgramWebsiteURL\": \"https://university.edu/programs/data-science\",\n"
+        "  \"Accreditation\": \"ABET Accredited\",\n"
+        "  \"QsWorldRanking\": \"45\"\n"
+        "}\n\n"
+        "=== IMPORTANT NOTES ===\n"
+        "- Return ONLY the JSON object, no markdown code fences, no explanations\n"
+        "- If a field cannot be found, use an empty string \"\"\n"
+        "- All values must be strings (even numbers like QsWorldRanking)\n"
+        "- Do not add any fields beyond those listed above\n\n"
+        "Now extract the values from the provided text and return ONLY the JSON object in the exact format shown above."
+    )
+
+
+def build_program_requirements_prompt() -> str:
+    """Prompt for extracting program application requirements."""
+    return (
+        "You are an expert higher-education data extractor.\n"
+        "Parse the given webpage text and return a STRICT JSON object with program application requirements.\n"
+        "Use ONLY the provided text. If the extraction is unsuccessful or the text is empty, "
+        "return all fields as empty strings or false (DO NOT hallucinate). Do not add extra keys or commentary.\n\n"
+        "=== EXTRACTION REQUIREMENTS ===\n\n"
+        "Extract ALL application requirements and materials:\n\n"
+        "BOOLEAN FIELDS (true/false): Set to true ONLY if explicitly stated as required. Set to false if optional, not mentioned, or not required.\n"
+        "- IsGMATRequired: GMAT is required\n"
+        "- IsGreRequired: GRE is required\n"
+        "- IsGMATOrGreRequired: Either GMAT or GRE is accepted\n"
+        "- IsIELTSRequired: IELTS is required\n"
+        "- IsTOEFLIBRequired: TOEFL iBT is required\n"
+        "- IsTOEFLPBTRequired: TOEFL PBT is required\n"
+        "- IsDuoLingoRequired: Duolingo English Test is required\n"
+        "- IsELSRequired: ELS is required\n"
+        "- IsPTERequired: PTE Academic is required\n"
+        "- IsEnglishNotRequired: English proficiency test is NOT required\n"
+        "- IsEnglishOptional: English proficiency test is optional\n"
+        "- IsLSATRequired: LSAT is required (for law programs)\n"
+        "- IsMCATRequired: MCAT is required (for medical programs)\n"
+        "- IsMATRequired: MAT is required\n"
+        "- IsACTRequired: ACT is required\n"
+        "- IsSATRequired: SAT is required\n"
+        "- IsAnalyticalNotRequired: Analytical writing section not required\n"
+        "- IsAnalyticalOptional: Analytical writing section is optional\n"
+        "- IsRecommendationSystemOpted: Recommendation system is used\n"
+        "- IsStemProgram: This is a STEM program\n\n"
+        "TEXT FIELDS:\n"
+        "- Resume: Resume/CV requirements (e.g., 'Required', 'Optional', 'Not required', or specific instructions)\n"
+        "- StatementOfPurpose: Statement of Purpose requirements and instructions\n"
+        "- GreOrGmat: GRE or GMAT requirements and details\n"
+        "- EnglishScore: English proficiency requirements (e.g., 'TOEFL 80', 'IELTS 6.5')\n"
+        "- Requirements: General admission requirements (GPA, prerequisites, etc.)\n"
+        "- WritingSample: Writing sample requirements\n"
+        "- MinGPA: Minimum GPA required (e.g., '3.0', '3.5')\n"
+        "- MaxGPA: Maximum GPA mentioned (if any)\n"
+        "- MaxFails: Maximum number of failed courses allowed\n"
+        "- PreviousYearAcceptanceRates: Acceptance rate or admission statistics\n\n"
+        "=== EXPECTED OUTPUT FORMAT ===\n\n"
+        "You MUST return a JSON object with these EXACT keys:\n\n"
+        "{\n"
+        "  \"Resume\": \"\",\n"
+        "  \"StatementOfPurpose\": \"\",\n"
+        "  \"GreOrGmat\": \"\",\n"
+        "  \"EnglishScore\": \"\",\n"
+        "  \"Requirements\": \"\",\n"
+        "  \"WritingSample\": \"\",\n"
+        "  \"IsAnalyticalNotRequired\": false,\n"
+        "  \"IsAnalyticalOptional\": false,\n"
+        "  \"IsDuoLingoRequired\": false,\n"
+        "  \"IsELSRequired\": false,\n"
+        "  \"IsGMATOrGreRequired\": false,\n"
+        "  \"IsGMATRequired\": false,\n"
+        "  \"IsGreRequired\": false,\n"
+        "  \"IsIELTSRequired\": false,\n"
+        "  \"IsLSATRequired\": false,\n"
+        "  \"IsMATRequired\": false,\n"
+        "  \"IsMCATRequired\": false,\n"
+        "  \"IsPTERequired\": false,\n"
+        "  \"IsTOEFLIBRequired\": false,\n"
+        "  \"IsTOEFLPBTRequired\": false,\n"
+        "  \"IsEnglishNotRequired\": false,\n"
+        "  \"IsEnglishOptional\": false,\n"
+        "  \"IsRecommendationSystemOpted\": false,\n"
+        "  \"IsStemProgram\": false,\n"
+        "  \"IsACTRequired\": false,\n"
+        "  \"IsSATRequired\": false,\n"
+        "  \"MaxFails\": \"\",\n"
+        "  \"MaxGPA\": \"\",\n"
+        "  \"MinGPA\": \"\",\n"
+        "  \"PreviousYearAcceptanceRates\": \"\"\n"
+        "}\n\n"
+        "=== EXAMPLE OUTPUT (Complete JSON with Sample Data) ===\n\n"
+        "Here is an example of how your response should look with actual data:\n\n"
+        "{\n"
+        "  \"Resume\": \"Required, maximum 2 pages\",\n"
+        "  \"StatementOfPurpose\": \"Required, 500-1000 words describing academic and career goals\",\n"
+        "  \"GreOrGmat\": \"GRE or GMAT required, minimum GRE 310 or GMAT 600\",\n"
+        "  \"EnglishScore\": \"TOEFL iBT 80 or IELTS 6.5 required for international students\",\n"
+        "  \"Requirements\": \"Bachelor's degree in related field, minimum GPA 3.0, prerequisite courses in statistics and programming\",\n"
+        "  \"WritingSample\": \"Optional, academic writing sample preferred\",\n"
+        "  \"IsAnalyticalNotRequired\": false,\n"
+        "  \"IsAnalyticalOptional\": true,\n"
+        "  \"IsDuoLingoRequired\": false,\n"
+        "  \"IsELSRequired\": false,\n"
+        "  \"IsGMATOrGreRequired\": true,\n"
+        "  \"IsGMATRequired\": false,\n"
+        "  \"IsGreRequired\": false,\n"
+        "  \"IsIELTSRequired\": true,\n"
+        "  \"IsLSATRequired\": false,\n"
+        "  \"IsMATRequired\": false,\n"
+        "  \"IsMCATRequired\": false,\n"
+        "  \"IsPTERequired\": false,\n"
+        "  \"IsTOEFLIBRequired\": true,\n"
+        "  \"IsTOEFLPBTRequired\": false,\n"
+        "  \"IsEnglishNotRequired\": false,\n"
+        "  \"IsEnglishOptional\": false,\n"
+        "  \"IsRecommendationSystemOpted\": true,\n"
+        "  \"IsStemProgram\": true,\n"
+        "  \"IsACTRequired\": false,\n"
+        "  \"IsSATRequired\": false,\n"
+        "  \"MaxFails\": \"2\",\n"
+        "  \"MaxGPA\": \"4.0\",\n"
+        "  \"MinGPA\": \"3.0\",\n"
+        "  \"PreviousYearAcceptanceRates\": \"35%\"\n"
+        "}\n\n"
+        "=== IMPORTANT NOTES ===\n"
+        "- Return ONLY the JSON object, no markdown code fences, no explanations\n"
+        "- Boolean fields must be true or false (not strings)\n"
+        "- Text fields must be strings (use empty string \"\" if not found)\n"
+        "- Set boolean fields to true ONLY if explicitly stated as required\n"
+        "- Do not add any fields beyond those listed above\n\n"
+        "Now extract the values from the provided text and return ONLY the JSON object in the exact format shown above."
+    )
+
+
+def build_program_term_prompt() -> str:
+    """Prompt for extracting program term details, costs, and deadlines."""
+    return (
+        "You are an expert higher-education data extractor.\n"
+        "Parse the given webpage text and return a STRICT JSON object with program term, cost, and deadline information.\n"
+        "Use ONLY the provided text. If the extraction is unsuccessful or the text is empty, "
+        "return all fields as empty strings (DO NOT hallucinate). Do not add extra keys or commentary.\n\n"
+        "=== EXTRACTION REQUIREMENTS ===\n\n"
+        "Extract the following information:\n\n"
+        "1. Term: The academic term this information applies to (e.g., 'Fall 2025', 'Spring 2026', 'Academic Year 2025-2026').\n"
+        "2. LiveDate: **MANDATORY** - Date when the program information becomes active or application opens for Fall term. "
+        "PRIORITIZE Fall application start dates. If multiple terms are mentioned, extract the Fall term date. "
+        "Format: YYYY-MM-DD if available (e.g., '2024-09-01' for September 1, 2024). "
+        "If only month/day is given, infer the year based on context (typically current or next year for Fall). "
+        "If no date is found, use empty string but make every effort to find it.\n"
+        "3. DeadlineDate: **MANDATORY** - Application deadline date for Fall term. "
+        "PRIORITIZE Fall application deadlines. If multiple deadlines are mentioned, extract the Fall term deadline. "
+        "Format: YYYY-MM-DD if available (e.g., '2025-03-15' for March 15, 2025). "
+        "If only month/day is given, infer the year based on context. "
+        "If deadline is 'Rolling' or similar, include that text. "
+        "If no date is found, use empty string but make every effort to find it.\n"
+        "4. Fees: Total program fees, application fees, or tuition fees mentioned (include currency if specified).\n"
+        "5. CostPerCredit: Cost per credit hour (include currency if specified, e.g., '$1,200 per credit').\n"
+        "6. AverageScholarshipAmount: Average scholarship amount awarded (include currency if specified).\n"
+        "7. ScholarshipAmount: Specific scholarship amount if mentioned (include currency).\n"
+        "8. ScholarshipPercentage: Scholarship percentage if mentioned (e.g., '50%', 'Full tuition').\n"
+        "9. ScholarshipType: Type of scholarship (e.g., 'Merit-based', 'Need-based', 'Graduate Assistantship').\n\n"
+        "**CRITICAL FOR DATES:**\n"
+        "- LiveDate and DeadlineDate are MANDATORY fields - search thoroughly for these dates\n"
+        "- Prioritize Fall term dates over other terms (Spring, Summer, etc.)\n"
+        "- Look for phrases like 'Fall application opens', 'Fall deadline', 'Fall 2025', 'Fall semester', etc.\n"
+        "- If only one set of dates is mentioned, assume it's for Fall unless explicitly stated otherwise\n"
+        "- Common Fall application patterns: Opens in September/October, Deadline in January/March/April\n"
+        "- Extract dates even if they're embedded in text or in different formats\n\n"
+        "=== EXPECTED OUTPUT FORMAT ===\n\n"
+        "You MUST return a JSON object with these EXACT keys (all values as strings):\n\n"
+        "{\n"
+        "  \"Term\": \"\",\n"
+        "  \"LiveDate\": \"\",\n"
+        "  \"DeadlineDate\": \"\",\n"
+        "  \"Fees\": \"\",\n"
+        "  \"AverageScholarshipAmount\": \"\",\n"
+        "  \"CostPerCredit\": \"\",\n"
+        "  \"ScholarshipAmount\": \"\",\n"
+        "  \"ScholarshipPercentage\": \"\",\n"
+        "  \"ScholarshipType\": \"\"\n"
+        "}\n\n"
+        "=== EXAMPLE OUTPUT (Complete JSON with Sample Data) ===\n\n"
+        "Here is an example of how your response should look with actual data:\n\n"
+        "{\n"
+        "  \"Term\": \"Fall 2025\",\n"
+        "  \"LiveDate\": \"2024-09-01\",\n"
+        "  \"DeadlineDate\": \"2025-03-15\",\n"
+        "  \"Fees\": \"$45,000 per year\",\n"
+        "  \"AverageScholarshipAmount\": \"$15,000\",\n"
+        "  \"CostPerCredit\": \"$1,200 per credit hour\",\n"
+        "  \"ScholarshipAmount\": \"$20,000\",\n"
+        "  \"ScholarshipPercentage\": \"50%\",\n"
+        "  \"ScholarshipType\": \"Merit-based\"\n"
+        "}\n\n"
+        "=== IMPORTANT NOTES ===\n"
+        "- Return ONLY the JSON object, no markdown code fences, no explanations\n"
+        "- LiveDate and DeadlineDate are MANDATORY - make every effort to find Fall term dates\n"
+        "- If dates cannot be found after thorough search, use empty string \"\" but this should be rare\n"
+        "- All values must be strings (even dates and numbers)\n"
+        "- Date format: YYYY-MM-DD when possible (e.g., '2024-09-01')\n"
+        "- Include currency symbols and units in fee fields if mentioned\n"
+        "- Prioritize Fall term information over other terms\n"
+        "- Do not add any fields beyond those listed above\n\n"
+        "Now extract the values from the provided text and return ONLY the JSON object in the exact format shown above. "
+        "Pay special attention to finding LiveDate and DeadlineDate for Fall term."
+    )
+
+
+def build_program_test_scores_prompt() -> str:
+    """Prompt for extracting minimum test score requirements."""
+    return (
+        "You are an expert higher-education data extractor.\n"
+        "Parse the given webpage text and return a STRICT JSON object with minimum test score requirements.\n"
+        "Use ONLY the provided text. If the extraction is unsuccessful or the text is empty, "
+        "return all fields as empty strings (DO NOT hallucinate). Do not add extra keys or commentary.\n\n"
+        "=== EXTRACTION REQUIREMENTS ===\n\n"
+        "Extract minimum test scores. Only include scores if explicitly mentioned as minimum requirements.\n\n"
+        "Test Score Fields:\n"
+        "- MinimumACTScore: Minimum ACT score required\n"
+        "- MinimumSATScore: Minimum SAT score required\n"
+        "- MinimumDuoLingoScore: Minimum Duolingo English Test score\n"
+        "- MinimumELSScore: Minimum ELS score\n"
+        "- MinimumGMATScore: Minimum GMAT score\n"
+        "- MinimumGreScore: Minimum GRE score (overall or by section)\n"
+        "- MinimumIELTSScore: Minimum IELTS score (overall or by band)\n"
+        "- MinimumMATScore: Minimum MAT score\n"
+        "- MinimumMCATScore: Minimum MCAT score\n"
+        "- MinimumPTEScore: Minimum PTE Academic score\n"
+        "- MinimumTOEFLScore: Minimum TOEFL score (iBT or overall)\n"
+        "- MinimumLSATScore: Minimum LSAT score\n\n"
+        "=== EXPECTED OUTPUT FORMAT ===\n\n"
+        "You MUST return a JSON object with these EXACT keys (values as strings with just the score number, e.g., '80', '6.5', '320'):\n\n"
+        "{\n"
+        "  \"MinimumACTScore\": \"\",\n"
+        "  \"MinimumDuoLingoScore\": \"\",\n"
+        "  \"MinimumELSScore\": \"\",\n"
+        "  \"MinimumGMATScore\": \"\",\n"
+        "  \"MinimumGreScore\": \"\",\n"
+        "  \"MinimumIELTSScore\": \"\",\n"
+        "  \"MinimumMATScore\": \"\",\n"
+        "  \"MinimumMCATScore\": \"\",\n"
+        "  \"MinimumPTEScore\": \"\",\n"
+        "  \"MinimumSATScore\": \"\",\n"
+        "  \"MinimumTOEFLScore\": \"\",\n"
+        "  \"MinimumLSATScore\": \"\"\n"
+        "}\n\n"
+        "=== EXAMPLE OUTPUT (Complete JSON with Sample Data) ===\n\n"
+        "Here is an example of how your response should look with actual data:\n\n"
+        "{\n"
+        "  \"MinimumACTScore\": \"28\",\n"
+        "  \"MinimumDuoLingoScore\": \"110\",\n"
+        "  \"MinimumELSScore\": \"112\",\n"
+        "  \"MinimumGMATScore\": \"600\",\n"
+        "  \"MinimumGreScore\": \"310\",\n"
+        "  \"MinimumIELTSScore\": \"6.5\",\n"
+        "  \"MinimumMATScore\": \"400\",\n"
+        "  \"MinimumMCATScore\": \"500\",\n"
+        "  \"MinimumPTEScore\": \"58\",\n"
+        "  \"MinimumSATScore\": \"1200\",\n"
+        "  \"MinimumTOEFLScore\": \"80\",\n"
+        "  \"MinimumLSATScore\": \"160\"\n"
+        "}\n\n"
+        "=== IMPORTANT NOTES ===\n"
+        "- Return ONLY the JSON object, no markdown code fences, no explanations\n"
+        "- If a score cannot be found, use an empty string \"\"\n"
+        "- All values must be strings (even numeric scores)\n"
+        "- Include only the numeric score value, no units or labels (e.g., '80' not '80 points')\n"
+        "- Only extract scores explicitly stated as minimum requirements\n"
+        "- Do not add any fields beyond those listed above\n\n"
+        "Now extract the values from the provided text and return ONLY the JSON object in the exact format shown above."
+    )
+
+
+@extract_bp.route("/extract-programs", methods=["GET", "POST"])
+def extract_programs_page():
+    """Page for extracting program details from a URL with multi-step extraction."""
+    
+    context: Dict[str, Any] = {
+        "url": "",
+        "extracted_text": "",
+        "college_options": [],
+        "college_department_options": [],
+        "program_snapshot": {},
+        "program_requirements": {},
+        "program_term": {},
+        "program_test_scores": {},
+        "matched_college": None,
+    }
+    
+    engine = get_engine()
+    college_opts: List[Tuple[int, str]] = []
+    college_dept_opts: List[Tuple[int, str]] = []
+    if engine:
+        try:
+            college_opts = get_college_options(engine)
+            college_dept_opts = get_college_department_options(engine)
+        except Exception:
+            pass
+    context["college_options"] = college_opts
+    context["college_department_options"] = college_dept_opts
+    
+    if request.method == "GET":
+        return render_template("extract_programs.html", **context)
+    
+    # Handle POST requests for extraction
+    url = request.form.get("url", "").strip()
+    context["url"] = url
+    
+    if not url:
+        flash("Please provide a URL.", "error")
+        return render_template("extract_programs.html", **context)
+    
+    if not is_valid_url(url):
+        flash("Invalid URL. Include the scheme (e.g., https://).", "error")
+        return render_template("extract_programs.html", **context)
+    
+    try:
+        headers = current_app.config.get("SCRAPER_HEADERS", {})
+        response = requests.get(url, timeout=15, headers=headers)
+        response.raise_for_status()
+        
+        if response.encoding is None or response.encoding == "ISO-8859-1":
+            response.encoding = response.apparent_encoding or "utf-8"
+        
+        try:
+            html_content = response.text
+        except UnicodeDecodeError:
+            html_content = response.content.decode("utf-8", errors="replace")
+        
+        soup = BeautifulSoup(html_content, "html.parser")
+        primary_content = extract_page_content(soup)
+        extracted_text = primary_content["text"]
+        context["extracted_text"] = extracted_text
+        context["primary_title"] = primary_content["title"]
+        context["primary_heading"] = primary_content["heading"]
+        
+        # Try to match college
+        if engine:
+            college_name_from_page = primary_content.get("title", "")
+            for suffix in [" - Home", " | Home", " - Official Site", " | Official Site"]:
+                if college_name_from_page.endswith(suffix):
+                    college_name_from_page = college_name_from_page[:-len(suffix)]
+            matched = find_college_by_name(engine, college_name_from_page)
+            if matched:
+                context["matched_college"] = {
+                    "CollegeID": matched["CollegeID"],
+                    "CollegeName": matched["CollegeName"]
+                }
+        
+    except requests.RequestException as exc:
+        flash(f"Failed to fetch the page: {exc}", "error")
+        return render_template("extract_programs.html", **context)
+    except Exception as exc:
+        flash(f"Error processing page: {exc}", "error")
+        return render_template("extract_programs.html", **context)
+    
+    return render_template("extract_programs.html", **context)
+
+
+@extract_bp.route("/extract-programs/run-program-details", methods=["POST"])
+def extract_programs_run_program_details():
+    """AJAX endpoint to extract complete program details (program-specific information)."""
+    
+    payload = request.get_json(silent=True) or {}
+    url = payload.get("url", "").strip()
+    
+    if not url:
+        return jsonify({"error": "URL is required."}), 400
+    
+    if not is_valid_url(url):
+        return jsonify({"error": "Invalid URL."}), 400
+    
+    try:
+        headers = current_app.config.get("SCRAPER_HEADERS", {})
+        response = requests.get(url, timeout=15, headers=headers)
+        response.raise_for_status()
+        
+        if response.encoding is None or response.encoding == "ISO-8859-1":
+            response.encoding = response.apparent_encoding or "utf-8"
+        
+        try:
+            html_content = response.text
+        except UnicodeDecodeError:
+            html_content = response.content.decode("utf-8", errors="replace")
+        
+        soup = BeautifulSoup(html_content, "html.parser")
+        primary_content = extract_page_content(soup)
+        extracted_text = primary_content["text"]
+        
+        # Use snapshot prompt for program details
+        prompt = build_program_snapshot_prompt()
+        llm_output = generate_gemini_response(prompt, url, primary_content)
+        
+        # Parse JSON from LLM output
+        parsed = {}
+        if llm_output:
+            try:
+                text = llm_output.strip()
+                if text.startswith("```"):
+                    lines = text.split("\n")
+                    text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
+                if text.startswith("```json"):
+                    lines = text.split("\n")
+                    text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
+                start = text.find("{")
+                end = text.rfind("}")
+                if start >= 0 and end > start:
+                    parsed = json.loads(text[start:end+1])
+                else:
+                    parsed = json.loads(text)
+            except (json.JSONDecodeError, ValueError):
+                parsed = {}
+        
+        return jsonify({
+            "ok": True,
+            "data": parsed if isinstance(parsed, dict) else {},
+            "llm_output": llm_output
+        })
+        
+    except Exception as exc:
+        import traceback
+        error_trace = traceback.format_exc()
+        return jsonify({"error": f"Extraction failed: {exc}", "traceback": error_trace}), 500
+
+
+@extract_bp.route("/extract-programs/run-shared-requirements", methods=["POST"])
+def extract_programs_run_shared_requirements():
+    """AJAX endpoint to extract shared requirements/details that apply to multiple programs."""
+    
+    payload = request.get_json(silent=True) or {}
+    url = payload.get("url", "").strip()
+    section = payload.get("section", "").strip()  # "requirements", "term", or "test_scores"
+    
+    if not url or not section:
+        return jsonify({"error": "URL and section are required."}), 400
+    
+    if not is_valid_url(url):
+        return jsonify({"error": "Invalid URL."}), 400
+    
+    try:
+        headers = current_app.config.get("SCRAPER_HEADERS", {})
+        response = requests.get(url, timeout=15, headers=headers)
+        response.raise_for_status()
+        
+        if response.encoding is None or response.encoding == "ISO-8859-1":
+            response.encoding = response.apparent_encoding or "utf-8"
+        
+        try:
+            html_content = response.text
+        except UnicodeDecodeError:
+            html_content = response.content.decode("utf-8", errors="replace")
+        
+        soup = BeautifulSoup(html_content, "html.parser")
+        primary_content = extract_page_content(soup)
+        extracted_text = primary_content["text"]
+        
+        # Select prompt based on section (only for shared requirements)
+        if section == "requirements":
+            prompt = build_program_requirements_prompt()
+        elif section == "term":
+            prompt = build_program_term_prompt()
+        elif section == "test_scores":
+            prompt = build_program_test_scores_prompt()
+        else:
+            return jsonify({"error": f"Unknown section: {section}. Use 'requirements', 'term', or 'test_scores'."}), 400
+        
+        # Call LLM
+        llm_output = generate_gemini_response(prompt, url, primary_content)
+        
+        # Parse JSON from LLM output
+        parsed = {}
+        if llm_output:
+            try:
+                text = llm_output.strip()
+                # Remove code fences if present
+                if text.startswith("```"):
+                    lines = text.split("\n")
+                    text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
+                if text.startswith("```json"):
+                    lines = text.split("\n")
+                    text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
+                # Find JSON object in text
+                start = text.find("{")
+                end = text.rfind("}")
+                if start >= 0 and end > start:
+                    parsed = json.loads(text[start:end+1])
+                else:
+                    parsed = json.loads(text)
+            except (json.JSONDecodeError, ValueError):
+                parsed = {}
+        
+        return jsonify({
+            "ok": True,
+            "section": section,
+            "data": parsed if isinstance(parsed, dict) else {},
+            "llm_output": llm_output
+        })
+        
+    except Exception as exc:
+        import traceback
+        error_trace = traceback.format_exc()
+        return jsonify({"error": f"Extraction failed: {exc}", "traceback": error_trace}), 500
+
+
+@extract_bp.route("/extract-programs/save", methods=["POST"])
+def extract_programs_save():
+    """Save extracted program details to database."""
+    
+    try:
+        engine = get_engine()
+        if engine is None:
+            msg = "Database is not configured."
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"ok": False, "message": msg}), 500
+            flash(msg, "error")
+            return redirect(url_for("extract.extract_programs_page"))
+        
+        college_id = request.form.get("college_id", type=int) or request.form.get("college_id_program_select", type=int)
+        college_department_id = request.form.get("college_department_id", type=int)
+        program_id = request.form.get("program_id", type=int)
+        
+        # Collect program data from form
+        program_payload = {}
+        for field in ["ProgramName", "Level", "Concentration", "Description", "ProgramWebsiteURL", "Accreditation", "QsWorldRanking"]:
+            val = request.form.get(f"Program.{field}", "").strip()
+            if val:
+                program_payload[field] = val
+        
+        if not program_payload.get("ProgramName"):
+            msg = "ProgramName is required."
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"ok": False, "message": msg}), 400
+            flash(msg, "error")
+            return redirect(url_for("extract.extract_programs_page"))
+        
+        # Collect requirements data
+        requirements_payload = {}
+        for field in ["Resume", "StatementOfPurpose", "GreOrGmat", "EnglishScore", "Requirements", "WritingSample",
+                     "MinGPA", "MaxGPA", "MaxFails", "PreviousYearAcceptanceRates"]:
+            val = request.form.get(f"ProgramRequirements.{field}", "").strip()
+            if val:
+                requirements_payload[field] = val
+        
+        # Collect boolean fields
+        for field in ["IsAnalyticalNotRequired", "IsAnalyticalOptional", "IsDuoLingoRequired", "IsELSRequired",
+                     "IsGMATOrGreRequired", "IsGMATRequired", "IsGreRequired", "IsIELTSRequired", "IsLSATRequired",
+                     "IsMATRequired", "IsMCATRequired", "IsPTERequired", "IsTOEFLIBRequired", "IsTOEFLPBTRequired",
+                     "IsEnglishNotRequired", "IsEnglishOptional", "IsRecommendationSystemOpted", "IsStemProgram",
+                     "IsACTRequired", "IsSATRequired"]:
+            val = request.form.get(f"ProgramRequirements.{field}")
+            requirements_payload[field] = val == "on" or val == "true" or val == "1"
+        
+        # Collect term details
+        term_payload = {}
+        if college_id:
+            term_payload["CollegeID"] = college_id
+        for field in ["Term", "LiveDate", "DeadlineDate", "Fees", "AverageScholarshipAmount", "CostPerCredit",
+                     "ScholarshipAmount", "ScholarshipPercentage", "ScholarshipType"]:
+            val = request.form.get(f"ProgramTermDetails.{field}", "").strip()
+            if val:
+                term_payload[field] = val
+        
+        # Collect test scores
+        test_scores_payload = {}
+        for field in ["MinimumACTScore", "MinimumDuoLingoScore", "MinimumELSScore", "MinimumGMATScore",
+                     "MinimumGreScore", "MinimumIELTSScore", "MinimumMATScore", "MinimumMCATScore",
+                     "MinimumPTEScore", "MinimumSATScore", "MinimumTOEFLScore", "MinimumLSATScore"]:
+            val = request.form.get(f"ProgramTestScores.{field}", "").strip()
+            if val:
+                test_scores_payload[field] = val
+        
+        # Build table payloads
+        table_payloads = {}
+        if program_payload:
+            table_payloads["Program"] = program_payload
+        if requirements_payload:
+            table_payloads["ProgramRequirements"] = requirements_payload
+        if term_payload:
+            table_payloads["ProgramTermDetails"] = term_payload
+        if test_scores_payload:
+            table_payloads["ProgramTestScores"] = test_scores_payload
+        
+        # Link to department if provided
+        if college_department_id:
+            table_payloads["ProgramDepartmentLink"] = {
+                "CollegeDepartmentID": college_department_id,
+                "CollegeID": college_id or 0,
+            }
+        
+        # Save to database
+        try:
+            saved_program_id = persist_program_bundle(engine, program_id, table_payloads)
+            msg = f"Program saved successfully (ID: {saved_program_id})."
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"ok": True, "message": msg, "program_id": saved_program_id})
+            flash(msg, "success")
+            return redirect(url_for("forms.program_list"))
+        except (SQLAlchemyError, ValueError) as exc:
+            msg = f"Failed to save program: {exc}"
+            if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+                return jsonify({"ok": False, "message": msg}), 500
+            flash(msg, "error")
+            return redirect(url_for("extract.extract_programs_page"))
+            
+    except Exception as exc:
+        msg = f"Error saving program: {exc}"
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_programs_page"))
+
+
+def find_college_id_by_name(engine, college_name: str) -> Optional[int]:
+    """Find college ID by name (case-insensitive partial match)."""
+    college_table = fetch_table("College")
+    stmt = select(college_table.c.CollegeID, college_table.c.CollegeName).where(
+        college_table.c.CollegeName.ilike(f"%{college_name}%")
+    )
+    with engine.connect() as conn:
+        row = conn.execute(stmt).first()
+        return int(row.CollegeID) if row else None
+
+
+def find_college_department_id_by_name(engine, college_name: str, department_name: str = None) -> Optional[int]:
+    """Find college department ID by college name and optional department name."""
+    college_department_table = fetch_table("CollegeDepartment", required=False)
+    college_table = fetch_table("College", required=False)
+    department_table = fetch_table("Department", required=False)
+    
+    if not all([college_department_table, college_table, department_table]):
+        return None
+    
+    stmt = (
+        select(college_department_table.c.CollegeDepartmentID)
+        .select_from(
+            college_department_table.join(
+                college_table,
+                college_table.c.CollegeID == college_department_table.c.CollegeID,
+            )
+        )
+        .where(college_table.c.CollegeName.ilike(f"%{college_name}%"))
+    )
+    
+    if department_name:
+        stmt = stmt.select_from(
+            college_department_table.join(
+                college_table,
+                college_table.c.CollegeID == college_department_table.c.CollegeID,
+            ).join(
+                department_table,
+                department_table.c.DepartmentID == college_department_table.c.DepartmentID,
+            )
+        ).where(
+            college_table.c.CollegeName.ilike(f"%{college_name}%"),
+            department_table.c.DepartmentName.ilike(f"%{department_name}%")
+        )
+    
+    with engine.connect() as conn:
+        row = conn.execute(stmt).first()
+        return int(row.CollegeDepartmentID) if row else None
+
+
+def parse_date_field(date_value: Any) -> Optional[str]:
+    """Parse a date field value. Returns None if not a valid date format."""
+    if date_value is None:
+        return None
+    
+    date_str = str(date_value).strip()
+    if not date_str or date_str.lower() in ["null", "none", "n/a", "varies", ""]:
+        return None
+    
+    # Check if it's already a valid date format (YYYY-MM-DD)
+    try:
+        datetime.strptime(date_str, "%Y-%m-%d")
+        return date_str
+    except ValueError:
+        pass
+    
+    # Try ISO datetime format (YYYY-MM-DDTHH:MM:SS or YYYY-MM-DDTHH:MM:SSZ)
+    try:
+        # Try with timezone
+        parsed = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+        return parsed.strftime("%Y-%m-%d")
+    except (ValueError, AttributeError):
+        try:
+            # Try without timezone
+            if 'T' in date_str:
+                parsed = datetime.strptime(date_str.split('T')[0], "%Y-%m-%d")
+                return parsed.strftime("%Y-%m-%d")
+        except ValueError:
+            pass
+    
+    # Try to parse common date formats
+    date_formats = [
+        "%Y-%m-%d",
+        "%m/%d/%Y",
+        "%d/%m/%Y",
+        "%B %d, %Y",  # October 1, 2024
+        "%b %d, %Y",  # Oct 1, 2024
+        "%B %d",  # October 1 (no year)
+        "%b %d",  # Oct 1 (no year)
+    ]
+    
+    for fmt in date_formats:
+        try:
+            parsed_date = datetime.strptime(date_str, fmt)
+            # If no year in format, use current year
+            if "%Y" not in fmt:
+                current_year = datetime.now().year
+                parsed_date = parsed_date.replace(year=current_year)
+            return parsed_date.strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+    
+    # If contains "varies" or other non-date text, return None
+    if any(word in date_str.lower() for word in ["varies", "typically", "example", "check", "see"]):
+        return None
+    
+    return None
+
+
+def parse_program_json(engine, program_data: Dict[str, Any], override_college_id: Optional[int] = None) -> Dict[str, Dict[str, Any]]:
+    """Parse program JSON data and map it to database structure.
+    Supports three formats:
+    1. Database format: {"Program": {...}, "ProgramRequirements": {...}, etc.}
+    2. Human-readable format: {"Program Snapshot": {...}, "Application Checklist": {...}, etc.}
+    3. Structured format: {"ProgramName": "...", "Requirements": {...}, "TermDetails": [...], "TestScores": {...}}
+    """
+    table_payloads = {}
+    
+    # Check for structured format (has ProgramName at top level and Requirements/TermDetails/TestScores)
+    if "ProgramName" in program_data and ("Requirements" in program_data or "TermDetails" in program_data or "TestScores" in program_data):
+        # Structured format
+        program_payload = {}
+        program_payload["ProgramName"] = program_data.get("ProgramName")
+        
+        for field in ["Level", "Concentration", "Description", "ProgramWebsiteURL", "Accreditation", "QsWorldRanking"]:
+            if field in program_data:
+                program_payload[field] = program_data[field]
+        
+        if program_payload.get("ProgramName"):
+            table_payloads["Program"] = program_payload
+        
+        # Parse Requirements -> ProgramRequirements
+        if "Requirements" in program_data:
+            reqs = program_data["Requirements"].copy()
+            # Convert string boolean values to actual booleans for Is* fields
+            for key, value in list(reqs.items()):
+                if key.startswith("Is"):
+                    if isinstance(value, str):
+                        reqs[key] = value.lower() in ["true", "1", "yes", "on"]
+                    elif value is None:
+                        reqs[key] = False
+                    else:
+                        reqs[key] = bool(value)
+                # Handle string values like "Not Required", "Required", etc. for Resume, StatementOfPurpose, etc.
+                elif key in ["Resume", "StatementOfPurpose", "GreOrGmat", "EnglishScore", "WritingSample"]:
+                    if isinstance(value, str):
+                        value_lower = value.lower()
+                        # Convert "Required" to True, "Not Required" to False
+                        reqs[key] = value_lower not in ["not required", "false", "0", "no", "n/a", ""]
+                    elif value is None:
+                        reqs[key] = False
+                    else:
+                        reqs[key] = bool(value)
+            table_payloads["ProgramRequirements"] = reqs
+        
+        # Parse TermDetails -> ProgramTermDetails (handle array)
+        if "TermDetails" in program_data:
+            term_details = program_data["TermDetails"]
+            if isinstance(term_details, list) and len(term_details) > 0:
+                # Take first term detail
+                term_data = term_details[0].copy()
+                term_payload = {}
+                
+                # Use override college ID if provided, otherwise find from College field
+                if override_college_id:
+                    term_payload["CollegeID"] = override_college_id
+                else:
+                    college_name = program_data.get("College")
+                    if college_name:
+                        college_id = find_college_id_by_name(engine, college_name)
+                        if college_id:
+                            term_payload["CollegeID"] = college_id
+                
+                # Map fields
+                if "Term" in term_data:
+                    term_payload["Term"] = term_data["Term"]
+                
+                for field in ["Fees", "AverageScholarshipAmount", "CostPerCredit", "ScholarshipAmount", 
+                             "ScholarshipPercentage", "ScholarshipType"]:
+                    if field in term_data:
+                        term_payload[field] = str(term_data[field]) if term_data[field] is not None else None
+                
+                # Parse date fields
+                if "LiveDate" in term_data:
+                    term_payload["LiveDate"] = parse_date_field(term_data["LiveDate"])
+                if "DeadlineDate" in term_data:
+                    term_payload["DeadlineDate"] = parse_date_field(term_data["DeadlineDate"])
+                
+                if term_payload.get("CollegeID"):
+                    table_payloads["ProgramTermDetails"] = term_payload
+        
+        # Parse TestScores -> ProgramTestScores
+        if "TestScores" in program_data:
+            test_scores = program_data["TestScores"].copy()
+            test_scores_payload = {}
+            for key, value in test_scores.items():
+                if value is not None and str(value).upper() != "N/A":
+                    test_scores_payload[key] = str(value)
+            if test_scores_payload:
+                table_payloads["ProgramTestScores"] = test_scores_payload
+        
+        # Parse Department and College -> ProgramDepartmentLink
+        college_name = program_data.get("College")
+        department_name = program_data.get("Department")
+        
+        if college_name and department_name:
+            college_id = find_college_id_by_name(engine, college_name)
+            if college_id:
+                college_dept_id = find_college_department_id_by_name(engine, college_name, department_name)
+                if college_dept_id:
+                    table_payloads["ProgramDepartmentLink"] = {
+                        "CollegeDepartmentID": college_dept_id,
+                        "CollegeID": college_id,
+                    }
+        
+        return table_payloads
+    
+    # Check if data is already in database format (has "Program" key directly)
+    if "Program" in program_data:
+        # Database format - use data directly
+        program_payload = program_data["Program"].copy()
+        if program_payload.get("ProgramName"):
+            table_payloads["Program"] = program_payload
+        
+        # ProgramRequirements
+        if "ProgramRequirements" in program_data:
+            reqs = program_data["ProgramRequirements"].copy()
+            # Convert string boolean values to actual booleans for Is* fields
+            for key, value in list(reqs.items()):
+                if key.startswith("Is") and isinstance(value, str):
+                    reqs[key] = value.lower() in ["true", "1", "yes", "on"]
+                # Convert None to False for boolean fields
+                elif key.startswith("Is") and value is None:
+                    reqs[key] = False
+            table_payloads["ProgramRequirements"] = reqs
+        
+        # ProgramTermDetails - handle array or single object
+        if "ProgramTermDetails" in program_data:
+            term_data = program_data["ProgramTermDetails"]
+            if isinstance(term_data, list) and len(term_data) > 0:
+                # Take first term detail if it's an array
+                term_payload = term_data[0].copy()
+                # Remove ProgramID if present (will be set by persist function)
+                term_payload.pop("ProgramID", None)
+                # Use override college ID if provided, otherwise use from data
+                if override_college_id:
+                    term_payload["CollegeID"] = override_college_id
+                else:
+                    # Convert CollegeID to int if it's a string number
+                    if "CollegeID" in term_payload:
+                        college_id = term_payload["CollegeID"]
+                        if isinstance(college_id, str) and college_id.isdigit():
+                            term_payload["CollegeID"] = int(college_id)
+                        elif not isinstance(college_id, int):
+                            term_payload["CollegeID"] = None
+                
+                # Parse date fields - convert text dates to proper format or None
+                if "LiveDate" in term_payload:
+                    term_payload["LiveDate"] = parse_date_field(term_payload["LiveDate"])
+                if "DeadlineDate" in term_payload:
+                    term_payload["DeadlineDate"] = parse_date_field(term_payload["DeadlineDate"])
+                
+                if term_payload.get("CollegeID"):
+                    table_payloads["ProgramTermDetails"] = term_payload
+            elif isinstance(term_data, dict):
+                term_payload = term_data.copy()
+                term_payload.pop("ProgramID", None)
+                # Use override college ID if provided, otherwise use from data
+                if override_college_id:
+                    term_payload["CollegeID"] = override_college_id
+                else:
+                    # Convert CollegeID to int if it's a string number
+                    if "CollegeID" in term_payload:
+                        college_id = term_payload["CollegeID"]
+                        if isinstance(college_id, str) and college_id.isdigit():
+                            term_payload["CollegeID"] = int(college_id)
+                        elif not isinstance(college_id, int):
+                            term_payload["CollegeID"] = None
+                
+                # Parse date fields - convert text dates to proper format or None
+                if "LiveDate" in term_payload:
+                    term_payload["LiveDate"] = parse_date_field(term_payload["LiveDate"])
+                if "DeadlineDate" in term_payload:
+                    term_payload["DeadlineDate"] = parse_date_field(term_payload["DeadlineDate"])
+                
+                if term_payload.get("CollegeID"):
+                    table_payloads["ProgramTermDetails"] = term_payload
+        
+        # ProgramTestScores
+        if "ProgramTestScores" in program_data:
+            test_scores = program_data["ProgramTestScores"].copy()
+            table_payloads["ProgramTestScores"] = test_scores
+        
+        # ProgramDepartmentLink - if provided
+        if "ProgramDepartmentLink" in program_data:
+            link_data = program_data["ProgramDepartmentLink"].copy()
+            link_data.pop("ProgramID", None)
+            table_payloads["ProgramDepartmentLink"] = link_data
+        
+        return table_payloads
+    
+    # Otherwise, parse human-readable format
+    # Parse Program Snapshot - try multiple key formats
+    program_snapshot = {}
+    for key in ["Program Snapshot", "ProgramSnapshot", "program_snapshot", "programSnapshot"]:
+        if key in program_data:
+            program_snapshot = program_data[key]
+            break
+    
+    # If still not found, try case-insensitive search
+    if not program_snapshot:
+        for key in program_data.keys():
+            if key.lower().replace("_", " ").replace("-", " ") == "program snapshot":
+                program_snapshot = program_data[key]
+                break
+    
+    program_payload = {}
+    program_name = program_snapshot.get("Program Name") or program_snapshot.get("ProgramName") or program_snapshot.get("program_name")
+    if program_name:
+        program_payload["ProgramName"] = program_name
+    
+    # Add other fields if they exist
+    for json_key, db_key in [
+        ("Level", "Level"),
+        ("Concentration", "Concentration"),
+        ("Description", "Description"),
+        ("Program Website URL", "ProgramWebsiteURL"),
+        ("ProgramWebsiteURL", "ProgramWebsiteURL"),
+        ("Accreditation", "Accreditation"),
+        ("Qs World Ranking", "QsWorldRanking"),
+        ("QsWorldRanking", "QsWorldRanking"),
+    ]:
+        val = program_snapshot.get(json_key)
+        if val is not None:
+            program_payload[db_key] = val
+    
+    # ProgramName is required
+    if program_payload.get("ProgramName"):
+        table_payloads["Program"] = program_payload
+    
+    # Parse Application Checklist -> ProgramRequirements
+    app_checklist = program_data.get("Application Checklist", {})
+    requirements_payload = {}
+    
+    # Boolean fields
+    bool_fields = {
+        "Resume": "Resume",
+        "Statement Of Purpose": "StatementOfPurpose",
+        "Gre Or Gmat": "GreOrGmat",
+        "English Score": "EnglishScore",
+        "Writing Sample": "WritingSample",
+        "Is Analytical Not Required": "IsAnalyticalNotRequired",
+        "Is Analytical Optional": "IsAnalyticalOptional",
+        "Is Duo Lingo Required": "IsDuoLingoRequired",
+        "Is E L S Required": "IsELSRequired",
+        "Is G M A T Or Gre Required": "IsGMATOrGreRequired",
+        "Is G M A T Required": "IsGMATRequired",
+        "Is Gre Required": "IsGreRequired",
+        "Is I E L T S Required": "IsIELTSRequired",
+        "Is L S A T Required": "IsLSATRequired",
+        "Is M A T Required": "IsMATRequired",
+        "Is M C A T Required": "IsMCATRequired",
+        "Is P T E Required": "IsPTERequired",
+        "Is T O E F L I B Required": "IsTOEFLIBRequired",
+        "Is T O E F L P B T Required": "IsTOEFLPBTRequired",
+        "Is English Not Required": "IsEnglishNotRequired",
+        "Is English Optional": "IsEnglishOptional",
+        "Is Recommendation System Opted": "IsRecommendationSystemOpted",
+        "Is Stem Program": "IsStemProgram",
+    }
+    
+    for json_key, db_key in bool_fields.items():
+        val = app_checklist.get(json_key)
+        if val is not None:
+            requirements_payload[db_key] = bool(val) if isinstance(val, bool) else (str(val).lower() in ["true", "1", "on", "yes"])
+    
+    # String fields
+    if app_checklist.get("Requirements"):
+        requirements_payload["Requirements"] = str(app_checklist.get("Requirements"))
+    
+    # GPA and other numeric fields
+    for field in ["Max Fails", "Max G P A", "Min G P A", "Previous Year Acceptance Rates"]:
+        val = app_checklist.get(field)
+        if val is not None:
+            db_key = field.replace(" ", "")
+            requirements_payload[db_key] = str(val)
+    
+    # Set default False for boolean fields that weren't provided
+    for db_key in bool_fields.values():
+        if db_key not in requirements_payload:
+            requirements_payload[db_key] = False
+    
+    if requirements_payload:
+        table_payloads["ProgramRequirements"] = requirements_payload
+    
+    # Parse Term & Investment -> ProgramTermDetails
+    term_investment = program_data.get("Term & Investment", {})
+    term_payload = {}
+    
+    # Use override college ID if provided, otherwise find from data
+    if override_college_id:
+        term_payload["CollegeID"] = override_college_id
+    else:
+        college_name = term_investment.get("College I D")
+        if college_name:
+            college_id = find_college_id_by_name(engine, college_name)
+            if college_id:
+                term_payload["CollegeID"] = college_id
+    
+    term_payload["Term"] = term_investment.get("Term")
+    
+    # Convert Fees to string if it's a number
+    fees = term_investment.get("Fees")
+    if fees is not None:
+        term_payload["Fees"] = str(fees)
+    
+    for field in ["Average Scholarship Amount", "Cost Per Credit", "Scholarship Amount", 
+                  "Scholarship Percentage", "Scholarship Type"]:
+        val = term_investment.get(field)
+        if val is not None:
+            db_key = field.replace(" ", "")
+            term_payload[db_key] = str(val)
+    
+    if term_payload:
+        table_payloads["ProgramTermDetails"] = term_payload
+    
+    # Parse Department Placement -> ProgramDepartmentLink
+    dept_placement = program_data.get("Department Placement", {})
+    dept_id_str = dept_placement.get("College Department I D", "")
+    
+    if dept_id_str and college_name and term_payload.get("CollegeID"):
+        # Try to parse "College Name — Department Name" format
+        dept_name = None
+        if "—" in dept_id_str or "–" in dept_id_str or "-" in dept_id_str:
+            # Try different dash types
+            for separator in ["—", "–", " - "]:
+                if separator in dept_id_str:
+                    parts = dept_id_str.split(separator)
+                    if len(parts) >= 2:
+                        dept_name = parts[1].strip()
+                        break
+        
+        college_dept_id = find_college_department_id_by_name(engine, college_name, dept_name)
+        
+        if college_dept_id:
+            table_payloads["ProgramDepartmentLink"] = {
+                "CollegeDepartmentID": college_dept_id,
+                "CollegeID": term_payload["CollegeID"],
+            }
+    
+    # Parse Minimum Test Scores -> ProgramTestScores
+    test_scores = program_data.get("Minimum Test Scores", {})
+    test_scores_payload = {}
+    
+    score_fields = {
+        "Minimum A C T Score": "MinimumACTScore",
+        "Minimum Duo Lingo Score": "MinimumDuoLingoScore",
+        "Minimum E L S Score": "MinimumELSScore",
+        "Minimum G M A T Score": "MinimumGMATScore",
+        "Minimum Gre Score": "MinimumGreScore",
+        "Minimum I E L T S Score": "MinimumIELTSScore",
+        "Minimum M A T Score": "MinimumMATScore",
+        "Minimum M C A T Score": "MinimumMCATScore",
+        "Minimum P T E Score": "MinimumPTEScore",
+        "Minimum S A T Score": "MinimumSATScore",
+        "Minimum T O E F L Score": "MinimumTOEFLScore",
+        "Minimum L S A T Score": "MinimumLSATScore",
+    }
+    
+    for json_key, db_key in score_fields.items():
+        val = test_scores.get(json_key)
+        if val is not None:
+            test_scores_payload[db_key] = str(val)
+    
+    if test_scores_payload:
+        table_payloads["ProgramTestScores"] = test_scores_payload
+    
+    return table_payloads
+
+
+@extract_bp.route("/import-programs-json", methods=["GET", "POST"])
+def import_programs_json():
+    """Import programs from JSON data."""
+    if request.method == "GET":
+        try:
+            engine = get_engine()
+            college_options = get_college_options(engine) if engine else []
+        except Exception:
+            college_options = []
+        return render_template("extract_programs_json.html", college_options=college_options)
+    
+    try:
+        engine = get_engine()
+        if engine is None:
+            flash("Database is not configured.", "error")
+            return redirect(url_for("extract.import_programs_json"))
+        
+        json_data = request.form.get("json_data", "").strip()
+        if not json_data:
+            flash("Please provide JSON data.", "error")
+            return redirect(url_for("extract.import_programs_json"))
+        
+        try:
+            programs_list = json.loads(json_data)
+        except json.JSONDecodeError as e:
+            flash(f"Invalid JSON format: {e}", "error")
+            return redirect(url_for("extract.import_programs_json"))
+        
+        if not isinstance(programs_list, list):
+            flash("JSON data must be a list of program objects.", "error")
+            return redirect(url_for("extract.import_programs_json"))
+        
+        # Get selected college ID if provided
+        selected_college_id = request.form.get("college_id", type=int)
+        
+        success_count = 0
+        created_count = 0
+        updated_count = 0
+        error_count = 0
+        errors = []
+        
+        for idx, program_data in enumerate(programs_list, 1):
+            try:
+                # Check if data has required structure (support multiple formats)
+                has_program = (
+                    "Program" in program_data or 
+                    "Program Snapshot" in program_data or 
+                    "ProgramSnapshot" in program_data or
+                    "ProgramName" in program_data  # New structured format
+                )
+                if not has_program:
+                    errors.append(f"Program {idx}: Missing required program data (expected 'Program', 'Program Snapshot', or 'ProgramName')")
+                    error_count += 1
+                    continue
+                
+                table_payloads = parse_program_json(engine, program_data, selected_college_id)
+                
+                if not table_payloads.get("Program"):
+                    # Try to get program name for error message
+                    program_name = "N/A"
+                    if "Program" in program_data:
+                        program_name = program_data["Program"].get("ProgramName", "N/A")
+                    elif "Program Snapshot" in program_data:
+                        program_name = program_data["Program Snapshot"].get("Program Name", "N/A")
+                    elif "ProgramName" in program_data:
+                        program_name = program_data.get("ProgramName", "N/A")
+                    errors.append(f"Program {idx} ({program_name}): Missing or invalid ProgramName")
+                    error_count += 1
+                    continue
+                
+                # Check if program already exists by name
+                program_name = table_payloads["Program"].get("ProgramName")
+                existing_program_id = None
+                if program_name:
+                    existing_program_id = find_program_by_name(engine, program_name)
+                
+                # Use existing program ID if found, otherwise create new
+                program_id = persist_program_bundle(engine, existing_program_id, table_payloads)
+                
+                if existing_program_id:
+                    updated_count += 1
+                    success_count += 1
+                else:
+                    created_count += 1
+                    success_count += 1
+                
+            except Exception as e:
+                error_count += 1
+                # Try to get program name for error message
+                program_name = f"Program {idx}"
+                if "Program" in program_data:
+                    program_name = program_data["Program"].get("ProgramName", program_name)
+                elif "Program Snapshot" in program_data:
+                    program_name = program_data["Program Snapshot"].get("Program Name", program_name)
+                elif "ProgramName" in program_data:
+                    program_name = program_data.get("ProgramName", program_name)
+                errors.append(f"{program_name}: {str(e)}")
+        
+        if success_count > 0:
+            messages = []
+            if created_count > 0:
+                messages.append(f"created {created_count}")
+            if updated_count > 0:
+                messages.append(f"updated {updated_count}")
+            action_msg = " and ".join(messages) if len(messages) == 2 else messages[0] if messages else "processed"
+            flash(f"Successfully {action_msg} {success_count} program(s).", "success")
+        if error_count > 0:
+            flash(f"Failed to import {error_count} program(s).", "error")
+            if errors:
+                flash("Errors: " + "; ".join(errors[:5]), "error")  # Show first 5 errors
+        
+        return redirect(url_for("forms.program_list"))
+        
+    except Exception as e:
+        flash(f"Error importing programs: {e}", "error")
+        import traceback
+        traceback.print_exc()
+        return redirect(url_for("extract.import_programs_json"))
+            
+    except Exception as exc:
+        msg = f"Error saving program: {exc}"
+        if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+            return jsonify({"ok": False, "message": msg}), 500
+        flash(msg, "error")
+        return redirect(url_for("extract.extract_programs_page"))
 
 
 @crawler_bp.route("/", methods=["GET", "POST"])

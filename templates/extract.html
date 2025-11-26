@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Web Extractor | OneGrad{% endblock %}
+{% block title %}{{ 'Extract College' if mode=='college' else ('Extract Admissions' if mode=='department' else ('Extract Program' if mode=='program' else 'Web Extractor')) }} | OneGrad{% endblock %}
 {% block extra_head %}
 <style>
   .extract-container {
@@ -78,8 +78,20 @@
 {% endblock %}
 {% block content %}
 <section class="extract-container">
-  <h2>Web Page Text Extractor</h2>
-  <p>Fetch a web page and summarize it with Gemini using your research prompt.</p>
+  <h2 style="margin-top: 0;">
+    {% if mode == 'college' %}Extract College{% elif mode == 'department' %}Extract Admissions Office{% elif mode == 'program' %}Extract Program{% else %}Web Extractor{% endif %}
+  </h2>
+  <p class="form-hint">
+    {% if mode == 'college' %}
+    Provide a single institutional page URL and an optional prompt. We will extract only College fields.
+    {% elif mode == 'department' %}
+    Provide a single admissions-office URL (Graduate/Undergraduate/College-specific). We will extract only Admissions Office fields and let you link to a College.
+    {% elif mode == 'program' %}
+    Provide a single program/catalog page URL. We will extract only Program fields and let you link to College (and Department if applicable).
+    {% else %}
+    Fetch a web page and summarize it with Gemini using your research prompt.
+    {% endif %}
+  </p>
   <form method="post" class="extract-form" novalidate>
     <div>
       <label for="url">Page URL</label>
@@ -87,7 +99,7 @@
         type="url"
         id="url"
         name="url"
-        placeholder="https://www.example.edu/programs"
+        placeholder="{% if mode=='college' %}https://www.example.edu/about{% elif mode=='department' %}https://www.example.edu/admissions{% else %}https://www.example.edu/academics/programs/data-science{% endif %}"
         value="{{ url }}"
         required
       />
@@ -97,10 +109,18 @@
       <textarea
         id="prompt"
         name="prompt"
-        placeholder="Describe the insights you're looking for..."
+        placeholder="{% if mode=='college' %}Add any guidance for college fields (address, phones, social, counts)...{% elif mode=='department' %}Add any guidance for admissions office fields (office name, building, phone/email, admissions URL)...{% else %}Add any guidance for program fields (ProgramName, level, fees, tests, requirements)...{% endif %}"
       >{{ prompt }}</textarea>
     </div>
-    <button type="submit">Extract and Analyze</button>
+    <button type="submit">
+      {% if mode == 'college' %}Extract College{% elif mode == 'department' %}Extract Admissions Office{% elif mode == 'program' %}Extract Program{% else %}Extract{% endif %}
+    </button>
+    <div class="form-hint" style="margin-top: 0.5rem;">
+      Quick links:
+      <a href="{{ url_for('extract.extract_college_link') }}">College</a> ·
+      <a href="{{ url_for('extract.extract_department_link') }}">Admissions</a> ·
+      <a href="{{ url_for('extract.extract_program_link') }}">Program</a>
+    </div>
   </form>
   {% if extracted_text %}
   <section class="result-section">
@@ -111,13 +131,712 @@
     <pre>{{ extracted_text }}</pre>
   </section>
   {% endif %}
-  {% if llm_output %}
+
+  {% if social_links %}
+  <section class="result-section">
+    <h2>Social Links</h2>
+    <div style="display: grid; gap: 0.4rem 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+      {% for platform, url in social_links.items() %}
+      <div>
+        <strong style="text-transform: capitalize; color: #1d2e53;">{{ platform }}</strong><br />
+        <a href="{{ url }}" target="_blank" rel="noopener">{{ url }}</a>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if links %}
+  <section class="result-section">
+    <h2>All Links on Page</h2>
+    <div style="max-height: 320px; overflow: auto; border: 1px solid #d9e1f2; border-radius: 8px; padding: 0.75rem; background: #f7f9ff;">
+      <ul style="margin: 0; padding-left: 1.1rem;">
+        {% for link in links %}
+        <li style="margin: 0.25rem 0;">
+          <a href="{{ link.url }}" target="_blank" rel="noopener">{{ link.text }}</a>
+          <div style="font-size: 0.8rem; color: #5a6894; word-break: break-word;">{{ link.url }}</div>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+  {% endif %}
+  <section class="result-section">
+    <h2>Run Sections without Page Refresh</h2>
+    <p class="form-hint">We’ll reuse the extracted text below and call the LLM for each section on demand.</p>
+    <textarea id="extracted_text_raw" style="display:none;">{{ extracted_text }}</textarea>
+    <div class="form-actions">
+      <button type="button" id="btn-run-college">Run College Basics</button>
+      <button type="button" id="btn-run-address">Run Primary Location</button>
+      <button type="button" id="btn-run-contact">Run Contact & Online</button>
+      <button type="button" id="btn-run-appreq">Run Application Snapshot</button>
+      <button type="button" id="btn-run-stats">Run Student Body & Funding</button>
+      <button type="button" id="btn-run-social">Run Social Media Profiles</button>
+    </div>
+  </section>
   <section class="result-section">
     <h2>Gemini Response</h2>
     <pre>{{ llm_output }}</pre>
+    <details style="margin-top: 0.75rem;" open>
+      <summary style="cursor: pointer; font-weight: 600; color: #2f4f8f;">Review & Manually Override</summary>
+      <div class="card" style="margin-top: 0.9rem; padding: 1rem;">
+        <div class="form-hint" style="margin-bottom: 0.6rem;">
+          Choose a college to save these values into (or leave blank to create a new one when saving Basics).
+        </div>
+        <div class="field" style="margin-bottom: 0.9rem;">
+          <label for="college_id_select">College</label>
+          <select id="college_id_select" name="college_id_select" style="min-height: 36px;">
+            <option value="">— Select College —</option>
+            {% for cid, label in college_options %}
+            <option value="{{ cid }}" {% if matched_college and matched_college.CollegeID == cid %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% if matched_college %}
+        <div class="form-hint" style="margin-bottom: 0.8rem;">
+          Matched College: <strong>{{ matched_college.CollegeName }}</strong> (ID: {{ matched_college.CollegeID }})
+        </div>
+        {% else %}
+        <div class="form-hint" style="margin-bottom: 0.8rem;">
+          No exact match found by name. You can still submit overrides, we will try to match again by name.
+        </div>
+        {% endif %}
+        <form method="post" class="form-layout form-layout--wide" action="{{ url_for('extract.extract_confirm_save') }}">
+          <input type="hidden" name="url" value="{{ url }}" />
+          <input type="hidden" name="college_id" value="{{ matched_college.CollegeID if matched_college else '' }}" />
+          <input type="hidden" name="college_name" value="{{ (review_fields|selectattr('column','equalto','CollegeName')|list)[0].llm_value if review_fields else '' }}" />
+          <div class="form-section">
+            <div class="field-grid">
+              {% if review_fields %}
+                {% for field in review_fields %}
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>{{ field.label }} <span style="color:#7b86aa; font-weight: 400;">({{ field.column }})</span></label>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                      <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Current DB</div>
+                      <input type="text" value="{{ field.existing_value }}" disabled />
+                    </div>
+                    <div>
+                      <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Override (prefilled with LLM)</div>
+                      <input type="text" name="override.{{ field.column }}" value="{{ field.llm_value }}" />
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              {% else %}
+                <!-- Create empty inputs so the client-side run can prefill them -->
+                {% set default_cols = [
+                  ('College Name','CollegeName'),
+                  ('College Setting','CollegeSetting'),
+                  ('Type of Institution','TypeofInstitution'),
+                  ('Student Faculty','Student_Faculty'),
+                  ('Number Of Campuses','NumberOfCampuses'),
+                  ('Total Faculty Available','TotalFacultyAvailable'),
+                  ('Total Programs Available','TotalProgramsAvailable'),
+                  ('Total Students Enrolled','TotalStudentsEnrolled'),
+                  ('Total Graduate Programs','TotalGraduatePrograms'),
+                  ('Total International Students','TotalInternationalStudents'),
+                  ('Total Students','TotalStudents'),
+                  ('Total Undergrad Majors','TotalUndergradMajors'),
+                  ('Countries Represented','CountriesRepresented')
+                ] %}
+                {% for label, col in default_cols %}
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>{{ label }} <span style="color:#7b86aa; font-weight: 400;">({{ col }})</span></label>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                      <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Current DB</div>
+                      <input type="text" value="" disabled />
+                    </div>
+                    <div>
+                      <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Override (prefilled with LLM)</div>
+                      <input type="text" name="override.{{ col }}" value="" />
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit">Save Confirmed Overrides to DB</button>
+          </div>
+        </form>
+      </div>
+    </details>
+    <form method="post" action="{{ url_for('extract.extract_save_to_db') }}" style="margin-top: 0.75rem;">
+      <input type="hidden" name="llm_output" value="{{ llm_output }}" />
+      <input type="hidden" name="url" value="{{ url }}" />
+      <button type="submit">Quick Save (use LLM as-is)</button>
+    </form>
   </section>
-  {% endif %}
+
+  <section class="result-section" style="margin-top: 1.5rem;">
+    <h2>Contact & Online — LLM Output</h2>
+    <pre>{{ llm_contact_output }}</pre>
+    <details style="margin-top: 0.75rem;">
+      <summary style="cursor: pointer; font-weight: 600; color: #2f4f8f;">Review & Manually Override (Contact & Online)</summary>
+      <div class="card" style="margin-top: 0.9rem; padding: 1rem;">
+        <div class="field" style="margin-bottom: 0.9rem;">
+          <label for="college_id_contact_select">College</label>
+          <select id="college_id_contact_select" name="college_id_contact_select" style="min-height: 36px;">
+            <option value="">— Select College —</option>
+            {% for cid, label in college_options %}
+            <option value="{{ cid }}" {% if matched_college and matched_college.CollegeID == cid %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <form method="post" class="form-layout form-layout--wide" action="{{ url_for('extract.extract_confirm_save_contact') }}">
+          <input type="hidden" name="url" value="{{ url }}" />
+          <input type="hidden" name="college_id" value="{{ matched_college.CollegeID if matched_college else '' }}" />
+          <div class="field">
+            <label>College Name (if creating new)</label>
+            <input type="text" name="college_name" value="{{ (review_fields|selectattr('column','equalto','CollegeName')|list)[0].llm_value if review_fields else '' }}" />
+          </div>
+          <div class="form-section">
+            <div class="field-grid">
+              {% if review_fields_contact %}
+                {% for field in review_fields_contact %}
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>{{ field.label }} <span style="color:#7b86aa; font-weight: 400;">({{ field.column }})</span></label>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                      <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Current DB</div>
+                      <input type="text" value="{{ field.existing_value }}" disabled />
+                    </div>
+                    <div>
+                      <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Override (prefilled with LLM)</div>
+                      <input type="text" name="override_contact.{{ field.column }}" value="{{ field.llm_value }}" />
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              {% else %}
+                {% set contact_cols = [
+                  ('Logo Path','LogoPath'),
+                  ('Phone','Phone'),
+                  ('Email','Email'),
+                  ('Secondary Email','SecondaryEmail'),
+                  ('Website Url','WebsiteUrl'),
+                  ('Admission Office Url','AdmissionOfficeUrl'),
+                  ('Virtual Tour Url','VirtualTourUrl'),
+                  ('Financial Aid Url','FinancialAidUrl')
+                ] %}
+                {% for label, col in contact_cols %}
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>{{ label }} <span style="color:#7b86aa; font-weight: 400;">({{ col }})</span></label>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                      <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Current DB</div>
+                      <input type="text" value="" disabled />
+                    </div>
+                    <div>
+                      <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Override (prefilled with LLM)</div>
+                      <input type="text" name="override_contact.{{ col }}" value="" />
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit">Save Contact Overrides to DB</button>
+          </div>
+        </form>
+      </div>
+    </details>
+  </section>
+
+  <section class="result-section" style="margin-top: 1.5rem;">
+    <h2>Application Snapshot — LLM Output</h2>
+    <pre>{{ llm_appreq_output }}</pre>
+    <details style="margin-top: 0.75rem;">
+      <summary style="cursor: pointer; font-weight: 600; color: #2f4f8f;">Review & Manually Override (Application Snapshot)</summary>
+      <div class="card" style="margin-top: 0.9rem; padding: 1rem;">
+        <div class="field" style="margin-bottom: 0.9rem;">
+          <label for="college_id_appreq_select">College</label>
+          <select id="college_id_appreq_select" name="college_id_appreq_select" style="min-height: 36px;">
+            <option value="">— Select College —</option>
+            {% for cid, label in college_options %}
+            <option value="{{ cid }}" {% if matched_college and matched_college.CollegeID == cid %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <form method="post" class="form-layout form-layout--wide" action="{{ url_for('extract.extract_confirm_save_appreq') }}">
+          <input type="hidden" name="url" value="{{ url }}" />
+          <input type="hidden" name="college_id" value="{{ matched_college.CollegeID if matched_college else '' }}" />
+          <div class="field">
+            <label>College Name (if creating new)</label>
+            <input type="text" name="college_name" value="{{ (review_fields|selectattr('column','equalto','CollegeName')|list)[0].llm_value if review_fields else '' }}" />
+          </div>
+          <div class="form-section">
+            <div class="field-grid">
+              {% if review_fields_appreq %}
+                {% for field in review_fields_appreq %}
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>{{ field.label }} <span style="color:#7b86aa; font-weight: 400;">({{ field.column }})</span></label>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                      <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Current DB</div>
+                      <input type="text" value="{{ field.existing_value }}" disabled />
+                    </div>
+                    <div>
+                      <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Override (prefilled with LLM)</div>
+                      <input type="text" name="override_appreq.{{ field.column }}" value="{{ field.llm_value }}" />
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              {% else %}
+                {% set appreq_cols = [
+                  ('Application Fees','ApplicationFees'),
+                  ('Tuition Fees','TuitionFees'),
+                  ('Test Policy','TestPolicy'),
+                  ('Courses And Grades','CoursesAndGrades'),
+                  ('Recommendations','Recommendations'),
+                  ('Personal Essay','PersonalEssay'),
+                  ('Writing Sample','WritingSample'),
+                  ('Additional Information','AdditionalInformation'),
+                  ('Additional Deadlines','AdditionalDeadlines')
+                ] %}
+                {% for label, col in appreq_cols %}
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>{{ label }} <span style="color:#7b86aa; font-weight: 400;">({{ col }})</span></label>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                      <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Current DB</div>
+                      <input type="text" value="" disabled />
+                    </div>
+                    <div>
+                      <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Override (prefilled with LLM)</div>
+                      <input type="text" name="override_appreq.{{ col }}" value="" />
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit">Save Application Snapshot to DB</button>
+          </div>
+        </form>
+      </div>
+    </details>
+  </section>
+  <section class="result-section" style="margin-top: 1.5rem;">
+    <h2>Student Body & Funding — LLM Output</h2>
+    <pre>{{ llm_stats_output }}</pre>
+    <details style="margin-top: 0.75rem;">
+      <summary style="cursor: pointer; font-weight: 600; color: #2f4f8f;">Review & Manually Override (Student Body & Funding)</summary>
+      <div class="card" style="margin-top: 0.9rem; padding: 1rem;">
+        <div class="field" style="margin-bottom: 0.9rem;">
+          <label for="college_id_stats_select">College</label>
+          <select id="college_id_stats_select" name="college_id_stats_select" style="min-height: 36px;">
+            <option value="">— Select College —</option>
+            {% for cid, label in college_options %}
+            <option value="{{ cid }}" {% if matched_college and matched_college.CollegeID == cid %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <form method="post" class="form-layout form-layout--wide" action="{{ url_for('extract.extract_confirm_save_stats') }}">
+          <input type="hidden" name="url" value="{{ url }}" />
+          <input type="hidden" name="college_id" value="{{ matched_college.CollegeID if matched_college else '' }}" />
+          <div class="field">
+            <label>College Name (if creating new)</label>
+            <input type="text" name="college_name" value="{{ (review_fields|selectattr('column','equalto','CollegeName')|list)[0].llm_value if review_fields else '' }}" />
+          </div>
+          <div class="form-section">
+            <div class="field-grid">
+              {% if review_fields_stats %}
+                {% for field in review_fields_stats %}
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>{{ field.label }} <span style="color:#7b86aa; font-weight: 400;">({{ field.column }})</span></label>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                      <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Current DB</div>
+                      <input type="text" value="{{ field.existing_value }}" disabled />
+                    </div>
+                    <div>
+                      <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Override (prefilled with LLM)</div>
+                      <input type="text" name="override_stats.{{ field.column }}" value="{{ field.llm_value }}" />
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              {% else %}
+                {% set stats_cols = [
+                  ('Grad Avg Tuition','GradAvgTuition'),
+                  ('Grad International Students','GradInternationalStudents'),
+                  ('Grad Scholarship High','GradScholarshipHigh'),
+                  ('Grad Scholarship Low','GradScholarshipLow'),
+                  ('Grad Total Students','GradTotalStudents'),
+                  ('U G Avg Tuition','UGAvgTuition'),
+                  ('U G International Students','UGInternationalStudents'),
+                  ('U G Scholarship High','UGScholarshipHigh'),
+                  ('U G Scholarship Low','UGScholarshipLow'),
+                  ('U G Total Students','UGTotalStudents')
+                ] %}
+                {% for label, col in stats_cols %}
+                <div class="field" style="grid-column: 1 / -1;">
+                  <label>{{ label }} <span style="color:#7b86aa; font-weight: 400;">({{ col }})</span></label>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <div>
+                      <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Current DB</div>
+                      <input type="text" value="" disabled />
+                    </div>
+                    <div>
+                      <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Override (prefilled with LLM)</div>
+                      <input type="text" name="override_stats.{{ col }}" value="" />
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit">Save Student Body & Funding to DB</button>
+          </div>
+        </form>
+      </div>
+    </details>
+  </section>
+  <section class="result-section" style="margin-top: 1.5rem;">
+    <h2>Social Media — LLM Output</h2>
+    <pre>{{ llm_social_output }}</pre>
+    <details style="margin-top: 0.75rem;">
+      <summary style="cursor: pointer; font-weight: 600; color: #2f4f8f;">Review & Manually Override (Social Media)</summary>
+      <div class="card" style="margin-top: 0.9rem; padding: 1rem;">
+        <div class="field" style="margin-bottom: 0.9rem;">
+          <label for="college_id_social_select">College</label>
+          <select id="college_id_social_select" name="college_id_social_select" style="min-height: 36px;">
+            <option value="">— Select College —</option>
+            {% for cid, label in college_options %}
+            <option value="{{ cid }}" {% if matched_college and matched_college.CollegeID == cid %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <form method="post" class="form-layout form-layout--wide" action="{{ url_for('extract.extract_confirm_save_social') }}">
+          <input type="hidden" name="url" value="{{ url }}" />
+          <input type="hidden" name="college_id" value="{{ matched_college.CollegeID if matched_college else '' }}" />
+          <div class="field">
+            <label>College Name (if creating new)</label>
+            <input type="text" name="college_name" value="{{ (review_fields|selectattr('column','equalto','CollegeName')|list)[0].llm_value if review_fields else '' }}" />
+          </div>
+          <div class="form-section">
+            <div class="field-grid">
+              {% set social_cols = ['Facebook','Instagram','Twitter','Youtube','Tiktok','LinkedIn'] %}
+              {% for platform in social_cols %}
+              {% set col = platform %}
+              <div class="field" style="grid-column: 1 / -1;">
+                <label>{{ platform }} URL <span style="color:#7b86aa; font-weight: 400;">({{ col }})</span></label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                  <div>
+                    <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Current DB</div>
+                    <input type="text" value="" disabled />
+                  </div>
+                  <div>
+                    <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Override (prefilled with LLM)</div>
+                    <input type="text" name="override_social.{{ col }}" value="" />
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit">Save Social Profiles to DB</button>
+          </div>
+        </form>
+      </div>
+    </details>
+  </section>
+  <section class="result-section" style="margin-top: 1.5rem;">
+    <h2>Primary Location (Address) — LLM Output</h2>
+    <pre>{{ llm_address_output }}</pre>
+    <details style="margin-top: 0.75rem;">
+      <summary style="cursor: pointer; font-weight: 600; color: #2f4f8f;">Review & Manually Override (Primary Location)</summary>
+      <div class="card" style="margin-top: 0.9rem; padding: 1rem;">
+        <div class="field" style="margin-bottom: 0.9rem;">
+          <label for="college_id_addr_select">College</label>
+          <select id="college_id_addr_select" name="college_id_addr_select" style="min-height: 36px;">
+            <option value="">— Select College —</option>
+            {% for cid, label in college_options %}
+            <option value="{{ cid }}" {% if matched_college and matched_college.CollegeID == cid %}selected{% endif %}>
+              {{ label }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% if matched_college %}
+        <div class="form-hint" style="margin-bottom: 0.8rem;">
+          Matched College: <strong>{{ matched_college.CollegeName }}</strong> (ID: {{ matched_college.CollegeID }})
+        </div>
+        {% else %}
+        <div class="form-hint" style="margin-bottom: 0.8rem;">
+          No exact match found by name. You can still submit overrides; we will try to match again by name.
+        </div>
+        {% endif %}
+        <form method="post" class="form-layout form-layout--wide" action="{{ url_for('extract.extract_confirm_save_address') }}">
+          <input type="hidden" name="url" value="{{ url }}" />
+          <input type="hidden" name="college_id" value="{{ matched_college.CollegeID if matched_college else '' }}" />
+          <div class="field">
+            <label>College Name (if creating new)</label>
+            <input type="text" name="college_name" value="{{ (review_fields|selectattr('column','equalto','CollegeName')|list)[0].llm_value if review_fields else '' }}" />
+          </div>
+          <div class="form-section">
+            <div class="field-grid">
+              {% for field in review_fields_address %}
+              <div class="field" style="grid-column: 1 / -1;">
+                <label>{{ field.label }} <span style="color:#7b86aa; font-weight: 400;">({{ field.column }})</span></label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                  <div>
+                    <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Current DB</div>
+                    <input type="text" value="{{ field.existing_value }}" disabled />
+                  </div>
+                  <div>
+                    <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Override (prefilled with LLM)</div>
+                    <input type="text" name="override_addr.{{ field.column }}" value="{{ field.llm_value }}" />
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+              {% if not review_fields_address %}
+              <!-- Ensure inputs exist so JS can prefill even before first run -->
+              {% for label, col in {'Street':'Street1','Street2':'Street2','County':'County','City':'City','State':'State','Country':'Country','Zip Code':'ZipCode'}.items() %}
+              <div class="field" style="grid-column: 1 / -1;">
+                <label>{{ label }} <span style="color:#7b86aa; font-weight: 400;">({{ col }})</span></label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                  <div>
+                    <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Current DB</div>
+                    <input type="text" value="" disabled />
+                  </div>
+                  <div>
+                    <div style="font-size: 0.82rem; color: #5c6c9a; margin-bottom: 0.25rem;">Override (prefilled with LLM)</div>
+                    <input type="text" name="override_addr.{{ col }}" value="" />
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit">Save Address Overrides to DB</button>
+          </div>
+        </form>
+      </div>
+    </details>
+  </section>
 </section>
+<script>
+  async function postJson(url, data) {
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const ct = resp.headers.get('Content-Type') || '';
+    if (!ct.includes('application/json')) {
+      const text = await resp.text();
+      throw new Error(text.slice(0, 200) || 'Non-JSON response');
+    }
+    const json = await resp.json();
+    if (!resp.ok || json.ok === false) throw new Error(json.message || json.error || 'Request failed');
+    return json;
+  }
+
+  function setValues(prefix, reviewFields) {
+    if (!Array.isArray(reviewFields)) return;
+    reviewFields.forEach(f => {
+      const name = `${prefix}${f.column}`;
+      const input = document.querySelector(`input[name="${name}"]`);
+      if (input) input.value = f.llm_value || '';
+    });
+  }
+
+  const btnCollege = document.getElementById('btn-run-college');
+  if (btnCollege) {
+    btnCollege.addEventListener('click', async () => {
+      const text = (document.getElementById('extracted_text_raw') || {}).value || '';
+      const urlVal = (document.getElementById('url') || {}).value || '';
+      try {
+        const res = await postJson('{{ url_for("extract.api_run_college") }}', { text, url: urlVal });
+        const llmPre = Array.from(document.querySelectorAll('section.result-section pre')).find(pre => pre.previousElementSibling && pre.previousElementSibling.textContent.includes('Gemini Response'));
+        if (llmPre) llmPre.textContent = res.llm_output || '';
+        setValues('override.', res.review_fields);
+        if (res.matched && res.matched.CollegeID) {
+          const cidInput = document.querySelector('input[name="college_id"]');
+          if (cidInput) cidInput.value = res.matched.CollegeID;
+          const cidSelect = document.getElementById('college_id_select');
+          if (cidSelect) cidSelect.value = String(res.matched.CollegeID);
+        }
+      } catch (err) {
+        alert('College basics run failed: ' + err.message);
+      }
+    });
+  }
+
+  const btnAddress = document.getElementById('btn-run-address');
+  if (btnAddress) {
+    btnAddress.addEventListener('click', async () => {
+      const text = (document.getElementById('extracted_text_raw') || {}).value || '';
+      const urlVal = (document.getElementById('url') || {}).value || '';
+      const cid = (document.querySelector('input[name="college_id"]') || {}).value || null;
+      try {
+        const res = await postJson('{{ url_for("extract.api_run_address") }}', { text, url: urlVal, college_id: cid });
+        const addrPre = Array.from(document.querySelectorAll('section.result-section pre')).find(pre => pre.previousElementSibling && pre.previousElementSibling.textContent.includes('Primary Location (Address) — LLM Output'));
+        if (addrPre) addrPre.textContent = res.llm_output || '';
+        setValues('override_addr.', res.review_fields);
+      } catch (err) {
+        alert('Address run failed: ' + err.message);
+      }
+    });
+  }
+
+  const btnContact = document.getElementById('btn-run-contact');
+  if (btnContact) {
+    btnContact.addEventListener('click', async () => {
+      const text = (document.getElementById('extracted_text_raw') || {}).value || '';
+      const urlVal = (document.getElementById('url') || {}).value || '';
+      const cid = (document.querySelector('input[name="college_id"]') || {}).value || null;
+      try {
+        const res = await postJson('{{ url_for("extract.api_run_contact") }}', { text, url: urlVal, college_id: cid });
+        const conPre = Array.from(document.querySelectorAll('section.result-section pre')).find(pre => pre.previousElementSibling && pre.previousElementSibling.textContent.includes('Contact & Online — LLM Output'));
+        if (conPre) conPre.textContent = res.llm_output || '';
+        setValues('override_contact.', res.review_fields);
+      } catch (err) {
+        alert('Contact run failed: ' + err.message);
+      }
+    });
+  }
+
+  const btnAppreq = document.getElementById('btn-run-appreq');
+  if (btnAppreq) {
+    btnAppreq.addEventListener('click', async () => {
+      const text = (document.getElementById('extracted_text_raw') || {}).value || '';
+      const urlVal = (document.getElementById('url') || {}).value || '';
+      const cid = (document.querySelector('input[name="college_id"]') || {}).value || null;
+      try {
+        const res = await postJson('{{ url_for("extract.api_run_appreq") }}', { text, url: urlVal, college_id: cid });
+        const pre = Array.from(document.querySelectorAll('section.result-section pre')).find(pre => pre.previousElementSibling && pre.previousElementSibling.textContent.includes('Application Snapshot — LLM Output'));
+        if (pre) pre.textContent = res.llm_output || '';
+        setValues('override_appreq.', res.review_fields);
+      } catch (err) {
+        alert('Application Snapshot run failed: ' + err.message);
+      }
+    });
+  }
+
+  const btnStats = document.getElementById('btn-run-stats');
+  if (btnStats) {
+    btnStats.addEventListener('click', async () => {
+      const text = (document.getElementById('extracted_text_raw') || {}).value || '';
+      const urlVal = (document.getElementById('url') || {}).value || '';
+      const cid = (document.querySelector('input[name="college_id"]') || {}).value || null;
+      try {
+        const res = await postJson('{{ url_for("extract.api_run_stats") }}', { text, url: urlVal, college_id: cid });
+        const pre = Array.from(document.querySelectorAll('section.result-section pre')).find(pre => pre.previousElementSibling && pre.previousElementSibling.textContent.includes('Student Body & Funding — LLM Output'));
+        if (pre) pre.textContent = res.llm_output || '';
+        setValues('override_stats.', res.review_fields);
+      } catch (err) {
+        alert('Student Body & Funding run failed: ' + err.message);
+      }
+    });
+  }
+
+  const btnSocial = document.getElementById('btn-run-social');
+  if (btnSocial) {
+    btnSocial.addEventListener('click', async () => {
+      const text = (document.getElementById('extracted_text_raw') || {}).value || '';
+      const urlVal = (document.getElementById('url') || {}).value || '';
+      const cid = (document.querySelector('input[name="college_id"]') || {}).value || null;
+      try {
+        const res = await postJson('{{ url_for("extract.api_run_social") }}', { text, url: urlVal, college_id: cid });
+        const pre = Array.from(document.querySelectorAll('section.result-section pre')).find(pre => pre.previousElementSibling && pre.previousElementSibling.textContent.includes('Social Media — LLM Output'));
+        if (pre) pre.textContent = res.llm_output || '';
+        setValues('override_social.', res.review_fields);
+      } catch (err) {
+        alert('Social Media run failed: ' + err.message);
+      }
+    });
+  }
+  // Keep hidden college_id synced with dropdowns
+  function syncSelectToHidden(selectId) {
+    const sel = document.getElementById(selectId);
+    if (!sel) return;
+    sel.addEventListener('change', () => {
+      // Update the hidden input inside the nearest form under the same section
+      const section = sel.closest('.card') || document;
+      const forms = section.querySelectorAll('form');
+      forms.forEach(f => {
+        const hidden = f.querySelector('input[name="college_id"]');
+        if (hidden) hidden.value = sel.value || '';
+      });
+    });
+  }
+  syncSelectToHidden('college_id_select');
+  syncSelectToHidden('college_id_addr_select');
+  syncSelectToHidden('college_id_contact_select');
+  syncSelectToHidden('college_id_appreq_select');
+  syncSelectToHidden('college_id_stats_select');
+  syncSelectToHidden('college_id_social_select');
+
+  // Intercept the two save forms to keep the page and state
+  function interceptAjaxForm(selector) {
+    const form = document.querySelector(selector);
+    if (!form) return;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      try {
+        const resp = await fetch(form.action, {
+          method: 'POST',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          body: fd,
+        });
+        const ct = resp.headers.get('Content-Type') || '';
+        let json = null;
+        if (ct.includes('application/json')) {
+          json = await resp.json();
+          if (!resp.ok || (json && json.ok === false)) {
+            alert((json && (json.message || json.error)) || 'Save failed');
+            return;
+          }
+        } else {
+          const text = await resp.text();
+          if (!resp.ok) {
+            alert(text.slice(0, 200) || 'Save failed');
+            return;
+          }
+        }
+        // Show success message inline
+        const flash = document.createElement('div');
+        flash.className = 'flash success';
+        flash.textContent = (json && json.message) || 'Saved';
+        const flashWrap = document.querySelector('.flash-messages') || document.body;
+        flashWrap.prepend(flash);
+      } catch (err) {
+        alert('Save failed: ' + err.message);
+      }
+    });
+  }
+  interceptAjaxForm('form[action$="{{ url_for("extract.extract_confirm_save") }}"]');
+  interceptAjaxForm('form[action$="{{ url_for("extract.extract_confirm_save_address") }}"]');
+  interceptAjaxForm('form[action$="{{ url_for("extract.extract_confirm_save_contact") }}"]');
+</script>
 {% endblock %}
 
 
