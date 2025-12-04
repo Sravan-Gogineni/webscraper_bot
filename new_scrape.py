@@ -197,6 +197,28 @@ def upsert_single_row(conn, table, key_column, key_value, payload):
     else:
         conn.execute(table.insert().values(**payload_with_key))
 
+def get_all_college_names(engine) -> set:
+    """Get all college names from database (normalized to lowercase for comparison)."""
+    if not engine:
+        return set()
+    
+    try:
+        metadata = MetaData()
+        metadata.reflect(bind=engine)
+        college_table = metadata.tables.get("College")
+        
+        if college_table is None:
+            return set()
+        
+        with engine.connect() as conn:
+            result = conn.execute(select(college_table.c.CollegeName))
+            # Normalize to lowercase and strip for case-insensitive comparison
+            college_names = {str(name).strip().lower() for name in result if name}
+            return college_names
+    except Exception as e:
+        print(f"    ⚠️  Error fetching college names: {str(e)}")
+        return set()
+
 def insert_college_data(engine, table_payloads, social_payloads):
     """Insert or update college data in the database."""
     try:
@@ -304,14 +326,15 @@ def insert_college_data(engine, table_payloads, social_payloads):
         return None
 
 # Read the Excel file
-df = pd.read_excel('Univs.xlsx')
+df = pd.read_excel('Univs-3.xlsx')
 
 # Get the first column (by position, regardless of column name)
 # Process ALL universities
 list_of_univs = df.iloc[:, 0].tolist()
+original_univ_count = len([u for u in list_of_univs if u and str(u).strip() and str(u).strip().lower() != 'nan'])
 
 # URL cache file
-URL_CACHE_FILE = 'university_urls_cache.json'
+URL_CACHE_FILE = 'university_urls_cache-1.json'
 
 def load_url_cache():
     """Load previously found URLs from cache file."""
@@ -332,9 +355,89 @@ def save_url_cache(cache):
     except Exception as e:
         print(f"⚠️  Warning: Could not save URL cache: {e}")
 
-# Load existing URLs from cache
+# Connect to database FIRST to filter out existing universities
 print("="*80)
-print("STEP 1: LOADING CACHED URLs")
+print("STEP 1: CONNECTING TO DATABASE AND FILTERING EXISTING UNIVERSITIES")
+print("="*80)
+engine = get_db_engine()
+existing_colleges_normalized = set()  # Normalized names for fast lookup
+
+if not engine:
+    print("⚠️  Failed to connect to database. Will process all universities.")
+    engine = None
+else:
+    # Check which colleges already exist in database
+    print("\nChecking which colleges already exist in database...")
+    print("  Fetching all college names from database (one-time query)...")
+    
+    # Fetch all college names from database once (much faster than individual queries)
+    db_college_names = get_all_college_names(engine)
+    print(f"  ✓ Found {len(db_college_names)} colleges in database")
+    
+    # Store in engine for later use (avoid re-fetching)
+    engine._db_college_names = db_college_names
+    
+    skipped_count = 0
+    
+    print("\n  Checking each college in the list...")
+    for college_name in list_of_univs:
+        if college_name and str(college_name).strip() and str(college_name).strip().lower() != 'nan':
+            college_name_clean = str(college_name).strip()
+            college_name_normalized = college_name_clean.lower().strip()
+            
+            # Check against in-memory set (very fast)
+            # Also check for partial matches (e.g., "Columbia University" matches "Columbia University in the City of New York")
+            found_match = False
+            if college_name_normalized in db_college_names:
+                found_match = True
+            else:
+                # Try partial matching - check if any DB name contains this name or vice versa
+                # Extract key words (remove common words like "university", "college", "the", "of", "in", "city")
+                common_words = {'university', 'college', 'the', 'of', 'in', 'city', 'new', 'york', 'state', 'institute', 'school'}
+                excel_words = set(college_name_normalized.split()) - common_words
+                
+                for db_name in db_college_names:
+                    # Exact substring match
+                    if college_name_normalized in db_name or db_name in college_name_normalized:
+                        found_match = True
+                        break
+                    
+                    # Word-based matching - if most key words match
+                    db_words = set(db_name.split()) - common_words
+                    if excel_words and db_words:
+                        common_key_words = excel_words.intersection(db_words)
+                        if len(common_key_words) >= min(2, len(excel_words) * 0.6):  # At least 60% of key words match
+                            found_match = True
+                            break
+            
+            if found_match:
+                # Store normalized version for comparison
+                existing_colleges_normalized.add(college_name_normalized)
+                skipped_count += 1
+                print(f"  ⏭️  [{skipped_count}] Skipping {college_name_clean}: Already exists in database")
+    
+    if existing_colleges_normalized:
+        print(f"\n✓ Total: {skipped_count} colleges already in database (will skip completely)")
+    else:
+        print("✓ No existing colleges found. Will process all colleges.")
+
+# Filter out existing universities from the list
+list_of_univs_filtered = []
+for college_name in list_of_univs:
+    if college_name and str(college_name).strip() and str(college_name).strip().lower() != 'nan':
+        college_name_clean = str(college_name).strip()
+        college_name_normalized = college_name_clean.lower().strip()
+        if college_name_normalized not in existing_colleges_normalized:
+            list_of_univs_filtered.append(college_name_clean)
+
+print(f"\n✓ Filtered list: {len(list_of_univs_filtered)}/{len(list_of_univs)} universities to process (skipped {len(list_of_univs) - len(list_of_univs_filtered)} already in database)")
+
+# Update list_of_univs to the filtered version
+list_of_univs = list_of_univs_filtered
+
+# Load existing URLs from cache
+print("\n" + "="*80)
+print("STEP 2: LOADING CACHED URLs")
 print("="*80)
 
 results = load_url_cache()
@@ -343,7 +446,7 @@ if results:
 else:
     print(f"ℹ️  No cache file found. Will search for all URLs.")
 
-# Initialize results dictionary with all universities from Excel
+# Initialize results dictionary with all universities from filtered list
 for college in list_of_univs:
     if college not in results:
         results[college] = None
@@ -352,7 +455,7 @@ for college in list_of_univs:
 universities_to_search = [college for college in list_of_univs if college not in results or not results[college] or results[college] is None]
 
 print("\n" + "="*80)
-print("STEP 2: SEARCHING FOR .EDU WEBSITES")
+print("STEP 3: SEARCHING FOR .EDU WEBSITES")
 print("="*80)
 
 if universities_to_search:
@@ -417,18 +520,9 @@ if universities_to_search:
 else:
     print("✓ All URLs already in cache. Using cached URLs (no searching needed).")
 
-# Print summary - count URLs for universities in our list
+# Print summary - count URLs for universities in our filtered list
 found_count = sum(1 for college in list_of_univs if college in results and results[college])
 print(f"\nSummary: {found_count}/{len(list_of_univs)} universities have URLs available for scraping")
-
-# Connect to database
-print("\n" + "="*80)
-print("STEP 3: CONNECTING TO DATABASE")
-print("="*80)
-engine = get_db_engine()
-if not engine:
-    print("⚠️  Failed to connect to database. Data will be scraped but not saved.")
-    engine = None
 
 # Initiate Gemini API
 print("\n" + "="*80)
@@ -463,8 +557,12 @@ if model:
     inserted_count = 0
     error_count = 0
     
-    # Process each website URL
+    # Process each website URL (only universities that are not already in database)
     for college_name, website_url in results.items():
+        # Skip universities not in our filtered list (already filtered out as existing)
+        if college_name not in list_of_univs:
+            continue
+            
         if not website_url:
             print(f"\n⚠️  Skipping {college_name}: No website URL found")
             continue
@@ -527,7 +625,11 @@ Return the data in a structured JSON format with the field names as keys and the
     print("\n" + "="*80)
     print("FINAL SUMMARY")
     print("="*80)
-    print(f"Total universities processed: {len(list_of_univs)}")
+    skipped_from_db = original_univ_count - len(list_of_univs)
+    print(f"Total universities in Excel: {original_univ_count}")
+    if skipped_from_db > 0:
+        print(f"Skipped (already in database): {skipped_from_db}")
+    print(f"Universities processed: {len(list_of_univs)}")
     print(f"Websites found: {found_count}")
     print(f"Successfully scraped: {scraped_count}")
     if engine:

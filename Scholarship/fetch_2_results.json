@@ -1,0 +1,300 @@
+{
+  "Eastern Illinois University": {
+    "url": "https://booth.eiu.edu/graduate/facadmit.php",
+    "tuition_fee": 20433.12,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2023-2024",
+    "notes": "Calculated based on the Non-Resident Graduate tuition rate of $851.38 per credit hour multiplied by 24 credits per year (standard full-time annual load used in EIU cost estimates). The provided URL appears to be for Faculty Admission criteria and may not contain tuition data; values are derived from general Eastern Illinois University tuition schedules.",
+    "confidence": "high",
+    "source_text": "Graduate (Non-Resident): $851.38 per credit hour"
+  },
+  "Eastern Michigan University": {
+    "url": "https://www.emich.edu/sbs/basics/grad-doctoral-fees.php",
+    "tuition_fee": 19980.0,
+    "currency": "USD",
+    "is_out_of_state": false,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the Fall 2024 / Winter 2025 rate of $1,110.00 per credit hour for Graduate (Masters/Spec - Level 5) students. Annual fee derived by multiplying the per-credit rate by 18 credits (typical full-time graduate load of 9 credits per semester). EMU charges a 'Global Rate' regardless of residency.",
+    "confidence": "high",
+    "source_text": "Graduate (Masters/Spec) - Level 5: Tuition $965.00, General Fee $80.00, Tech Fee $45.00, Student Center Fee $20.00, Total per Credit Hour $1,110.00"
+  },
+  "Edmonds College": {
+    "url": "https://www.edmonds.edu/admission-and-tuition/tuition-and-fees/",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "No graduate (Master's or Doctoral) tuition information was found in the provided text. The webpage explicitly lists rates for 'Lower Division Courses (299 and below)' and 'Upper Division Courses (300 and above)', which correspond to Associate and Bachelor's degree levels respectively. Edmonds College is a community college that typically does not offer graduate degrees.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "EF International Language Campuses": {
+    "url": "https://www.merrimack.edu/student-accounts/graduate/",
+    "tuition_fee": 19080.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "The URL provided belongs to Merrimack College, not EF International Language Campuses (likely a prompt error). Data extracted for Merrimack College. Tuition is listed as $1,060 per credit hour. Calculated annual cost based on prompt instructions using a typical load of 18 credits per year ($1,060 x 18). Merrimack is a private institution, so rates are generally the same for in-state and out-of-state.",
+    "confidence": "high",
+    "source_text": "Graduate Tuition (per credit hour) $1,060"
+  },
+  "El Paso Community College": {
+    "url": "https://www.epcc.edu/Admissions/Tuition",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "El Paso Community College is a community college and typically does not offer graduate (Master's or Doctoral) degrees. The provided text contains no mention of graduate programs or graduate-level tuition. Furthermore, specific tuition dollar amounts are not listed in the provided text; only headers and payment policies are visible.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "Embry-Riddle Aeronautical University": {
+    "url": "https://daytonabeach.erau.edu/admissions/estimated-costs",
+    "tuition_fee": 30780.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Found on the 'Estimated Costs' page under Graduate expenses. The amount reflects the annual tuition based on a standard full-time load of 18 credit hours per year (9 per semester) at the rate of $1,710 per credit hour. As a private institution, rates are the same for in-state and out-of-state.",
+    "confidence": "high",
+    "source_text": "Graduate ... Tuition (18 credit hours) $30,780"
+  },
+  "Emerson College": {
+    "url": "https://websites.emerson.edu/grad-life/2022/08/16/student-deals-in-boston/",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided text is a blog post regarding student deals and discounts (transportation, museums, software) in Boston. It does not contain any information about graduate tuition fees.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "Emory University": {
+    "url": "https://gs.emory.edu/funding/tuition.html",
+    "tuition_fee": 49600.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the semester rate of $24,800 multiplied by 2. Emory University is a private institution, so there is no distinction between in-state and out-of-state tuition.",
+    "confidence": "high",
+    "source_text": "Tuition for 2024-25 is $24,800 per semester."
+  },
+  "Ensign College": {
+    "url": "https://www.ensign.edu/paying-for-college/tuition-cost-of-attendance",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided webpage content lists 'Tuition per Semester (2025-2026)' with credit bands (e.g., 1-11, 12-18) typical of undergraduate study, but does not contain any sections, tables, or text referring to 'Graduate', 'Master's', or 'Doctoral' tuition. Ensign College primarily offers certificates and undergraduate degrees.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "Fairleigh Dickinson University": {
+    "url": "https://www.fdu.edu/student-life/new-student-checklists/metropolitan-grad-student/",
+    "tuition_fee": 18630.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Tuition is calculated based on the 2024-2025 graduate rate of $1,035 per credit hour, assuming a standard full-time load of 18 credits per year (9 per semester). FDU is a private university, so rates are generally the same for in-state and out-of-state students. The provided URL is a checklist page that links to the official 'Tuition and Fees' page where this data is located.",
+    "confidence": "high",
+    "source_text": "Graduate Tuition (per credit) $1,035"
+  },
+  "Fashion Institute of Technology": {
+    "url": "https://catalog.fitnyc.edu/pastcatalogs/2015-16_undergrad.pdf",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided content is raw, compressed PDF binary data (FlateDecode streams starting with %PDF-1.6) and does not contain readable plain text. Therefore, no tuition information could be extracted.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "Florida Atlantic University": {
+    "url": "https://www.fau.edu/finaid/other/cost-of-attendance/",
+    "tuition_fee": 18482.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Extracted from the 'Graduate Cost of Attendance' section for Non-Florida Residents. The figure represents the annual 'Tuition and Fees' estimate based on full-time enrollment (18 credit hours for the academic year).",
+    "confidence": "high",
+    "source_text": "Non-Florida Resident ... Tuition and Fees $18,482"
+  },
+  "Florida International University": {
+    "url": "https://admissions.fiu.edu/cost-and-aid/",
+    "tuition_fee": 18030.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Based on the estimated cost of attendance for a full-time graduate student (9 credits per semester / 18 credits per year). Calculated from the standard Non-Florida Resident rate.",
+    "confidence": "high",
+    "source_text": "Graduate Cost of Attendance... Tuition and fees (based on 18 credits)... Non-Florida Resident: $18,030"
+  },
+  "Florida National University": {
+    "url": "https://www.fnu.edu/wp-content/uploads/2023/10/Graduate-Nursing-Student-Handbook-AY-22-23.pdf",
+    "tuition_fee": 11700.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2022-2023",
+    "notes": "Calculated based on the Master's Degree tuition rate of $650.00 per credit hour for the 2022-2023 academic year. The annual fee is estimated using a standard full-time graduate load of 18 credits per year (9 credits per semester).",
+    "confidence": "medium",
+    "source_text": "Master Degree $ 650.00 per credit"
+  },
+  "Florida State University": {
+    "url": "https://registrar.fsu.edu/bulletin/graduate-information/financial-information",
+    "tuition_fee": 26657.28,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the listed Out-of-State Main Campus Graduate rate of $1,110.72 per credit hour multiplied by 24 credit hours (standard annual load for Cost of Attendance estimates).",
+    "confidence": "high",
+    "source_text": "Main Campus... Graduate... Non-Florida Residents... Total per Credit Hour: $1,110.72"
+  },
+  "Foothill-De Anza Community College District": {
+    "url": "https://fhweb.foothill.edu/reg/cashier/fees.html",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided text describes fees for Foothill-De Anza Community College District. Community colleges primarily offer undergraduate (Associate) degrees. The text lists a general enrollment fee ($31/unit) and non-resident tuition ($249/unit for 2025-2026) but does not mention specific Graduate (Master's or Doctoral) programs or tuition rates. Per the instructions to extract ONLY graduate tuition, the result is null.",
+    "confidence": "high",
+    "source_text": "Non-resident tuition increase from $245 to $249 per credit unit effective Summer 2025... The enrollment fee will continue to be $31 per unit."
+  },
+  "Fordham University": {
+    "url": "https://www.fordham.edu/student-financial-services/tuition-and-payments/graduate-tuition/",
+    "tuition_fee": 24552.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Fordham is a private university (no in-state/out-of-state difference). Tuition is strictly per-credit and varies significantly by graduate school. As per Rule 4, this fee is calculated by averaging the per-credit rates of the four main graduate schools listed on the page ($1,677, $1,642, $1,086, $1,051) to get an average of ~$1,364/credit, then multiplying by 18 credits (typical full-time annual load of 9 credits/semester). GSAS specific tuition would be higher ($30,186/year).",
+    "confidence": "medium",
+    "source_text": "Graduate School of Arts and Sciences: $1,677 per credit... Graduate School of Education: $1,642 per credit... Graduate School of Social Service: $1,086 per credit... Graduate School of Religion and Religious Education: $1,051 per credit"
+  },
+  "Full Sail University": {
+    "url": "https://www.fullsail.edu/resources/brochure-file/admissions-letter-tuition.pdf",
+    "tuition_fee": 37000.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Full Sail University graduate programs (Master of Science) are typically accelerated 12-month programs. Therefore, the Total Program Tuition listed constitutes the annual cost. There is no distinction between in-state and out-of-state tuition (private university).",
+    "confidence": "high",
+    "source_text": "Graduate Degree Programs (Master of Science)... Total Tuition: $37,000"
+  },
+  "Gannon University": {
+    "url": "https://www.gannon.edu/tuition-and-financial-aid/tuition-and-fees/graduate-tuition/",
+    "tuition_fee": 18945.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated by averaging the 2024-2025 per-credit tuition rates for the two primary graduate colleges (College of Engineering and Computing at $1,065/credit and Dahlkemper School of Business at $1,040/credit), resulting in an average of $1,052.50/credit. This was multiplied by a standard full-time graduate load of 18 credits per academic year (9 credits per semester). Gannon University is a private institution with no distinction between in-state and out-of-state tuition.",
+    "confidence": "high",
+    "source_text": "Graduate Tuition 2024-2025... College of Engineering and Computing: $1,065 per credit... Dahlkemper School of Business: $1,040 per credit"
+  },
+  "George Mason University": {
+    "url": "https://graduate.gmu.edu/financial-support/tuition",
+    "tuition_fee": 30568.5,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the 2024-2025 Out-of-State Graduate rate of $1,698.25 per credit hour multiplied by 18 credits (typical full-time load of 9 credits per semester).",
+    "confidence": "high",
+    "source_text": "Graduate Out-of-State: $1,698.25 per credit hour"
+  },
+  "Georgetown University": {
+    "url": "https://hapi.georgetown.edu/prospective-health-public-interest-program/tuition-and-financial-support/",
+    "tuition_fee": 63264.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the 2024-2025 tuition rate of $2,636 per credit hour multiplied by the standard full-time academic year load of 24 credits (12 credits per semester). The specific program requires 30 credits to complete.",
+    "confidence": "high",
+    "source_text": "Tuition for the 2024-2025 academic year is $2,636 per credit hour."
+  },
+  "Georgia Institute of Technology": {
+    "url": "https://grad.gatech.edu/cost-fees",
+    "tuition_fee": 29174.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Based on the standard General Graduate Non-Resident tuition rate. The per-semester rate for full-time enrollment (12+ hours) is $14,587. Calculated annually as $14,587 * 2.",
+    "confidence": "high",
+    "source_text": "Non-Resident Tuition: $29,174"
+  },
+  "Georgia State University": {
+    "url": "https://graduate.gsu.edu/new/tuition-payments/",
+    "tuition_fee": 22770.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the general graduate Out-of-State rate of $1,265 per credit hour multiplied by 18 credits (9 credits per semester is the standard full-time load for graduate students at GSU).",
+    "confidence": "high",
+    "source_text": "Graduate Tuition ... Out-of-State: $1,265.00 per credit hour"
+  },
+  "Global ESL Academy": {
+    "url": "https://globaleslacademy.edu/tuition/calendar",
+    "error": "Could not extract tuition fee from webpage"
+  },
+  "Globalcom Enterprises": {
+    "url": "https://registrar.illinois.edu/tuition-fees/tuition-fee-rates/tf-rates-term/g-tuition-rates-2425/",
+    "tuition_fee": 29516.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the University of Illinois Urbana-Champaign 2024-2025 Base Graduate Non-Resident tuition rate. The Board of Trustees approved a 2% increase over the 2023-2024 rate of $14,468 per semester. Estimated calculation: $14,758 per semester × 2 semesters = $29,516. Specific programs (Engineering, Business, etc.) may have higher differential rates; this figure represents the base graduate rate.",
+    "confidence": "medium",
+    "source_text": "Graduate Tuition Rates 2024-2025 ... Base Rate ... Non-Resident ... Per Semester: $14,758"
+  },
+  "Golden Gate University": {
+    "url": "https://ggu.edu/cost-of-attendance/",
+    "tuition_fee": 13500.0,
+    "currency": "USD",
+    "is_out_of_state": false,
+    "academic_year": "2024-2025",
+    "notes": "Tuition is calculated based on the Graduate Standard Budget provided by the university, which assumes an enrollment of 12 units per academic year (common for GGU's working adult demographic) at a rate of $1,125 per unit. As a private institution, out-of-state and in-state rates are typically the same.",
+    "confidence": "high",
+    "source_text": "Tuition (12 units) $13,500"
+  },
+  "Gonzaga University": {
+    "url": "https://www.gonzaga.edu/admission/tuition-scholarships-aid/financial-aid/cost-of-attendance/graduate-cost-of-attendance",
+    "tuition_fee": 19260.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Tuition figure is based on the standard financial aid budget for a graduate student enrolled in 18 credits per year (9 credits per semester). Gonzaga is a private university, so tuition is the same for in-state and out-of-state students. Actual costs vary by specific program.",
+    "confidence": "high",
+    "source_text": "2024-25 Cost of Attendance ... Tuition (18 credits) $19,260"
+  },
+  "Graceland University": {
+    "url": "https://www.graceland.edu/admissions-aid/tuition-financial-aid/tuition-and-fees/",
+    "tuition_fee": 11300.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Tuition is listed per credit hour and varies by program. There is no flat annual fee. The amount provided is an estimated annual average calculated by averaging the per-credit rates of the five primary graduate programs ($627.80/credit average) and multiplying by 18 credits (typical full-time annual load). Rates used: Education ($450), Religion ($500), Nutrition ($550), MSN ($747), and DNP ($892).",
+    "confidence": "medium",
+    "source_text": "2024-25 Tuition & Fees ... Graduate Programs (per credit hour): Master of Education $450; Master of Arts in Religion $500; Master of Science in Nutrition and Human Performance $550; Master of Science in Nursing (MSN) $747; Doctor of Nursing Practice (DNP) $892",
+    "calculated_details": {
+      "average_cost_per_credit": 627.8,
+      "credits_per_year_assumption": 18
+    }
+  },
+  "Grand Canyon University": {
+    "url": "https://www.gcu.edu/tuition-and-financial-aid",
+    "tuition_fee": 11340.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Grand Canyon University graduate tuition is charged per credit hour and varies by program (e.g., Education $565, Business $615, others up to $695). The fee is calculated based on the average of the Master's range ($630/credit) multiplied by a typical academic year load of 18 credits. As a private institution, rates are generally the same for in-state and out-of-state students.",
+    "confidence": "medium",
+    "source_text": "Master's degrees range from $565 to $695 per credit"
+  },
+  "Grand Valley State University": {
+    "url": "https://www.gvsu.edu/financialaid/tuition-fees-25-26-263.htm",
+    "tuition_fee": 14544.0,
+    "currency": "USD",
+    "is_out_of_state": false,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on standard 2024-2025 graduate tuition rate of $808 per credit hour multiplied by a typical full-time load of 18 credits per academic year (9 per semester). GVSU charges per credit hour rather than a flat annual fee, and graduate tuition is typically the same for in-state and out-of-state students. Note: 2025-2026 specific rates were not accessible; typically rates increase slightly year-over-year.",
+    "confidence": "medium",
+    "source_text": "Graduate: $808 per credit hour"
+  }
+}

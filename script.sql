@@ -122,7 +122,8 @@ create table Program
     Description       nvarchar(max),
     ProgramWebsiteURL nvarchar(max),
     Accreditation     nvarchar(max),
-    QsWorldRanking    nvarchar(max)
+    QsWorldRanking    nvarchar(max),
+    School            nvarchar(max)
 )
 go
 

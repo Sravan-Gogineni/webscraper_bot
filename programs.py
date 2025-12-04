@@ -22,10 +22,18 @@ def get_db_engine():
     username = os.getenv("DB_USERNAME")
     password = os.getenv("DB_PASSWORD")
     driver = os.getenv("DB_DRIVER", "ODBC Driver 18 for SQL Server")
+    # Get timeout from environment or use default of 60 seconds
+    connection_timeout = int(os.getenv("DB_CONNECTION_TIMEOUT", "60"))
+    login_timeout = int(os.getenv("DB_LOGIN_TIMEOUT", "60"))
     
     if not all([database, username, password]):
         print("Error: Database credentials not set. Please set DB_SERVER, DB_NAME, DB_USERNAME, and DB_PASSWORD.")
         return None
+    
+    print(f"Attempting to connect to: {server}")
+    print(f"Database: {database}")
+    print(f"Username: {username}")
+    print(f"Connection timeout: {connection_timeout}s, Login timeout: {login_timeout}s")
     
     odbc_params = (
         f"Driver={driver};"
@@ -33,6 +41,8 @@ def get_db_engine():
         f"Database={database};"
         f"UID={username};"
         f"PWD={password};"
+        f"Connection Timeout={connection_timeout};"
+        f"Login Timeout={login_timeout};"
         "Encrypt=no;"
         "TrustServerCertificate=yes;"
     )
@@ -40,13 +50,31 @@ def get_db_engine():
     connection_url = f"mssql+pyodbc:///?odbc_connect={quote_plus(odbc_params)}"
     
     try:
-        engine = create_engine(connection_url, pool_pre_ping=True)
+        # Create engine with connection timeout settings
+        engine = create_engine(
+            connection_url,
+            pool_pre_ping=True,
+            connect_args={
+                "timeout": connection_timeout,
+            },
+            # Set pool timeout as well
+            pool_timeout=connection_timeout,
+        )
         # Test connection
+        print("Testing connection...")
         with engine.connect() as conn:
             conn.execute(select(1))
+        print("✓ Connection test successful")
         return engine
     except Exception as e:
         print(f"Error connecting to database: {e}")
+        print(f"\nTroubleshooting tips:")
+        print(f"1. Verify the server address '{server}' is correct and reachable")
+        print(f"2. Check if the SQL Server is running and accepting connections")
+        print(f"3. Verify firewall rules allow connections on port 1433 (or your configured port)")
+        print(f"4. Check if the database '{database}' exists")
+        print(f"5. Verify username '{username}' and password are correct")
+        print(f"6. Try increasing timeout values by setting DB_CONNECTION_TIMEOUT and DB_LOGIN_TIMEOUT environment variables")
         import traceback
         traceback.print_exc()
         return None
@@ -86,6 +114,33 @@ def get_all_colleges(engine):
         import traceback
         traceback.print_exc()
         return []
+
+def check_college_has_programs(engine, college_id):
+    """Check if a college already has programs in the database.
+    Returns True if the college has at least one program, False otherwise."""
+    if not engine or not college_id:
+        return False
+    
+    try:
+        metadata = MetaData()
+        metadata.reflect(bind=engine)
+        program_link_table = metadata.tables.get("ProgramDepartmentLink")
+        
+        if program_link_table is None:
+            return False
+        
+        with engine.connect() as conn:
+            # Count how many programs this college has
+            count_stmt = select(func.count(program_link_table.c.LinkID)).where(
+                program_link_table.c.CollegeID == college_id
+            )
+            count = conn.execute(count_stmt).scalar() or 0
+            
+            return count > 0
+            
+    except Exception as e:
+        print(f"⚠️  Error checking programs for college ID {college_id}: {e}")
+        return False
 
 def find_college_department(engine, college_id, department_name, program_level=None):
     """Find CollegeDepartmentID by college and department name with multiple matching strategies."""
@@ -155,47 +210,9 @@ def find_college_department(engine, college_id, department_name, program_level=N
                         if result:
                             return result[0]
             
-            # Strategy 4: Fallback based on program level
-            if program_level:
-                level_lower = program_level.lower()
-                if "undergraduate" in level_lower or "bachelor" in level_lower:
-                    # Try to find Undergraduate Admissions
-                    stmt = (
-                        select(college_department_table.c.CollegeDepartmentID)
-                        .join(department_table, department_table.c.DepartmentID == college_department_table.c.DepartmentID)
-                        .where(
-                            (college_department_table.c.CollegeID == college_id) &
-                            (func.upper(department_table.c.DepartmentName).like("%UNDERGRADUATE%")) &
-                            (func.upper(department_table.c.DepartmentName).like("%ADMISSION%"))
-                        )
-                    )
-                    result = conn.execute(stmt).first()
-                    if result:
-                        return result[0]
-                elif "graduate" in level_lower or "master" in level_lower or "doctorate" in level_lower or "phd" in level_lower:
-                    # Try to find Graduate Admissions
-                    stmt = (
-                        select(college_department_table.c.CollegeDepartmentID)
-                        .join(department_table, department_table.c.DepartmentID == college_department_table.c.DepartmentID)
-                        .where(
-                            (college_department_table.c.CollegeID == college_id) &
-                            (func.upper(department_table.c.DepartmentName).like("%GRADUATE%")) &
-                            (func.upper(department_table.c.DepartmentName).like("%ADMISSION%"))
-                        )
-                    )
-                    result = conn.execute(stmt).first()
-                    if result:
-                        return result[0]
-            
-            # Strategy 5: Get any department for this college as last resort
-            stmt = (
-                select(college_department_table.c.CollegeDepartmentID)
-                .where(college_department_table.c.CollegeID == college_id)
-            )
-            result = conn.execute(stmt).first()
-            if result:
-                return result[0]
-            
+            # NO FALLBACK STRATEGIES - only return matches if department name was explicitly provided
+            # We do NOT guess departments based on program level or pick random departments
+            # Return None if no match found - it's better to skip the link than to guess incorrectly
             return None
             
     except Exception as e:
@@ -292,6 +309,7 @@ def save_program(engine, college_id, program_data):
                     "ProgramWebsiteURL": snapshot.get("Program Website URL"),
                     "Accreditation": snapshot.get("Accreditation"),
                     "QsWorldRanking": snapshot.get("Qs World Ranking"),
+                    "School": snapshot.get("School"),
                 }
                 program_values = {k: v for k, v in program_values.items() if v is not None}
                 if program_values:
@@ -310,6 +328,7 @@ def save_program(engine, college_id, program_data):
                     "ProgramWebsiteURL": snapshot.get("Program Website URL"),
                     "Accreditation": snapshot.get("Accreditation"),
                     "QsWorldRanking": snapshot.get("Qs World Ranking"),
+                    "School": snapshot.get("School"),
                 }
                 program_values = {k: v for k, v in program_values.items() if v is not None}
                 result = conn.execute(program_table.insert().values(**program_values))
@@ -444,27 +463,24 @@ def save_program(engine, college_id, program_data):
                 else:
                     conn.execute(program_test_table.insert().values(**test_values))
             
-            # Save ProgramDepartmentLink
+            # Save ProgramDepartmentLink (only if department name is explicitly provided)
             if program_link_table is not None:
                 dept_name = None
                 if dept_placement:
                     dept_name = dept_placement.get("College Department I D") or dept_placement.get("College Department ID") or dept_placement.get("Department Name")
                 
-                # Try to find department - use program level as fallback
+                # Only try to find department if name is explicitly provided (no guessing based on program level)
                 college_dept_id = None
                 if dept_name:
                     print(f"      Trying to find department: {dept_name}")
                     college_dept_id = find_college_department(engine, college_id, dept_name, level)
                     if college_dept_id:
                         print(f"      ✓ Found department match: {dept_name}")
+                    else:
+                        print(f"      ⚠️  Could not find matching department: {dept_name}")
+                        print(f"      Program will be saved but not linked to a department")
                 
-                # If still not found, try fallback based on program level
-                if not college_dept_id:
-                    print(f"      Trying fallback based on program level: {level}")
-                    college_dept_id = find_college_department(engine, college_id, None, level)
-                    if college_dept_id:
-                        print(f"      ✓ Found department by program level: {level}")
-                
+                # NO FALLBACK - only link if department name was explicitly provided and found
                 if college_dept_id:
                     existing_link = conn.execute(
                         select(program_link_table.c.LinkID).where(
@@ -490,7 +506,10 @@ def save_program(engine, college_id, program_data):
                         )
                         print(f"      ✓ Created ProgramDepartmentLink")
                 else:
-                    print(f"      ⚠️  WARNING: Could not find department for program (Level: {level})")
+                    if not dept_name:
+                        print(f"      ℹ️  No department name provided for program - skipping department link")
+                    else:
+                        print(f"      ⚠️  Department name provided but not found in database - skipping department link")
                     print(f"      Program will be saved but not linked to a department")
         
         return True
@@ -599,6 +618,11 @@ for idx, (college_id, college_name, website_url) in enumerate(colleges, 1):
         print(f"\n[{idx}/{len(colleges)}] ⚠️  Skipping {college_name}: No website URL found")
         continue
     
+    # Check if this college already has programs in the database
+    if check_college_has_programs(engine, college_id):
+        print(f"\n[{idx}/{len(colleges)}] ⏭️  Skipping {college_name}: Already has programs in database")
+        continue
+    
     print(f"\n[{idx}/{len(colleges)}] Processing: {college_name}")
     print(f"Main Website: {website_url}")
     
@@ -611,6 +635,9 @@ for idx, (college_id, college_name, website_url) in enumerate(colleges, 1):
         college_name_lower = college_name.lower().strip()
         matched_cache_name = None
         
+        # Common generic words to ignore (these appear in many university names)
+        common_generic_words = {'university', 'college', 'school', 'institute', 'institution', 'academy', 'center', 'centre'}
+        
         # First try exact match
         for cached_name, cached_data in program_urls_cache.items():
             cached_name_lower = cached_name.lower().strip()
@@ -620,47 +647,69 @@ for idx, (college_id, college_name, website_url) in enumerate(colleges, 1):
                 undergrad_programs_url = cached_data.get("Undergraduate Programs URL")
                 break
         
-        # If no exact match, try partial matches (removing common words)
+        # If no exact match, try partial matches (removing common generic words)
         if not matched_cache_name:
-            # Remove common words for better matching
-            college_words = set([w for w in college_name_lower.split() if len(w) > 3])
+            
+            # Extract meaningful words (ignore generic words and short words)
+            college_words = set([w for w in college_name_lower.split() 
+                                if len(w) > 3 and w not in common_generic_words])
             
             best_match = None
             best_score = 0
             
             for cached_name, cached_data in program_urls_cache.items():
                 cached_name_lower = cached_name.lower().strip()
-                cached_words = set([w for w in cached_name_lower.split() if len(w) > 3])
+                cached_words = set([w for w in cached_name_lower.split() 
+                                   if len(w) > 3 and w not in common_generic_words])
                 
-                # Calculate match score
+                # Calculate match score using only meaningful words
                 if college_words and cached_words:
                     common_words = college_words & cached_words
-                    score = len(common_words) / max(len(college_words), len(cached_words))
-                    
-                    if score > best_score and score >= 0.5:  # At least 50% word overlap
-                        best_score = score
-                        best_match = (cached_name, cached_data)
+                    if common_words:  # Must have at least one meaningful word in common
+                        score = len(common_words) / max(len(college_words), len(cached_words))
+                        
+                        # Require at least 60% overlap AND at least one unique word match
+                        if score > best_score and score >= 0.6:
+                            best_score = score
+                            best_match = (cached_name, cached_data)
             
             if best_match:
                 matched_cache_name, cached_data = best_match
                 grad_programs_url = cached_data.get("Graduate Programs URL")
                 undergrad_programs_url = cached_data.get("Undergraduate Programs URL")
         
-        # If still no match, try simple substring matching
+        # If still no match, try fuzzy string matching (only for very similar names)
         if not matched_cache_name:
             for cached_name, cached_data in program_urls_cache.items():
                 cached_name_lower = cached_name.lower().strip()
-                # Check if significant portion matches
+                
+                # Only match if one name contains the other as a significant substring
+                # AND they share at least 15 characters (excluding generic words)
                 if college_name_lower in cached_name_lower or cached_name_lower in college_name_lower:
-                    # Ensure at least 10 characters match
-                    if len(college_name_lower) >= 10 or len(cached_name_lower) >= 10:
-                        matched_cache_name = cached_name
-                        grad_programs_url = cached_data.get("Graduate Programs URL")
-                        undergrad_programs_url = cached_data.get("Undergraduate Programs URL")
-                        break
+                    # Extract meaningful parts (remove generic words)
+                    college_meaningful = ' '.join([w for w in college_name_lower.split() 
+                                                   if w not in common_generic_words])
+                    cached_meaningful = ' '.join([w for w in cached_name_lower.split() 
+                                                  if w not in common_generic_words])
+                    
+                    # Check if meaningful parts overlap significantly (at least 10 chars)
+                    if college_meaningful and cached_meaningful:
+                        if college_meaningful in cached_meaningful or cached_meaningful in college_meaningful:
+                            if len(college_meaningful) >= 8 and len(cached_meaningful) >= 8:
+                                matched_cache_name = cached_name
+                                grad_programs_url = cached_data.get("Graduate Programs URL")
+                                undergrad_programs_url = cached_data.get("Undergraduate Programs URL")
+                                break
         
         if matched_cache_name:
-            print(f"✓ Matched cache entry: '{matched_cache_name}'")
+            # Warn if the matched name is different from the college name (fuzzy match)
+            if matched_cache_name.lower().strip() != college_name.lower().strip():
+                print(f"⚠️  WARNING: Fuzzy matched '{college_name}' to cache entry '{matched_cache_name}'")
+                print(f"⚠️  Please verify this is correct before proceeding!")
+            else:
+                print(f"✓ Exact match found in cache: '{matched_cache_name}'")
+            
+            print(f"✓ Using cache entry: '{matched_cache_name}'")
             # Filter out None/null URLs
             if grad_programs_url and grad_programs_url.lower() != 'null' and grad_programs_url.strip():
                 print(f"  ✓ Graduate Programs URL: {grad_programs_url}")
@@ -718,7 +767,13 @@ for idx, (college_id, college_name, website_url) in enumerate(colleges, 1):
                     program_focus = "ALL programs (both Undergraduate and Graduate)"
                     level_hint = "Include programs of all levels"
                 
-                prompt = f"""You are a higher education data scraper. You are given a specific program listing page URL from a university. This page specifically lists {program_focus}. You MUST scrape information for EVERY SINGLE PROGRAM listed on this page and any linked pages.
+                prompt = f"""You are a higher education data scraper. You are given a specific program listing page URL from a university.
+
+🔥 CURRENT UNIVERSITY YOU ARE SCRAPING: "{college_name}" 🔥
+
+This page specifically lists {program_focus}. You MUST scrape information for EVERY SINGLE PROGRAM listed on this page and any linked pages.
+
+⚠️⚠️⚠️ CRITICAL: The school/college names you find MUST be specific to "{college_name}" - DO NOT use school names from other universities like "University of New Haven" or any other university. Only use school names that actually appear on "{college_name}"'s website.
 
 CRITICAL REQUIREMENT: You MUST find and return ALL programs from this page - DO NOT limit yourself to just 5, 10, or any small number. This page likely lists dozens or hundreds of programs, and you need to find EVERY ONE OF THEM.
 
@@ -739,6 +794,86 @@ IMPORTANT:
 - Each school/college section may have multiple programs - get them ALL
 - Each department may have multiple programs - get them ALL
 
+⚠️⚠️⚠️ CRITICAL - UNDERSTANDING SCHOOL vs DEPARTMENT ⚠️⚠️⚠️:
+
+🔥🔥🔥 YOU ARE CURRENTLY SCRAPING: "{college_name}" 🔥🔥🔥
+
+⚠️ CRITICAL DISTINCTION - "School" and "Department" are COMPLETELY DIFFERENT:
+
+1. "School" = Organizational/Academic unit within the university
+   - Examples: "School of Engineering", "School of Business", "College of Medicine", "Tagliatela College of Engineering"
+   - This is where the program is offered/academically housed
+   - Goes in the "School" field in Program Snapshot
+
+2. "Department" = Admissions Office that handles applications
+   - Examples: "Graduate Admissions", "Undergraduate Admissions", "Office of Graduate Admissions"
+   - This is the office that processes applications for the program
+   - Goes in the "Department Placement" section
+
+DO NOT confuse these two - they serve different purposes!
+
+🔥 VERY IMPORTANT: Each university has its own unique school/college structure. School names from one university are COMPLETELY DIFFERENT from another university. 
+
+For example:
+- "University of New Haven" has school names like: "Tagliatela College of Engineering", "Pompea College of Business", "Henry C. Lee College of Criminal Justice and Forensic Sciences"
+- "{college_name}" will have COMPLETELY DIFFERENT school names (whatever that university actually calls its schools)
+- DO NOT use "Tagliatela College of Engineering" or "Pompea College of Business" or any other University of New Haven school names when scraping "{college_name}"
+- Each university's website will list its own unique school/college names
+
+⚠️⚠️⚠️ CRITICAL RULES - READ CAREFULLY:
+1. You are scraping "{college_name}" - find school names that are SPECIFIC to "{college_name}" only
+2. DO NOT copy school names from examples in this prompt (they are just examples from other universities)
+3. DO NOT use school names from "University of New Haven" or any other university you've seen before
+4. DO NOT assume school names based on program type
+5. ONLY use school names that are EXPLICITLY STATED on "{college_name}"'s website
+6. If you cannot find the school name clearly stated on "{college_name}"'s website, use null
+7. It is BETTER to leave it null than to guess or copy from examples or other universities
+
+IMPORTANT: "School" here refers to the ORGANIZATIONAL UNIT WITHIN "{college_name}" (like "School of Medicine", "College of Engineering", "School of Business"), NOT the university name itself.
+
+⚠️ CRITICAL - EACH UNIVERSITY HAS ITS OWN UNIQUE SCHOOL STRUCTURE:
+Every university has its own unique school/college names. The school names for "University of New Haven" (like "Tagliatela College of Engineering") are DIFFERENT from "{college_name}"'s school names. 
+
+You MUST find the school names that are SPECIFIC to "{college_name}" only. DO NOT copy school names from examples or from other universities like "University of New Haven".
+
+Examples of what "School" means (these are GENERIC examples - each university will have its own unique names):
+  * Medical programs → Could be "School of Medicine", "College of Medicine", "Faculty of Medicine", or whatever the university calls it (if stated on website)
+  * Engineering programs → Could be "College of Engineering", "School of Engineering", "Faculty of Engineering", or whatever the university calls it (if stated on website)
+  * Business programs → Could be "School of Business", "College of Business", "Business School", or whatever the university calls it (if stated on website)
+  * Arts programs → Could be "College of Arts", "School of Arts", "Faculty of Arts", or whatever the university calls it (if stated on website)
+
+⚠️ DO NOT use school names from other universities - only use names that appear on the CURRENT university's website you are scraping.
+
+This is the ORGANIZATIONAL UNIT that offers the program, not:
+  ❌ The university name (e.g., "University of New Haven")
+  ❌ The department name (e.g., "Computer Science Department")
+  ❌ The program name itself (e.g., "Master of Science in Computer Science")
+  ❌ Guessed or assumed names based on program type
+  ❌ Generic names you invent (e.g., don't assume "College of Engineering" just because it's an engineering program)
+
+Look for the school/college name in:
+  * Page headers and section titles (e.g., "College of Engineering Programs", "School of Business")
+  * Breadcrumb navigation paths (e.g., "Home > Colleges > [School Name] > Programs") - use the actual school name that appears in the breadcrumb
+  * Program detail pages that mention the parent school/college
+  * Department listings that show which school they belong to
+  * Menu navigation showing the organizational structure
+  * URL structure that may indicate the school (e.g., /medicine/programs, /engineering/programs, /business/degrees)
+  * Program listings organized under school/college sections
+
+⚠️ MANDATORY ACCURACY RULES:
+  * Use the EXACT, FULL name as it appears on the website - copy it word-for-word
+  * DO NOT guess school names based on program type
+  * DO NOT assume a program belongs to a school just because of its name
+  * DO NOT create generic school names (e.g., don't say "College of Engineering" just because it's engineering)
+  * DO NOT use abbreviations unless that's exactly how it appears on the website
+  * DO NOT use the university name - only use the school/college within the university
+  * If you cannot find the school name EXPLICITLY stated on the website, use null
+  * It is BETTER to use null than to guess or fabricate a school name
+  * Only use a school name if you can see it clearly written on the website
+  * Each university has its own unique school names - find the names that are SPECIFIC to the university you are currently scraping
+  * DO NOT copy school names from examples or from other universities
+  * Only use school names that appear on the CURRENT university's website
+
 DO NOT STOP after finding a few programs. This page exists specifically to list programs, so there should be many programs listed. Get EVERY SINGLE ONE.
 
 For EACH program you find, you need to scrape the following information and return it in a structured JSON format as an array of program objects. Each program should have these sections:
@@ -751,6 +886,54 @@ For EACH program you find, you need to scrape the following information and retu
    - "Program Website URL": URL to the program's webpage
    - "Accreditation": Accreditation information
    - "Qs World Ranking": QS World Ranking if available
+   - "School": The SCHOOL/COLLEGE organizational unit WITHIN THE UNIVERSITY that this program belongs to (NOT the university name itself). 
+   
+   ⚠️ IMPORTANT: "School" is DIFFERENT from "Department". They are completely different concepts:
+   - "School" = Organizational unit like "School of Engineering", "School of Business", "College of Medicine", "Tagliatela College of Engineering"
+   - "Department" (in Department Placement below) = Admissions office like "Graduate Admissions", "Undergraduate Admissions" - this is for admissions/application processing
+   
+   "School" refers to the organizational/academic unit within the university, such as:
+   - "School of Medicine"
+   - "School of Engineering" 
+   - "College of Engineering"
+   - "School of Business"
+   - "College of Business"
+   - "School of Arts and Sciences"
+   - etc. 
+
+   🔥🔥🔥 CRITICAL WARNING - DO NOT COPY SCHOOL NAMES FROM EXAMPLES OR OTHER UNIVERSITIES 🔥🔥🔥:
+   
+   EACH UNIVERSITY HAS ITS OWN UNIQUE SCHOOL NAMES. If you are scraping "Academy of Europe Arts", you MUST find the school names that are SPECIFIC to "Academy of Europe Arts" - DO NOT use school names like "Tagliatela College of Engineering" or "Pompea College of Business" (those are for University of New Haven, not Academy of Europe Arts).
+   
+   ⚠️ CRITICAL RULES:
+   - Each university has DIFFERENT school names - find the names on the CURRENT university's website
+   - DO NOT copy school names from examples in this prompt
+   - DO NOT use school names from other universities you've seen before  
+   - DO NOT guess or assume school names
+   - Only use school names that are EXPLICITLY STATED on the CURRENT university's website
+   - If you cannot find the school name clearly written on the website, use null
+   - It is BETTER to leave it null than to guess incorrectly or copy from examples
+
+   ⚠️ IMPORTANT: The examples below are GENERIC examples. Each university has its own unique school names. You must find the school names that are SPECIFIC to the university you are currently scraping. DO NOT copy school names from examples.
+   
+   Generic examples of school structures (but use the actual names from the current university's website):
+   - "School of Medicine", "College of Medicine", "Faculty of Medicine"
+   - "School of Engineering", "College of Engineering", "Faculty of Engineering"  
+   - "School of Business", "College of Business", "Business School"
+   - "College of Arts and Sciences", "School of Arts", "Faculty of Arts"
+   - "School of Law", "College of Law"
+   - "School of Nursing", "College of Nursing"
+   
+   Each university will have its own unique names - you must find and use the EXACT names that appear on that university's website.
+
+   Rules:
+   - Use the EXACT, FULL name as it appears on the website - copy it word-for-word
+   - Look in page headers, breadcrumbs, navigation menus, section titles, and program detail pages
+   - Do NOT use the university name - only use the school/college within the university
+   - Do NOT guess based on program type (e.g., don't assume "College of Engineering" just because it's an engineering program)
+   - Do NOT create generic names - only use names that are explicitly written on the website
+   - If the school name is not clearly visible on the website, use null
+   - Accuracy is more important than completeness - use null rather than making something up
 
 2. "Application Checklist":
    - "Resume": true/false - Is resume required?
@@ -798,7 +981,54 @@ For EACH program you find, you need to scrape the following information and retu
    - "Scholarship Type": Type of scholarship
 
 4. "Department Placement":
-   - "College Department I D": The exact department/admissions office name that handles this program (e.g., "Graduate Admissions", "Undergraduate Admissions", "School of Business Admissions", "School of Engineering Admissions"). This should match the department name exactly as it appears in the admissions section of the website. If the program is for undergraduates, use "Undergraduate Admissions". If it's for graduates, use "Graduate Admissions". If it's a specific school's admissions office, use that school's name followed by "Admissions".
+   ⚠️⚠️⚠️ CRITICAL DISTINCTION: "Department" here is COMPLETELY DIFFERENT from "School" above! ⚠️⚠️⚠️
+   
+   - "School" (above) = Organizational/academic unit like "School of Engineering", "School of Business"
+   - "Department" (here) = ADMISSIONS OFFICE that handles applications for this program
+   
+   "Department Placement" refers to the ADMISSIONS OFFICE that processes applications for this program, such as:
+   - "Graduate Admissions" (admissions office for graduate programs)
+   - "Undergraduate Admissions" (admissions office for undergraduate programs)
+   - "Graduate School Admissions" 
+   - "Office of Graduate Admissions"
+   - "Admissions Office"
+   - etc.
+   
+   - "College Department I D": The exact admissions office/department name that handles applications for this program.
+   
+   ⚠️ CRITICAL: Only use admissions office names that are EXPLICITLY STATED on the website. DO NOT guess, assume, or fabricate admissions office names. If you cannot find the admissions office name clearly written on the website, use null. It is BETTER to use null than to guess incorrectly.
+   
+   This should match the admissions office name EXACTLY as it appears on the website. Examples (ONLY if these exact names appear on the website): 
+   - "Graduate Admissions"
+   - "Undergraduate Admissions"
+   - "Graduate School Admissions"
+   - "Office of Graduate Admissions"
+   - "Admissions Office"
+   
+   ⚠️ DO NOT confuse this with "School":
+   - ❌ "School of Engineering" - this goes in "School" field, NOT Department Placement
+   - ❌ "College of Business" - this goes in "School" field, NOT Department Placement
+   - ✅ "Graduate Admissions" - this goes in Department Placement
+   - ✅ "Undergraduate Admissions" - this goes in Department Placement
+   
+   Rules:
+   - "Department" = Admissions office (for applications)
+   - "School" = Organizational unit (like School of Engineering)
+   - Use the EXACT, FULL admissions office name as it appears on the website - copy it word-for-word
+   - Look in these places for admissions office names:
+     * "How to Apply" sections on program pages
+     * "Admissions" or "Application" pages
+     * Contact information sections
+     * "Apply Now" or "Application Process" pages
+     * Footer links or navigation menus with "Admissions"
+     * Program detail pages that mention where to send applications
+   - DO NOT assume "Undergraduate Admissions" just because it's an undergraduate program
+   - DO NOT assume "Graduate Admissions" just because it's a graduate program
+   - DO NOT confuse with school names - admissions offices are different from schools
+   - DO NOT create generic admissions office names - only use names that are explicitly written on the website
+   - DO NOT guess based on program level - only use names that are explicitly written on the website
+   - If the admissions office name is not clearly visible on the website, use null
+   - Accuracy is more important than completeness - use null rather than making something up
 
 5. "Minimum Test Scores":
    - "Minimum A C T Score": Minimum ACT score
@@ -814,7 +1044,16 @@ For EACH program you find, you need to scrape the following information and retu
    - "Minimum T O E F L Score": Minimum TOEFL score
    - "Minimum L S A T Score": Minimum LSAT score
 
-Return the data as a JSON array where each element is a program object with all the above sections. Example structure:
+Return the data as a JSON array where each element is a program object with all the above sections.
+
+⚠️⚠️⚠️ BEFORE YOU CREATE THE JSON, REMEMBER:
+- You are scraping "{college_name}"
+- The "School" field must contain school names that are SPECIFIC to "{college_name}"
+- DO NOT use school names from other universities
+- If you cannot find the school name on "{college_name}"'s website, use null
+- The examples below are GENERIC - use the actual school names from "{college_name}"'s website
+
+Example structure:
 [
   {{
     "Program Snapshot": {{
@@ -824,7 +1063,41 @@ Return the data as a JSON array where each element is a program object with all 
       "Description": "...",
       "Program Website URL": "...",
       "Accreditation": "...",
-      "Qs World Ranking": "..."
+      "Qs World Ranking": "...",
+      "School": "College of Engineering"
+    }},
+    {{
+      "Program Snapshot": {{
+        "Program Name": "Master of Business Administration",
+        "Level": "Master",
+        "Concentration": null,
+        "Description": "...",
+        "Program Website URL": "...",
+        "Accreditation": "...",
+        "Qs World Ranking": "...",
+        "School": "School of Business"
+    }},
+    {{
+      "Program Snapshot": {{
+        "Program Name": "Doctor of Medicine",
+        "Level": "Doctorate",
+        "Concentration": null,
+        "Description": "...",
+        "Program Website URL": "...",
+        "Accreditation": "...",
+        "Qs World Ranking": "...",
+        "School": "School of Medicine"
+    }},
+    {{
+      "Program Snapshot": {{
+        "Program Name": "Example Program Without Clear School",
+        "Level": "Master",
+        "Concentration": null,
+        "Description": "...",
+        "Program Website URL": "...",
+        "Accreditation": "...",
+        "Qs World Ranking": "...",
+        "School": null
     }},
     "Application Checklist": {{
       "Resume": true,
@@ -840,6 +1113,16 @@ Return the data as a JSON array where each element is a program object with all 
     "Department Placement": {{
       "College Department I D": "Graduate Admissions"
     }},
+    {{
+      "Program Snapshot": {{
+        "Program Name": "Example Program Without Clear Department",
+        "Level": "Master",
+        ...
+        "School": null
+    }},
+    "Department Placement": {{
+      "College Department I D": null
+    }},
     "Minimum Test Scores": {{
       "Minimum I E L T S Score": 6.5,
       "Minimum T O E F L Score": 80,
@@ -852,6 +1135,32 @@ Return the data as a JSON array where each element is a program object with all 
 CRITICAL INSTRUCTIONS:
 - You MUST include EVERY SINGLE PROGRAM found on the website - no exceptions
 - DO NOT limit the number of programs - if the university has 50, 100, 200, or 500 programs, return ALL of them
+
+⚠️⚠️⚠️ CRITICAL - ACCURACY REQUIREMENTS (NO FABRICATION ALLOWED) ⚠️⚠️⚠️:
+
+IMPORTANT: DO NOT guess, assume, or fabricate any information. Only use data that is EXPLICITLY STATED on the website. This applies especially to School and Department fields.
+
+FOR SCHOOL FIELD:
+- For EACH program, identify and include the "School" field ONLY if you can find it EXPLICITLY STATED on the website
+- DO NOT guess school names based on program type
+- DO NOT fabricate or invent school names
+- DO NOT assume a school name - only use what is clearly written on the website
+- If you cannot find the school name on the website, use null
+- It is BETTER to use null than to guess incorrectly
+- Examples of generic school name patterns (but use the ACTUAL names from the current university's website): "School of Medicine", "College of Engineering", "School of Business", "College of Arts and Sciences"
+- ⚠️ CRITICAL: Each university has unique school names - do NOT copy names from examples or other universities
+- NOTE: "School" refers to the organizational unit within the university (like School of Medicine, College of Engineering), NOT the university name itself
+
+FOR DEPARTMENT/ADMISSIONS OFFICE FIELD:
+- For EACH program, identify and include the "College Department I D" field ONLY if you can find it EXPLICITLY STATED on the website
+- DO NOT guess department names based on program level (e.g., don't assume "Graduate Admissions" just because it's a graduate program)
+- DO NOT fabricate or invent department/admissions office names
+- DO NOT assume a department name - only use what is clearly written on the website
+- If you cannot find the department/admissions office name on the website, use null
+- It is BETTER to use null than to guess incorrectly
+- Examples of correct department names (ONLY if found on website): "Graduate Admissions", "Undergraduate Admissions", "School of Business Admissions", "College of Engineering Admissions Office"
+- The department name should match EXACTLY as it appears on the website
+- DO NOT default to "Graduate Admissions" for graduate programs or "Undergraduate Admissions" for undergraduate programs unless you see these exact names on the website
 - DO NOT stop after finding a few programs - continue until you have exhausted all program pages
 - Visit EACH school's page, EACH college's page, EACH department's page to get their programs
 - Explore all schools, colleges, departments, and program listing pages systematically

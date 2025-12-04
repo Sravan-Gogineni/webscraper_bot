@@ -33,7 +33,7 @@ from flask import (
     request,
     url_for,
 )
-from sqlalchemy import MetaData, create_engine, func, select, case
+from sqlalchemy import MetaData, create_engine, func, select, case, literal
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql import sqltypes
 
@@ -484,8 +484,11 @@ def university_list():
 
     with engine.connect() as conn:
         rows = [dict(row._mapping) for row in conn.execute(stmt)]
+        # Get the total count of universities
+        count_stmt = select(func.count(college_table.c.CollegeID))
+        total_count = conn.execute(count_stmt).scalar() or 0
 
-    return render_template("forms/university_list.html", rows=rows)
+    return render_template("forms/university_list.html", rows=rows, total_count=total_count)
 
 
 @forms_bp.route("/universities/new", methods=["GET", "POST"])
@@ -1418,74 +1421,613 @@ def persist_department_bundle(
     return department_id
 
 
+@forms_bp.route("/yocket-programs/")
+def yocket_programs_list():
+    """Display list of Yocket programs grouped by university with pagination and search."""
+    try:
+        engine = get_engine()
+    except Exception:
+        flash("Database is not configured.", "error")
+        return render_template("forms/yocket_programs_list.html", grouped_programs={}, total_count=0, total_universities=0, page=1, total_pages=0, per_page=10, search_query="")
+    
+    try:
+        yocket_table = fetch_table("YocketPrograms", required=False)
+        
+        if yocket_table is None:
+            flash("YocketPrograms table not found in database. Please create it first.", "error")
+            return render_template("forms/yocket_programs_list.html", grouped_programs={}, total_count=0, total_universities=0, page=1, total_pages=0, per_page=10, search_query="")
+        
+        # Get pagination and search parameters
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        per_page = min(max(per_page, 5), 50)  # Limit between 5 and 50 universities per page
+        search_query = request.args.get('search', '').strip()
+        
+        with engine.connect() as conn:
+            # Get all programs ordered by university and course name
+            stmt = (
+                select(yocket_table)
+                .order_by(
+                    yocket_table.c.UniversitySlug,
+                    yocket_table.c.UniversityCourseName
+                )
+            )
+            rows = [dict(row._mapping) for row in conn.execute(stmt)]
+            
+            # Get total count
+            count_stmt = select(func.count(yocket_table.c.YocketProgramID))
+            total_count = conn.execute(count_stmt).scalar() or 0
+        
+        # Group programs by university
+        grouped_programs = defaultdict(list)
+        for row in rows:
+            university_name = row.get('UniversitySlug') or row.get('UniversityID') or 'Unknown University'
+            grouped_programs[university_name].append(row)
+        
+        # Filter universities by search query if provided
+        if search_query:
+            search_lower = search_query.lower()
+            filtered_universities = {
+                uni: programs for uni, programs in grouped_programs.items()
+                if search_lower in uni.lower() or 
+                   any(search_lower in str(row.get('UniversityID', '')).lower() for row in programs)
+            }
+            grouped_programs = filtered_universities
+        
+        # Sort universities alphabetically
+        sorted_universities = sorted(grouped_programs.keys())
+        total_universities = len(sorted_universities)
+        
+        # Calculate pagination for universities
+        total_pages = (total_universities + per_page - 1) // per_page if total_universities > 0 else 0
+        page = max(1, min(page, total_pages)) if total_pages > 0 else 1
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        
+        # Get universities for current page
+        paginated_universities = sorted_universities[start_idx:end_idx]
+        grouped_programs_paginated = {uni: grouped_programs[uni] for uni in paginated_universities}
+        
+        return render_template(
+            "forms/yocket_programs_list.html", 
+            grouped_programs=grouped_programs_paginated,
+            total_count=total_count,
+            total_universities=total_universities,
+            page=page,
+            total_pages=total_pages,
+            per_page=per_page,
+            search_query=search_query
+        )
+    
+    except Exception as e:
+        flash(f"Error loading Yocket programs: {e}", "error")
+        import traceback
+        traceback.print_exc()
+        return render_template("forms/yocket_programs_list.html", grouped_programs={}, total_count=0, total_universities=0, page=1, total_pages=0, per_page=10, search_query="")
+
+
+@forms_bp.route("/yocket-programs/delete-university", methods=["POST"])
+def yocket_programs_delete_university():
+    """Delete all Yocket programs for a specific university."""
+    try:
+        engine = get_engine()
+        if engine is None:
+            flash("Database is not configured.", "error")
+            return redirect(url_for("forms.yocket_programs_list"))
+        
+        yocket_table = fetch_table("YocketPrograms", required=False)
+        
+        if yocket_table is None:
+            flash("YocketPrograms table not found.", "error")
+            return redirect(url_for("forms.yocket_programs_list"))
+        
+        # Get university identifier from form data
+        university_slug = request.form.get('university_slug', '').strip()
+        university_id = request.form.get('university_id', '').strip()
+        
+        if not university_slug and not university_id:
+            flash("University identifier is required.", "error")
+            return redirect(url_for("forms.yocket_programs_list"))
+        
+        with engine.begin() as conn:
+            # Delete all programs for this university
+            # Try to delete by UniversitySlug first, then by UniversityID
+            if university_slug:
+                result = conn.execute(
+                    yocket_table.delete().where(yocket_table.c.UniversitySlug == university_slug)
+                )
+            elif university_id:
+                result = conn.execute(
+                    yocket_table.delete().where(yocket_table.c.UniversityID == university_id)
+                )
+            
+            deleted_count = result.rowcount
+            
+            if deleted_count > 0:
+                flash(f"Deleted {deleted_count} program{'s' if deleted_count != 1 else ''} for university.", "success")
+            else:
+                flash("No programs found for this university.", "info")
+        
+        # Redirect back to the list page, preserving search and pagination
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 10, type=int)
+        search_query = request.args.get('search', '').strip()
+        
+        return redirect(url_for(
+            'forms.yocket_programs_list',
+            page=page,
+            per_page=per_page,
+            search=search_query if search_query else None
+        ))
+    
+    except Exception as e:
+        import traceback
+        error_msg = f"Error deleting Yocket programs: {str(e)}\n{traceback.format_exc()}"
+        print(error_msg)
+        flash(f"Error deleting programs: {str(e)}", "error")
+        return redirect(url_for("forms.yocket_programs_list"))
+
+
 @forms_bp.route("/programs/")
 def program_list():
-    engine = get_engine()
-    program_table = fetch_table("Program")
-    program_link_table = fetch_table("ProgramDepartmentLink", required=False)
-    college_table = fetch_table("College", required=False)
-    department_table = fetch_table("Department", required=False)
-    college_department_table = fetch_table("CollegeDepartment", required=False)
+    try:
+        engine = get_engine()
+        program_table = fetch_table("Program")
+        program_term_table = fetch_table("ProgramTermDetails", required=False)
+        program_link_table = fetch_table("ProgramDepartmentLink", required=False)
+        college_table = fetch_table("College", required=False)
+        department_table = fetch_table("Department", required=False)
+        college_department_table = fetch_table("CollegeDepartment", required=False)
+        
+        with engine.connect() as conn:
+            if program_term_table is not None and college_table is not None:
+                # Build query to get all programs
+                program_stmt = select(
+                    program_table.c.ProgramID,
+                    program_table.c.ProgramName,
+                    program_table.c.Level,
+                    program_table.c.School,
+                    program_table.c.Concentration,
+                )
+                # Get first ProgramTermID per ProgramID
+                first_term_subquery = (
+                    select(
+                        program_term_table.c.ProgramID,
+                        func.min(program_term_table.c.ProgramTermID).label('FirstTermID')
+                    )
+                    .group_by(program_term_table.c.ProgramID)
+                    .subquery()
+                )
+                
+                # Join to get the actual term record
+                term_subquery = (
+                    select(
+                        program_term_table.c.ProgramID,
+                        program_term_table.c.CollegeID
+                    )
+                    .select_from(
+                        first_term_subquery.join(
+                            program_term_table,
+                            (program_term_table.c.ProgramID == first_term_subquery.c.ProgramID) &
+                            (program_term_table.c.ProgramTermID == first_term_subquery.c.FirstTermID)
+                        )
+                    )
+                    .subquery()
+                )
+                
+                # Join programs with term subquery and college table
+                stmt = program_stmt.outerjoin(
+                    term_subquery,
+                    term_subquery.c.ProgramID == program_table.c.ProgramID
+                ).outerjoin(
+                    college_table,
+                    college_table.c.CollegeID == term_subquery.c.CollegeID,
+                )
+                
+                stmt = stmt.add_columns(
+                    college_table.c.CollegeName,
+                    college_table.c.CollegeID,
+                    term_subquery.c.CollegeID.label('TermCollegeID'),
+                )
+                
+                # Add department information
+                if program_link_table is not None:
+                    # Get first LinkID per ProgramID
+                    first_link_subquery = (
+                        select(
+                            program_link_table.c.ProgramID,
+                            func.min(program_link_table.c.LinkID).label('FirstLinkID')
+                        )
+                        .group_by(program_link_table.c.ProgramID)
+                        .subquery()
+                    )
+                    
+                    # Join to get the actual link record
+                    link_subquery = (
+                        select(
+                            program_link_table.c.ProgramID,
+                            program_link_table.c.CollegeDepartmentID
+                        )
+                        .select_from(
+                            first_link_subquery.join(
+                                program_link_table,
+                                (program_link_table.c.ProgramID == first_link_subquery.c.ProgramID) &
+                                (program_link_table.c.LinkID == first_link_subquery.c.FirstLinkID)
+                            )
+                        )
+                        .subquery()
+                    )
+                    
+                    stmt = stmt.outerjoin(
+                        link_subquery,
+                        link_subquery.c.ProgramID == program_table.c.ProgramID
+                    )
+                    stmt = stmt.add_columns(link_subquery.c.CollegeDepartmentID)
 
-    stmt = select(
-        program_table.c.ProgramID,
-        program_table.c.ProgramName,
-        program_table.c.Level,
-        program_table.c.Concentration,
-    ).select_from(program_table)
+                    if college_department_table is not None and department_table is not None:
+                        stmt = stmt.outerjoin(
+                            college_department_table,
+                            college_department_table.c.CollegeDepartmentID
+                            == link_subquery.c.CollegeDepartmentID,
+                        ).outerjoin(
+                            department_table,
+                            department_table.c.DepartmentID == college_department_table.c.DepartmentID,
+                        )
+                        stmt = stmt.add_columns(
+                            department_table.c.DepartmentName,
+                            department_table.c.DepartmentID,
+                            college_department_table.c.CollegeID.label('DeptCollegeID'),
+                        )
+                    else:
+                        stmt = stmt.add_columns(
+                            literal(None).label('DepartmentName'),
+                            literal(None).label('DepartmentID'),
+                            literal(None).label('DeptCollegeID'),
+                        )
+                else:
+                    # If no program_link_table, still add department columns as None
+                    stmt = stmt.add_columns(
+                        literal(None).label('CollegeDepartmentID'),
+                        literal(None).label('DepartmentName'),
+                        literal(None).label('DepartmentID'),
+                        literal(None).label('DeptCollegeID'),
+                    )
+                
+                # Order by CollegeName first, then ProgramName
+                stmt = stmt.order_by(
+                    case(
+                        (college_table.c.CollegeName.is_(None), 1),
+                        else_=0
+                    ),
+                    college_table.c.CollegeName,
+                    program_table.c.ProgramName
+                )
+                
+                # Execute query - loads all programs
+                rows = [dict(row._mapping) for row in conn.execute(stmt)]
 
-    if program_link_table is not None:
-        stmt = stmt.add_columns(program_link_table.c.CollegeDepartmentID)
-        stmt = stmt.outerjoin(
-            program_link_table,
-            program_link_table.c.ProgramID == program_table.c.ProgramID,
+                # Quick deduplication (safety check)
+                seen_program_ids = set()
+                deduplicated_rows = []
+                for row in rows:
+                    program_id = row.get("ProgramID")
+                    if program_id and program_id not in seen_program_ids:
+                        seen_program_ids.add(program_id)
+                        deduplicated_rows.append(row)
+                rows = deduplicated_rows
+
+                # Group programs by college name
+                grouped_programs = defaultdict(list)
+                for row in rows:
+                    college_name = row.get("CollegeName") or "Unassigned"
+                    grouped_programs[college_name].append(row)
+                
+                total_programs = len(rows)
+                total_universities = len(grouped_programs)
+            else:
+                # Fallback if tables not available
+                rows = []
+                grouped_programs = {}
+                total_programs = 0
+                total_universities = 0
+
+        college_options = get_college_options(engine)
+
+        return render_template(
+            "forms/program_list.html",
+            rows=rows,
+            grouped_programs=grouped_programs,
+            college_options=college_options,
+            total_programs=total_programs,
+            total_universities=total_universities
+        )
+    except Exception as e:
+        import traceback
+        error_msg = f"Error loading programs: {str(e)}\n{traceback.format_exc()}"
+        print(error_msg)  # Print to console for debugging
+        flash(f"Error loading programs: {str(e)}", "error")
+        # Return empty data on error
+        return render_template(
+            "forms/program_list.html",
+            rows=[],
+            grouped_programs={},
+            college_options=[],
+            total_programs=0,
+            total_universities=0
         )
 
-        if college_department_table is not None and college_table is not None:
-            stmt = stmt.add_columns(college_table.c.CollegeName)
-            stmt = stmt.outerjoin(
-                college_department_table,
-                college_department_table.c.CollegeDepartmentID
-                == program_link_table.c.CollegeDepartmentID,
-            ).outerjoin(
-                college_table,
-                college_table.c.CollegeID == college_department_table.c.CollegeID,
+
+@forms_bp.route("/all-programs/")
+def all_programs_list():
+    """Simple route to display all programs from Program table grouped by university."""
+    try:
+        engine = get_engine()
+        program_table = fetch_table("Program")
+        program_term_table = fetch_table("ProgramTermDetails", required=False)
+        college_table = fetch_table("College", required=False)
+        
+        with engine.connect() as conn:
+            if program_term_table is not None and college_table is not None:
+                # Get programs with their university information
+                stmt = (
+                    select(
+                        program_table.c.ProgramID,
+                        program_table.c.ProgramName,
+                        program_table.c.Level,
+                        program_table.c.School,
+                        program_table.c.Concentration,
+                        college_table.c.CollegeName,
+                        college_table.c.CollegeID
+                    )
+                    .select_from(
+                        program_table
+                        .outerjoin(
+                            program_term_table,
+                            program_term_table.c.ProgramID == program_table.c.ProgramID
+                        )
+                        .outerjoin(
+                            college_table,
+                            college_table.c.CollegeID == program_term_table.c.CollegeID
+                        )
+                    )
+                    .order_by(
+                        case(
+                            (college_table.c.CollegeName.is_(None), 1),
+                            else_=0
+                        ),
+                        college_table.c.CollegeName,
+                        program_table.c.ProgramName
+                    )
+                )
+                
+                rows = [dict(row._mapping) for row in conn.execute(stmt)]
+                
+                # Group programs by university
+                grouped_programs = defaultdict(list)
+                for row in rows:
+                    university_name = row.get("CollegeName") or "Unassigned"
+                    grouped_programs[university_name].append(row)
+                
+                # Sort universities (put Unassigned at end)
+                sorted_universities = sorted(
+                    [k for k in grouped_programs.keys() if k != "Unassigned"],
+                    key=lambda x: x
+                )
+                if "Unassigned" in grouped_programs:
+                    sorted_universities.append("Unassigned")
+                
+                total_programs = len(rows)
+                total_universities = len(grouped_programs)
+            else:
+                # Fallback if tables not available - just show programs without grouping
+                stmt = select(program_table).order_by(program_table.c.ProgramName)
+                rows = [dict(row._mapping) for row in conn.execute(stmt)]
+                grouped_programs = {"All Programs": rows}
+                sorted_universities = ["All Programs"]
+                total_programs = len(rows)
+                total_universities = 1
+        
+        return render_template(
+            "forms/all_programs_list.html",
+            grouped_programs=grouped_programs,
+            sorted_universities=sorted_universities,
+            total_programs=total_programs,
+            total_universities=total_universities
+        )
+    except Exception as e:
+        import traceback
+        error_msg = f"Error loading all programs: {str(e)}\n{traceback.format_exc()}"
+        print(error_msg)
+        flash(f"Error loading programs: {str(e)}", "error")
+        return render_template(
+            "forms/all_programs_list.html",
+            grouped_programs={},
+            sorted_universities=[],
+            total_programs=0,
+            total_universities=0
+        )
+
+
+@forms_bp.route("/programs/fix-department-assignments", methods=["POST"])
+def fix_program_department_assignments():
+    """Bulk fix: Reassign all program departments based on each program's college from ProgramTermDetails."""
+    try:
+        engine = get_engine()
+        if engine is None:
+            flash("Database is not configured.", "error")
+            return redirect(url_for("forms.program_list"))
+        
+        program_term_table = fetch_table("ProgramTermDetails", required=False)
+        program_link_table = fetch_table("ProgramDepartmentLink", required=False)
+        college_department_table = fetch_table("CollegeDepartment", required=False)
+        department_table = fetch_table("Department", required=False)
+        
+        if program_term_table is None:
+            flash("ProgramTermDetails table is not available.", "error")
+            return redirect(url_for("forms.program_list"))
+        
+        if program_link_table is None or college_department_table is None or department_table is None:
+            flash("Required tables for department linking are not available.", "error")
+            return redirect(url_for("forms.program_list"))
+        
+        updated_count = 0
+        created_count = 0
+        errors = []
+        skipped_no_college = 0
+        skipped_no_dept = 0
+        
+        with engine.begin() as conn:
+            # Get all programs with their college from ProgramTermDetails
+            program_term_stmt = (
+                select(
+                    program_term_table.c.ProgramID,
+                    program_term_table.c.CollegeID,
+                    func.row_number()
+                    .over(
+                        partition_by=program_term_table.c.ProgramID,
+                        order_by=program_term_table.c.ProgramTermID
+                    )
+                    .label('rn')
+                )
+                .select_from(program_term_table)
+                .subquery()
             )
-
-        if college_department_table is not None and department_table is not None:
-            stmt = stmt.add_columns(department_table.c.DepartmentName)
-            stmt = stmt.outerjoin(
-                department_table,
-                department_table.c.DepartmentID == college_department_table.c.DepartmentID,
-            )
-
-    # Order by CollegeName first, then ProgramName
-    if college_table is not None:
-        stmt = stmt.order_by(college_table.c.CollegeName, program_table.c.ProgramName)
-    else:
-        stmt = stmt.order_by(program_table.c.ProgramName)
-
-    with engine.connect() as conn:
-        rows = [dict(row._mapping) for row in conn.execute(stmt)]
-
-    # Group programs by college name
-    grouped_programs = defaultdict(list)
-    for row in rows:
-        college_name = row.get("CollegeName") or "Unassigned"
-        grouped_programs[college_name].append(row)
-    
-    # Sort colleges (put "Unassigned" at the end)
-    sorted_colleges = sorted(
-        [k for k in grouped_programs.keys() if k != "Unassigned"]
-    )
-    if "Unassigned" in grouped_programs:
-        sorted_colleges.append("Unassigned")
-    
-    grouped_programs_sorted = {k: grouped_programs[k] for k in sorted_colleges}
-
-    college_options = get_college_options(engine)
-
-    return render_template("forms/program_list.html", rows=rows, grouped_programs=grouped_programs_sorted, college_options=college_options)
+            
+            programs_with_colleges = conn.execute(
+                select(
+                    program_term_stmt.c.ProgramID,
+                    program_term_stmt.c.CollegeID
+                )
+                .where(program_term_stmt.c.rn == 1)
+            ).mappings().all()
+            
+            for prog_term_row in programs_with_colleges:
+                program_id = prog_term_row["ProgramID"]
+                college_id = prog_term_row["CollegeID"]
+                
+                if not college_id:
+                    skipped_no_college += 1
+                    continue
+                
+                # Find an appropriate department for this college
+                # Strategy: Prefer "Graduate Admissions" or "Undergraduate Admissions" based on program level
+                # First, get the program level
+                program_table = fetch_table("Program")
+                program = conn.execute(
+                    select(program_table.c.Level).where(program_table.c.ProgramID == program_id)
+                ).mappings().first()
+                
+                program_level = (program.get("Level") or "").upper() if program else ""
+                
+                # Determine which department type to look for
+                is_graduate = any(keyword in program_level for keyword in ["GRADUATE", "MASTER", "DOCTOR", "PHD", "M.S.", "M.A.", "MBA"])
+                is_undergraduate = any(keyword in program_level for keyword in ["UNDERGRADUATE", "BACHELOR", "B.S.", "B.A.", "BS", "BA"])
+                
+                dept_query = (
+                    select(
+                        college_department_table.c.CollegeDepartmentID,
+                        department_table.c.DepartmentName
+                    )
+                    .select_from(
+                        college_department_table.join(
+                            department_table,
+                            department_table.c.DepartmentID == college_department_table.c.DepartmentID
+                        )
+                    )
+                    .where(college_department_table.c.CollegeID == college_id)
+                )
+                
+                # Try to find appropriate department
+                dept_candidate = None
+                
+                if is_graduate:
+                    # Try Graduate Admissions first
+                    dept_candidate = conn.execute(
+                        dept_query.where(
+                            func.upper(department_table.c.DepartmentName).like("%GRADUATE%ADMISSIONS%")
+                        )
+                    ).mappings().first()
+                    
+                if not dept_candidate and is_undergraduate:
+                    # Try Undergraduate Admissions
+                    dept_candidate = conn.execute(
+                        dept_query.where(
+                            func.upper(department_table.c.DepartmentName).like("%UNDERGRADUATE%ADMISSIONS%")
+                        )
+                    ).mappings().first()
+                
+                # If still not found, try any "Admissions" department
+                if not dept_candidate:
+                    dept_candidate = conn.execute(
+                        dept_query.where(
+                            func.upper(department_table.c.DepartmentName).like("%ADMISSIONS%")
+                        )
+                    ).mappings().first()
+                
+                # Last resort: any department for this college
+                if not dept_candidate:
+                    dept_candidate = conn.execute(dept_query).mappings().first()
+                
+                if not dept_candidate:
+                    skipped_no_dept += 1
+                    errors.append(f"Program ID {program_id}: No department found for college ID {college_id}")
+                    continue
+                
+                college_dept_id = dept_candidate["CollegeDepartmentID"]
+                
+                # Check if ProgramDepartmentLink exists
+                existing_link = conn.execute(
+                    select(program_link_table).where(program_link_table.c.ProgramID == program_id)
+                ).mappings().first()
+                
+                if existing_link:
+                    # Update existing link
+                    if existing_link["CollegeDepartmentID"] != college_dept_id:
+                        conn.execute(
+                            program_link_table.update()
+                            .where(program_link_table.c.ProgramID == program_id)
+                            .values(
+                                CollegeID=college_id,
+                                CollegeDepartmentID=college_dept_id
+                            )
+                        )
+                        updated_count += 1
+                else:
+                    # Create new link
+                    conn.execute(
+                        program_link_table.insert().values(
+                            ProgramID=program_id,
+                            CollegeID=college_id,
+                            CollegeDepartmentID=college_dept_id
+                        )
+                    )
+                    created_count += 1
+        
+        messages = []
+        if updated_count > 0:
+            messages.append(f"Updated department assignments for {updated_count} program(s).")
+        if created_count > 0:
+            messages.append(f"Created department links for {created_count} program(s).")
+        if skipped_no_college > 0:
+            messages.append(f"Skipped {skipped_no_college} program(s) without college assignment.")
+        if skipped_no_dept > 0:
+            messages.append(f"Skipped {skipped_no_dept} program(s) where no department was found for their college.")
+        
+        if messages:
+            flash(" ".join(messages), "success")
+        else:
+            flash("No department assignments were changed.", "info")
+        
+        if errors:
+            flash(f"Errors for {len(errors)} program(s): {', '.join(errors[:5])}", "error")
+        
+        return redirect(url_for("forms.program_list"))
+        
+    except Exception as e:
+        flash(f"Error fixing department assignments: {e}", "error")
+        import traceback
+        traceback.print_exc()
+        return redirect(url_for("forms.program_list"))
 
 
 @forms_bp.route("/programs/bulk-update-college", methods=["POST"])
@@ -1627,6 +2169,99 @@ def bulk_update_program_college():
         
     except Exception as e:
         flash(f"Error updating programs: {e}", "error")
+        import traceback
+        traceback.print_exc()
+        return redirect(url_for("forms.program_list"))
+
+
+@forms_bp.route("/programs/clear-all-schools", methods=["POST"])
+def clear_all_program_schools():
+    """Clear School field for all programs."""
+    try:
+        engine = get_engine()
+        if engine is None:
+            flash("Database is not configured.", "error")
+            return redirect(url_for("forms.program_list"))
+        
+        program_table = fetch_table("Program")
+        
+        with engine.begin() as conn:
+            # Get count of programs with School data before clearing
+            # Check for non-null and non-empty School values
+            count_stmt = select(func.count(program_table.c.ProgramID)).where(
+                (program_table.c.School.isnot(None)) & (program_table.c.School != "")
+            )
+            programs_with_school = conn.execute(count_stmt).scalar() or 0
+            
+            # Clear School field for all programs
+            conn.execute(
+                program_table.update().values(School=None)
+            )
+        
+        if programs_with_school > 0:
+            flash(f"Successfully cleared School field for all {programs_with_school} program(s).", "success")
+        else:
+            flash("No programs had School data to clear.", "info")
+        
+        return redirect(url_for("forms.program_list"))
+        
+    except Exception as e:
+        flash(f"Error clearing School data: {e}", "error")
+        import traceback
+        traceback.print_exc()
+        return redirect(url_for("forms.program_list"))
+
+
+@forms_bp.route("/programs/delete-all", methods=["POST"])
+def delete_all_programs():
+    """Delete all programs and all related records."""
+    try:
+        engine = get_engine()
+        if engine is None:
+            flash("Database is not configured.", "error")
+            return redirect(url_for("forms.program_list"))
+        
+        program_table = fetch_table("Program")
+        program_requirements_table = fetch_table("ProgramRequirements", required=False)
+        program_term_table = fetch_table("ProgramTermDetails", required=False)
+        program_link_table = fetch_table("ProgramDepartmentLink", required=False)
+        program_test_table = fetch_table("ProgramTestScores", required=False)
+        
+        with engine.begin() as conn:
+            # Get count of programs before deleting
+            count_stmt = select(func.count(program_table.c.ProgramID))
+            total_programs = conn.execute(count_stmt).scalar() or 0
+            
+            if total_programs == 0:
+                flash("No programs found to delete.", "info")
+                return redirect(url_for("forms.program_list"))
+            
+            # Delete related records first (due to foreign key constraints)
+            if program_test_table is not None:
+                conn.execute(program_test_table.delete())
+                print(f"  ✓ Deleted all ProgramTestScores records")
+            
+            if program_link_table is not None:
+                conn.execute(program_link_table.delete())
+                print(f"  ✓ Deleted all ProgramDepartmentLink records")
+            
+            if program_term_table is not None:
+                conn.execute(program_term_table.delete())
+                print(f"  ✓ Deleted all ProgramTermDetails records")
+            
+            if program_requirements_table is not None:
+                conn.execute(program_requirements_table.delete())
+                print(f"  ✓ Deleted all ProgramRequirements records")
+            
+            # Finally delete all programs
+            conn.execute(program_table.delete())
+            print(f"  ✓ Deleted all Program records")
+        
+        flash(f"Successfully deleted all {total_programs} program(s) and all related records.", "success")
+        return redirect(url_for("forms.program_list"))
+        
+    except Exception as e:
+        flash(f"Error deleting all programs: {e}", "error")
         import traceback
         traceback.print_exc()
         return redirect(url_for("forms.program_list"))
@@ -1867,12 +2502,13 @@ def build_program_sections(engine) -> Tuple[List[Dict[str, Any]], List[Tuple[int
                 "ProgramName",
                 "Level",
                 "Concentration",
+                "School",
                 "Description",
                 "ProgramWebsiteURL",
                 "Accreditation",
                 "QsWorldRanking",
             ],
-            "description": "Summarize the core academic details that distinguish this program.",
+            "description": "Summarize the core academic details that distinguish this program, including which school or college within the university this program belongs to.",
         },
         {
             "title": "Application Checklist",

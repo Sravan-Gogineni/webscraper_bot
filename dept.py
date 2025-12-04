@@ -172,6 +172,32 @@ def map_department_fields(office_data):
     
     return dept_data if dept_data else None
 
+def check_college_has_departments(engine, college_id):
+    """Check if a college already has any departments in the database.
+    Returns True if the college has at least one department, False otherwise."""
+    try:
+        metadata = MetaData()
+        metadata.reflect(bind=engine)
+        college_department_table = metadata.tables.get("CollegeDepartment")
+        
+        if college_department_table is None:
+            return False
+        
+        with engine.connect() as conn:
+            # Count how many departments this college has
+            count_stmt = select(func.count(college_department_table.c.CollegeDepartmentID)).where(
+                college_department_table.c.CollegeID == college_id
+            )
+            count = conn.execute(count_stmt).scalar() or 0
+            
+            return count > 0
+            
+    except Exception as e:
+        print(f"Error checking existing departments: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
 def save_college_department(engine, college_id, department_id, dept_data):
     """Save or update CollegeDepartment record."""
     try:
@@ -272,10 +298,19 @@ print("="*80)
 
 success_count = 0
 error_count = 0
+skipped_count = 0
 
 for idx, (college_id, college_name, website_url) in enumerate(colleges, 1):
     if not website_url:
         print(f"\n[{idx}/{len(colleges)}] ⚠️  Skipping {college_name}: No website URL found")
+        continue
+    
+    # Check if college already has any departments
+    has_departments = check_college_has_departments(engine, college_id)
+    
+    if has_departments:
+        skipped_count += 1
+        print(f"\n[{idx}/{len(colleges)}] ⏭️  Skipping {college_name}: Already has departments in database")
         continue
     
     print(f"\n[{idx}/{len(colleges)}] Processing: {college_name}")
@@ -504,7 +539,10 @@ Return ONLY valid JSON, no additional text or markdown formatting."""
 print("\n" + "="*80)
 print("FINAL SUMMARY")
 print("="*80)
-print(f"Total colleges processed: {len(colleges)}")
+print(f"Total colleges in database: {len(colleges)}")
+if skipped_count > 0:
+    print(f"Skipped (already have departments): {skipped_count}")
+print(f"Colleges processed: {len(colleges) - skipped_count}")
 print(f"Successfully saved offices: {success_count}")
 print(f"Errors: {error_count}")
 

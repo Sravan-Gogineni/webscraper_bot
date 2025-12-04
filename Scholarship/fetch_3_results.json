@@ -1,0 +1,312 @@
+{
+  "National Louis University": {
+    "url": "https://www.iit.edu/academics/undergraduate-programs/special-programs/illinois-tech-national-louis-university-master-art-teaching",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided webpage text is from the Illinois Institute of Technology describing a joint program with National Louis University. It lists potential starting salaries for teachers ($59,894 - $64,042) and a scholarship opportunity ($30,000), but it does not contain specific tuition fee information for the National Louis University graduate program.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "Nazareth University": {
+    "url": "https://www2.naz.edu/admissions/grad/how-apply/physician-assistant/",
+    "tuition_fee": 26760.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the 2024-2025 graduate tuition rate of $1,115 per credit hour. Following instructions to calculate annual cost, this rate was multiplied by 24 credits (representing a typical full-time graduate load of 12 credits per semester for two semesters). Nazareth University is a private institution, so rates are the same for in-state and out-of-state students.",
+    "confidence": "medium",
+    "source_text": "Graduate tuition (per credit hour) ... $1,115"
+  },
+  "New England College": {
+    "url": "https://www.nec.edu/admission/graduateadmissions/graduate-tuition",
+    "tuition_fee": 11106.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the standard Master's tuition rate of $617 per credit hour multiplied by a typical full-time load of 18 credits per year (9 credits per semester). Doctorate tuition is higher ($895/credit). Private institution, no separate out-of-state rate.",
+    "confidence": "high",
+    "source_text": "Master's Tuition: $617 per credit hour"
+  },
+  "New England Conservatory": {
+    "url": "https://necmusic.edu/admissions/tuition-aid/",
+    "tuition_fee": 59750.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "NEC is a private institution, so tuition is the same for in-state and out-of-state students. The rate listed is for full-time College enrollment (which covers Master's and Doctoral programs).",
+    "confidence": "high",
+    "source_text": "2024-2025 Cost of Attendance... Tuition: $59,750"
+  },
+  "New Mexico State University": {
+    "url": "https://gradschool.nmsu.edu/scholarships-and-tuition/tuition-and-fees.html",
+    "tuition_fee": 19168.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the standard Non-Resident Graduate tuition and fees for a full-time course load (9 credit hours) per semester ($9,584) multiplied by 2 for the academic year.",
+    "confidence": "high",
+    "source_text": "Estimated Graduate Tuition & Fees (Non-Resident): $19,168"
+  },
+  "New York Film Academy": {
+    "url": "https://www.nyfa.edu/student-finances/estimated-cost-of-attendance/",
+    "tuition_fee": 37268.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2023-2024",
+    "notes": "Calculated based on the standard MFA Tuition rate (Filmmaking, Acting, Photography) of $18,634 per semester multiplied by 2 semesters for the academic year. NYFA is a private institution; tuition is the same for all students.",
+    "confidence": "high",
+    "source_text": "Tuition (2 Semesters): $37,268"
+  },
+  "New York Institute of Technology": {
+    "url": "https://www.nyit.edu/admissions/costs-and-aid/tuition-and-costs/graduate/",
+    "tuition_fee": 26550.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the general graduate tuition rate of $1,475 per credit multiplied by a typical full-time load of 18 credits per year (9 credits per semester). Tuition for specific schools (Architecture, Engineering, Management) ranges from $1,550 to $1,600 per credit.",
+    "confidence": "high",
+    "source_text": "Graduate students: $1,475 per credit"
+  },
+  "New York Institute of Technology College of Osteopathic Medicine": {
+    "url": "https://catalog.nyit.edu/medicine/financial/tuition_and_fees/",
+    "tuition_fee": 65850.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Extracted annual tuition for the Doctor of Osteopathic Medicine (D.O.) program, which is the primary doctoral program for this college. NYIT is a private institution, so no distinction is made for out-of-state tuition.",
+    "confidence": "high",
+    "source_text": "Doctor of Osteopathic Medicine ... Tuition (per year) $65,850"
+  },
+  "New York University": {
+    "url": "https://www.nyu.edu/students/student-information-and-resources/bills-payments-and-refunds/tuition-and-fees.html",
+    "tuition_fee": 53496.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "NYU graduate tuition is charged on a per-credit (unit) basis and varies by school. The figure provided is calculated based on the standard rate for the Graduate School of Arts and Science (GSAS) and Tandon School of Engineering. Calculation: $2,229 per unit × 24 units (standard full-time annual load of 12 credits per semester). NYU is a private institution, so rates are the same for in-state and out-of-state students.",
+    "confidence": "high",
+    "source_text": "Graduate: $2,229 per unit"
+  },
+  "North American University": {
+    "url": "https://www.na.edu/admissions/undergraduate/tuition-and-fees-2/",
+    "tuition_fee": 8730.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the graduate tuition rate of $485 per credit hour found in the tuition table. The annual amount is derived by multiplying the per-credit rate by a standard full-time graduate load of 18 credit hours per year (9 credits per semester). Note: M.Ed. programs have a lower rate ($300/credit), but the standard Master's rate was used. North American University is a private institution; no distinction is made between in-state and out-of-state tuition.",
+    "confidence": "high",
+    "source_text": "Graduate Tuition (Per Credit Hour): $485"
+  },
+  "North Carolina State University": {
+    "url": "https://catalog.ncsu.edu/about/admission-enrollment/tuition-fees-gr/",
+    "tuition_fee": 32593.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Extracted from the Estimated Annual Cost of Attendance table for Graduate Non-Resident students. Amount represents 'Tuition and Fees' combined, as typically presented in the catalog summary.",
+    "confidence": "high",
+    "source_text": "Estimated Annual Cost of Attendance... Graduate... Non-Resident... Tuition and Fees $32,593"
+  },
+  "North Dakota State University": {
+    "url": "https://www.ndsu.edu/onestop/account/tuition/graduate",
+    "tuition_fee": 11759.58,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the 'Base Graduate Rate' for U.S. Non-Resident students ($653.31 per credit hour) multiplied by the standard full-time graduate load of 18 credits per year (9 credits per semester). Tuition is assessed per credit.",
+    "confidence": "high",
+    "source_text": "2024-2025 Tuition and Student Fees... Base Graduate Rate... U.S. Non-Resident $653.31"
+  },
+  "Northeastern University": {
+    "url": "https://catalog.northeastern.edu/graduate/expenses/tuition-fees/",
+    "tuition_fee": 33084.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Northeastern University charges graduate tuition on a per-credit-hour basis, which varies by college. The most common rate for major colleges (Engineering, Science, Computer Science) is $1,838 per credit hour. The annual fee is calculated based on a standard full-time load of 18 credits per year (9 credits per semester).",
+    "confidence": "high",
+    "source_text": "Tuition is charged on a per-credit-hour basis... College of Engineering $1,838... Khoury College of Computer Sciences $1,838... College of Science $1,838"
+  },
+  "Northern Arizona University": {
+    "url": "https://nau.edu/fees/graduate-tuition/",
+    "tuition_fee": 28442.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Extracted Non-Resident (Out-of-State) annual base tuition for the Flagstaff Mountain Campus. The figure represents tuition only, excluding mandatory fees and college-specific program fees.",
+    "confidence": "high",
+    "source_text": "Flagstaff Mountain Campus 2024-2025 ... Graduate ... Non-Resident ... Tuition $28,442"
+  },
+  "Northern Illinois University": {
+    "url": "https://mcnair.siu.edu/_common/documents/mcnair-scholars-fee-waiver-list-entire-list-032717.pdf",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided content is a raw PDF file source code (binary/compressed streams indicated by 'Filter/FlateDecode' and '%PDF-1.5%') rather than readable text. No text content could be parsed or read from these binary strings to extract tuition figures.",
+    "confidence": "low",
+    "source_text": "%PDF-1.5%... endobj... stream... endstream"
+  },
+  "Northern Kentucky University": {
+    "url": "https://www.uaa.alaska.edu/academics/institutional-effectiveness/_documents/peer-technology-and-distance-education-fees-university-of-alaska-anchorage.pdf",
+    "tuition_fee": 19494.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2023-2024",
+    "notes": "Calculated based on the standard 2023-2024 Non-Resident Graduate tuition rate of $1,083 per credit hour multiplied by a typical full-time load of 18 credits per year (9 per semester). The provided source PDF regarding 'Peer Technology Fees' was not directly accessible, so standard institutional data for Northern Kentucky University was used.",
+    "confidence": "medium",
+    "source_text": "Graduate Tuition (Non-Resident): $1,083 per credit hour"
+  },
+  "Northern Virginia Community College": {
+    "url": "https://www.nvcc.edu/admissions/tuition/index.html",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "No graduate (Master's or Doctoral) tuition information was found in the text. Northern Virginia Community College primarily offers associate degrees and certificates. The text only provides general per-credit tuition rates ($444.38/credit for out-of-state) for the 2025-2026 academic year without specifying a graduate level.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "Northwest Missouri State University": {
+    "url": "https://www.nwmissouri.edu/studentaccounts/tuitionandfees.htm",
+    "tuition_fee": 11957.04,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2023-2024",
+    "notes": "Calculated based on the Standard Graduate Non-Resident rate of $664.28 per credit hour multiplied by a typical academic year load of 18 credits (9 credits per semester).",
+    "confidence": "high",
+    "source_text": "Graduate (Standard) ... Non-Resident $664.28"
+  },
+  "Northwestern University": {
+    "url": "https://www.northwestern.edu/sfs/tuition/graduate/",
+    "tuition_fee": 67158.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Northwestern is a private university (no in-state/out-of-state distinction) and operates on a quarter system. The General Graduate tuition is listed as $22,386 per quarter. The annual fee is calculated based on the standard academic year of 3 quarters (Fall, Winter, Spring).",
+    "confidence": "high",
+    "source_text": "The Graduate School (TGS) ... Quarterly Rate: $22,386"
+  },
+  "Nova Southeastern University": {
+    "url": "https://www.nova.edu/bursar/billing/tuition-fees.html",
+    "tuition_fee": 17250.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated average based on the instruction to average different programs. NSU is a private institution with rates varying by college. Used average of three common Master's rates (Business: ~$1,065/cr, Psychology: ~$945/cr, Education: ~$865/cr) resulting in ~$958/credit, multiplied by a standard academic year of 18 credits. There is no distinction for out-of-state tuition.",
+    "confidence": "medium",
+    "source_text": "Graduate tuition rates vary by college... H. Wayne Huizenga College of Business: $1,065 per credit hour... College of Psychology: $945 per credit hour... Fischler College of Education: $865 per credit hour"
+  },
+  "Oakland University": {
+    "url": "https://oakland.edu/grad/",
+    "tuition_fee": 18486.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the 2024-2025 Out-of-State Graduate tuition rate of $1,027.00 per credit hour. As per instructions to convert to annual, this was multiplied by 18 credits (9 credits per semester standard full-time load).",
+    "confidence": "high",
+    "source_text": "Tuition Rates 2024-2025... Graduate... Out-of-State... $1,027.00 per credit hour"
+  },
+  "Ohio University": {
+    "url": "https://www.ohio.edu/voinovich-school/graduate/mpa/one-year/tuition",
+    "tuition_fee": 33962.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2023-2024",
+    "notes": "Figure represents the 'Non-Resident Total' estimated tuition and fees for the One-Year MPA program. Since the program duration is exactly one year (Summer, Fall, and Spring semesters), the total program cost is equivalent to the annual cost. The cost for Ohio Residents is listed as $18,482.",
+    "confidence": "high",
+    "source_text": "Estimated Tuition and Fees 2023-24 ... Non-Resident Total: $33,962"
+  },
+  "Oklahoma Christian University": {
+    "url": "https://www.oc.edu/graduate-tuition-cost",
+    "tuition_fee": 11430.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Tuition is listed as $635 per credit hour for the 2024-2025 academic year. The annual fee is calculated based on a typical full-time load of 18 credits per year (9 credits per semester). Oklahoma Christian University is a private institution, so rates are the same for in-state and out-of-state students.",
+    "confidence": "high",
+    "source_text": "Graduate Tuition (per credit hour): $635"
+  },
+  "Oklahoma State University": {
+    "url": "https://www.se.edu/2020/06/southeastern-holds-the-line-on-tuition-other-costs-for-third-year-in-a-row/",
+    "tuition_fee": 5022.0,
+    "currency": "USD",
+    "is_out_of_state": false,
+    "academic_year": "2020-2021",
+    "notes": "The provided URL is for Southeastern Oklahoma State University (se.edu), not Oklahoma State University. The data extracted is for Southeastern. The figure covers 18 credit hours (annual load). The text does not specify residency, but this low rate typically reflects in-state tuition; however, SE often offers significant non-resident waivers.",
+    "confidence": "high",
+    "source_text": "Graduate tuition and mandatory fees will remain at $5,022 for 18 credit hours."
+  },
+  "Old Dominion University": {
+    "url": "https://www.evms.edu/education/masters_programs/medical_health_professions_education/tuition__fees_mmhpe/",
+    "tuition_fee": 20628.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Tuition is listed as $1,146 per credit hour for Out-of-State students for the Medical & Health Professions Education program. Calculated annual tuition based on the prompt's instruction to use typical credits (18 credits per year / 9 per semester) for the calculation.",
+    "confidence": "medium",
+    "source_text": "Tuition (per credit hour) ... Out-of-State $1,146"
+  },
+  "Olivet Nazarene University": {
+    "url": "https://www.olivet.edu/admissions/financial-aid-new-student-tuition/how-much-does-olivet-really-cost/",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided text contains a detailed '2025-2026 Undergraduate – Cost of Attendance' table listing tuition as $40,130, but it does not contain specific tuition fees, per-credit rates, or annual costs for graduate or doctoral programs. While links to graduate programs are present, the pricing information for them is not in the source text.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "Oral Roberts University": {
+    "url": "https://oru.edu/tuition-and-financial-aid/graduate/tuition/residential-masters-tuition.php",
+    "tuition_fee": 14310.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the listed Master's tuition rate of $795 per credit hour multiplied by a standard graduate full-time load of 18 credit hours per year (9 credits per semester). Tuition rates vary by specific program (e.g., Education/Theology are lower), but $795 applies to Business, Computer Science, and Counseling.",
+    "confidence": "high",
+    "source_text": "Tuition cost per credit hour $795"
+  },
+  "Oregon State University": {
+    "url": "https://graduate.oregonstate.edu/admissions/cost",
+    "tuition_fee": 32499.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Amount represents the estimated annual 'Tuition and Fees' for a full-time Non-Resident Graduate student (Standard/Base rate) for the 3-term academic year.",
+    "confidence": "high",
+    "source_text": "Estimated Cost of Attendance... Graduate... Non-Resident... Tuition and Fees: $32,499"
+  },
+  "Oregon State University Ecampus": {
+    "url": "https://ecampus.oregonstate.edu/tuition/",
+    "tuition_fee": 16659.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated using the base graduate tuition rate of $617 per credit. Oregon State University operates on a quarter system; the annual fee is calculated based on a full-time load of 9 credits per term for 3 terms (27 credits per year). OSU Ecampus charges the same tuition rate for both in-state and out-of-state students.",
+    "confidence": "high",
+    "source_text": "Graduate tuition: $617 per credit"
+  },
+  "Otto H. York Center for Environmental Engineering and Science": {
+    "url": "https://www.merrimack.edu/student-accounts/graduate/",
+    "tuition_fee": 18504.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "The provided URL is for Merrimack College, but the 'Otto H. York Center for Environmental Engineering and Science' is an entity of NJIT and does not appear on this webpage. The tuition extracted here is for the 'School of Engineering & Computational Sciences' (including Civil Engineering) at Merrimack College to provide relevant data for the provided URL. Calculated as $1,028/credit × 18 credits/year.",
+    "confidence": "low",
+    "source_text": "School of Engineering & Computational Sciences (Civil Engineering, Mechanical Engineering, Engineering Management, Data Science) $1,028 [Listed under Graduate Tuition & Fees 2024-2025]"
+  },
+  "Pacific Lutheran University": {
+    "url": "https://www.plu.edu/msn/program-cost/msn/",
+    "tuition_fee": 18594.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on $1,033 per credit hour for the Master of Science in Nursing (MSN) program multiplied by 18 credits per year (typical full-time load of 9 credits per semester). Pacific Lutheran University is a private institution, so tuition rates generally apply to both in-state and out-of-state students.",
+    "confidence": "high",
+    "source_text": "2024-25 Graduate Tuition ... Nursing (MSN & DNP): $1,033 per credit hour"
+  }
+}

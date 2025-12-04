@@ -6,12 +6,20 @@ Script to fetch QS rankings from Yocket API and update existing universities in 
 import os
 import json
 import re
+import sys
 import requests
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Set
 from difflib import SequenceMatcher
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, select, MetaData
 from sqlalchemy.exc import SQLAlchemyError
+
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+    print("Warning: pandas not available. Install it with: pip install pandas openpyxl")
 
 load_dotenv()
 
@@ -176,8 +184,69 @@ def similarity_score(name1: str, name2: str) -> float:
     return seq_ratio
 
 
-def get_all_colleges_from_db(engine) -> List[Dict]:
-    """Get all colleges from the database."""
+def load_colleges_from_excel(excel_file: str = "Univs-2.xlsx", sheet_index: int = 0) -> Set[str]:
+    """Load college names from Excel file to filter which colleges to process."""
+    if not PANDAS_AVAILABLE:
+        print("Warning: pandas not available. Processing all colleges from database.")
+        return set()
+    
+    if not os.path.exists(excel_file):
+        print(f"Warning: Excel file '{excel_file}' not found. Processing all colleges from database.")
+        return set()
+    
+    try:
+        # Read the Excel file
+        excel_data = pd.ExcelFile(excel_file)
+        sheet_names = excel_data.sheet_names
+        print(f"Found Excel file with {len(sheet_names)} sheet(s): {sheet_names}")
+        
+        if sheet_index >= len(sheet_names):
+            print(f"Warning: Sheet index {sheet_index} out of range. Using first sheet.")
+            sheet_index = 0
+        
+        # Read the specified sheet
+        df = pd.read_excel(excel_file, sheet_name=sheet_index)
+        print(f"Reading from sheet: '{sheet_names[sheet_index]}'")
+        print(f"Columns in sheet: {list(df.columns)}")
+        
+        # Try to find the college name column (case-insensitive)
+        college_col = None
+        possible_names = ['College Name', 'CollegeName', 'College', 'Name', 'University Name', 'UniversityName']
+        
+        for col_name in possible_names:
+            if col_name in df.columns:
+                college_col = col_name
+                break
+        
+        # If not found, try case-insensitive match
+        if college_col is None:
+            for col in df.columns:
+                if str(col).lower() in ['college name', 'collegename', 'college', 'name', 'university name', 'universityname']:
+                    college_col = col
+                    break
+        
+        if college_col is None:
+            print(f"Warning: Could not find college name column. Available columns: {list(df.columns)}")
+            print("Using first column as college name.")
+            college_col = df.columns[0]
+        
+        # Extract college names and normalize
+        college_names = set()
+        for name in df[college_col].dropna():
+            if pd.notna(name) and str(name).strip():
+                college_names.add(str(name).strip())
+        
+        print(f"Loaded {len(college_names)} college names from Excel file")
+        return college_names
+        
+    except Exception as e:
+        print(f"Error reading Excel file: {e}")
+        print("Processing all colleges from database.")
+        return set()
+
+
+def get_all_colleges_from_db(engine, filter_colleges: Optional[Set[str]] = None) -> List[Dict]:
+    """Get all colleges from the database, optionally filtered by Excel file."""
     metadata = MetaData()
     metadata.reflect(bind=engine)
     college_table = metadata.tables.get("College")
@@ -188,10 +257,36 @@ def get_all_colleges_from_db(engine) -> List[Dict]:
     
     with engine.connect() as conn:
         result = conn.execute(select(college_table.c.CollegeID, college_table.c.CollegeName))
-        colleges = [{"CollegeID": row.CollegeID, "CollegeName": row.CollegeName} for row in result]
+        all_colleges = [{"CollegeID": row.CollegeID, "CollegeName": row.CollegeName} for row in result]
     
-    print(f"Found {len(colleges)} colleges in database")
-    return colleges
+    # Filter colleges if Excel file provided
+    if filter_colleges:
+        print(f"\nFiltering colleges from database based on Excel file...")
+        print(f"Total colleges in database: {len(all_colleges)}")
+        
+        # Create normalized set for matching
+        normalized_filter = {normalize_university_name(name) for name in filter_colleges}
+        
+        filtered_colleges = []
+        for college in all_colleges:
+            college_name = college.get("CollegeName", "")
+            if not college_name:
+                continue
+            
+            normalized_db_name = normalize_university_name(college_name)
+            
+            # Check if this college matches any in the Excel file
+            for excel_name in filter_colleges:
+                normalized_excel_name = normalize_university_name(excel_name)
+                if normalized_db_name == normalized_excel_name or similarity_score(college_name, excel_name) >= 0.8:
+                    filtered_colleges.append(college)
+                    break
+        
+        print(f"Filtered to {len(filtered_colleges)} colleges matching Excel file")
+        return filtered_colleges
+    
+    print(f"Found {len(all_colleges)} colleges in database (no filter applied)")
+    return all_colleges
 
 
 def get_programs_for_college(engine, college_id: int) -> List[Dict]:
@@ -359,6 +454,26 @@ def main():
     print("QS Ranking Update Script")
     print("=" * 60)
     
+    # Parse command line arguments for Excel file and sheet
+    excel_file = "Univs-2.xlsx"
+    sheet_index = 1  # Default to sheet 2 (index 1)
+    
+    if len(sys.argv) > 1:
+        excel_file = sys.argv[1]
+    if len(sys.argv) > 2:
+        try:
+            sheet_index = int(sys.argv[2])
+        except ValueError:
+            print(f"Warning: Invalid sheet index '{sys.argv[2]}'. Using sheet 2 (index 1).")
+            sheet_index = 1
+    
+    # Load colleges from Excel file (if available)
+    filter_colleges = None
+    if PANDAS_AVAILABLE:
+        filter_colleges = load_colleges_from_excel(excel_file, sheet_index)
+        if filter_colleges:
+            print(f"\nWill only process {len(filter_colleges)} colleges from Excel file")
+    
     # Connect to database
     connection_url = build_db_connection_url()
     if not connection_url:
@@ -393,14 +508,14 @@ def main():
         print("No universities fetched from API. Exiting.")
         return
     
-    # Get colleges from database
-    db_colleges = get_all_colleges_from_db(engine)
+    # Get colleges from database (filtered by Excel if provided)
+    db_colleges = get_all_colleges_from_db(engine, filter_colleges)
     if not db_colleges:
-        print("No colleges found in database. Exiting.")
+        print("No colleges found in database (after filtering). Exiting.")
         return
     
     # Match universities
-    matches = match_universities(api_universities, db_colleges, threshold=0.85)
+    matches = match_universities(api_universities, db_colleges, threshold=0.75)
     
     if not matches:
         print("\nNo matches found. Exiting.")

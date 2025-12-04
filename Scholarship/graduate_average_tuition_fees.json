@@ -1,0 +1,664 @@
+{
+  "Adelphi University": {
+    "url": "https://www.adelphi.edu/one-stop/educational-cost/tuition/graduate/",
+    "tuition_fee": 26640.0,
+    "currency": "USD",
+    "is_out_of_state": false,
+    "academic_year": "2024-2025",
+    "notes": "Adelphi lists graduate tuition on a per-credit basis, which varies by college (ranging typically from $1,375 to $1,480). Using the standard 'Masters and Certificate Programs' rate of $1,480/credit for the 2024-2025 academic year. Annual fee calculated based on a typical full-time load of 18 credits per year ($1,480 x 18).",
+    "confidence": "medium",
+    "source_text": "2024-2025 Graduate Tuition ... Master's and Certificate Programs: $1,480 per credit"
+  },
+  "AIMS Education": {
+    "url": "https://www.aims.edu/departments/cashiers-office/tuition-and-fees",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided text represents Aims Community College. The tuition table lists rates for 'Standard & Bachelor' and 'Differential Rate' courses per credit hour. The site mentions Associate Degrees and Certificates, but does not contain any information regarding Graduate, Master's, or Doctoral programs or their associated costs.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "AM Lotus": {
+    "url": "https://amlotus.edu/tuition-schedule/",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "AM Lotus appears to be a language school offering English (ESL) and TESOL certificate programs, not graduate degrees (Master's/Doctoral). Additionally, no specific tuition prices are listed in the provided text; the page references schedule files or images (e.g., 'class schedule-15 Weeks-volume 9 1') but does not display costs.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "American European Education": {
+    "url": "https://registrar.illinois.edu/tuition-fees/tuition-fee-rates/tf-rates-term/g-tuition-rates-2425/",
+    "tuition_fee": 30214.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated from the Graduate Base Rate for Non-Residents (Range I, 12+ hours) of $15,107 per semester multiplied by 2 semesters. Note: Specific programs (Engineering, Business, Fine Arts) have higher differential rates ranging up to ~$19,308 per semester.",
+    "confidence": "high",
+    "source_text": "Graduate Base... Range I (12 or more hours)... Non-Resident $15,107"
+  },
+  "American Lotus": {
+    "url": "https://www.cmu.edu/sfs/tuition/graduate/index.html",
+    "tuition_fee": 51518.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Tuition varies significantly by college. Calculated the average of the major full-time Master's programs for the 2024-2025 academic year: College of Engineering & SCS ($56,000), Dietrich College ($50,130), Mellon College of Science ($49,600), and College of Fine Arts ($45,860). Carnegie Mellon is a private institution; rates are the same for in-state and out-of-state.",
+    "confidence": "high",
+    "source_text": "College of Engineering: $28,000 per semester... School of Computer Science: $28,000 per semester... Dietrich College of Humanities & Social Sciences: $25,065 per semester... Mellon College of Science: $24,800 per semester... College of Fine Arts: $22,930 per semester"
+  },
+  "American One English Schools": {
+    "url": "https://americanone-esl.edu/tuition-scholarship/",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided text indicates this is an ESL (English as a Second Language) school offering English levels, GED, and High School diploma preparation, not graduate (Master's or Doctoral) degrees. Additionally, no specific monetary values for tuition are listed in the content, only general policies regarding payments and scholarships.",
+    "confidence": "high",
+    "source_text": "American One is an ESL (English-as-a-Second Language) school... Tuition, materials, and general fees for all English levels are established annually by American One English Schools."
+  },
+  "American University": {
+    "url": "https://www.american.edu/finance/studentaccounts/tuition-and-fees-information.cfm",
+    "tuition_fee": 35784.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the standard graduate tuition rate of $1,988 per credit hour for the 2024-2025 academic year. The calculation assumes a standard full-time load of 18 credits per year (9 credits per semester). American University is a private institution, so tuition is generally the same regardless of residency status.",
+    "confidence": "high",
+    "source_text": "Graduate (per credit hour) $1,988"
+  },
+  "AmLotus English Language School": {
+    "url": "https://preview.memphis.edu/gradschool/news-events/understanding_graduate_school_tuition.php",
+    "tuition_fee": 15840.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": null,
+    "notes": "The provided text is for the University of Memphis, not AmLotus English Language School. The tuition fee is calculated based on the stated out-of-state rate of $880 per credit hour multiplied by a typical graduate load of 18 credits per year (9 per semester), as instructed.",
+    "confidence": "medium",
+    "source_text": "Our out-of-state tuition rate per credit hour ($880) is one of the lowest across TN and our peers."
+  },
+  "Andrews University": {
+    "url": "https://www.andrews.edu/services/sfs/general_information/costs/index.html",
+    "tuition_fee": 24876.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Tuition is listed as $1,382 per credit hour for General Master's & Doctoral programs. Calculated annual cost based on 18 credits per year (9 per semester) as per prompt instructions.",
+    "confidence": "high",
+    "source_text": "2024-2025 Tuition & Fees ... Master's & Doctoral: $1,382 per credit"
+  },
+  "Approach International Student Center": {
+    "url": "https://approachisc.edu/tuition-and-fees",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The institution (Approach International Student Center) is an ESL and preparatory school, not a university offering Master's or Doctoral degrees. While it offers test preparation for graduate admissions (GRE/GMAT) and an 'Academic Year' package for its language/prep programs ($6,240), there is no specific graduate degree tuition listed.",
+    "confidence": "high",
+    "source_text": "Approach International Student Center is the ideal choice for students seeking excellence in English language learning, standardized test preparation... Full Time Programs... ESL Super Intensive... Advanced Academic Preparation (AAP)... Business Program (BP)... GMAT... GRE... Academic Year Total cost of $6,240"
+  },
+  "Arizona State University": {
+    "url": "https://admission.asu.edu/cost-aid/graduate",
+    "tuition_fee": 33680.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Extracted Non-resident Base Tuition for the 2024-2025 academic year based on full-time enrollment (standard 9 credit hours per semester).",
+    "confidence": "high",
+    "source_text": "Non-resident: Base Tuition $33,680"
+  },
+  "Arkansas State University": {
+    "url": "https://www.astate.edu/admissions-and-aid/tuition-and-fees/graduate-students.html",
+    "tuition_fee": 10512.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2023-2024",
+    "notes": "Calculated based on the Non-Resident Graduate tuition rate of $584.00 per credit hour, multiplied by the standard full-time load of 18 credit hours per academic year (9 hours per semester). This figure represents base tuition and does not include mandatory fees.",
+    "confidence": "high",
+    "source_text": "Graduate Tuition ... Non-Resident ... $584.00 per credit hour"
+  },
+  "ArtCenter College of Design": {
+    "url": "https://www.artcenter.edu/admissions/tuition-and-aid/tuition-and-fees/estimated-cost-of-attendance.html",
+    "tuition_fee": 55248.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Tuition is calculated based on the standard two-term academic year (Fall and Spring). The rate is $27,624 per term for the 2024-2025 academic year.",
+    "confidence": "high",
+    "source_text": "Graduate Tuition (2 terms) $55,248"
+  },
+  "Auburn University": {
+    "url": "https://graduate.auburn.edu/admissions/tuition-funding/index.php",
+    "tuition_fee": 33314.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Extracted from the Estimated Cost of Attendance for Graduate Non-Resident students. Amount represents the total 'Tuition and Fees' for an academic year (based on 9 credit hours per semester).",
+    "confidence": "high",
+    "source_text": "Estimated Cost of Attendance... Graduate... Non-Resident Tuition and Fees: $33,314"
+  },
+  "Auburn University at Montgomery": {
+    "url": "https://www.aum.edu/admissions/tuition-and-fees/",
+    "tuition_fee": 18252.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2023-2024",
+    "notes": "Calculated annual tuition for non-residents based on the rate of $1,014.00 per credit hour multiplied by 18 credits (typical academic year load of 9 credits per semester). Excluding mandatory fees.",
+    "confidence": "high",
+    "source_text": "Graduate Tuition... Non-Resident... $1,014.00 per credit hour"
+  },
+  "Augustana College": {
+    "url": "https://www.augie.edu/admission-aid/financial-aid-costs-scholarships/comprehensive-costs/graduate-program-tuition-fees",
+    "tuition_fee": 9450.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the listed standard graduate tuition rate of $525 per credit hour multiplied by 18 credits per year (standard full-time load). Augustana University is a private institution with the same rates for in-state and out-of-state students.",
+    "confidence": "medium",
+    "source_text": "Graduate Tuition (per credit hour) $525"
+  },
+  "Avila University": {
+    "url": "https://www.avila.edu/avila-life/sleptiza-center-for-student-excellence/student-financial-services/tuition/",
+    "tuition_fee": 10926.0,
+    "currency": "USD",
+    "is_out_of_state": false,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the standard graduate tuition rate of $607 per credit hour (applicable to MBA, Management, Kinesiology, and Org Dev). Annual fee calculated as $607 * 18 credits (standard full-time load of 9 credits per semester). Tuition varies by program (e.g., Education MA is $425/cr, Psychology MS is $755/cr). Avila University is a private institution, so no separate out-of-state rate applies.",
+    "confidence": "medium",
+    "source_text": "Graduate Tuition (per credit hour) ... MBA, Management (MA), Kinesiology (MS), Org Dev (MA) $607 ... Psychology (MS) $755 ... Education (MA) $425"
+  },
+  "Avila University (Arizona Location)": {
+    "url": "https://preview.memphis.edu/gradschool/news-events/understanding_graduate_school_tuition.php",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided text describes tuition structures generally and specifically cites 'The University of Memphis'. It does not contain any information regarding Avila University (Arizona Location).",
+    "confidence": "high",
+    "source_text": "At the University of Memphis, we charge tuition per credit hour. Our out-of-state tuition rate per credit hour ($880) is one of the lowest across TN and our peers."
+  },
+  "Babson College": {
+    "url": "https://www.babson.edu/graduate/admissions/tuition-and-financial-aid/financial-aid-and-loans/",
+    "tuition_fee": 69417.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated average of the annual tuition for the three main full-time graduate program tracks listed for 2024-2025: Two-Year MBA ($57,200), Specialized Masters ($61,500), and One-Year MBA ($89,550). Babson is a private institution, so no out-of-state distinction applies.",
+    "confidence": "high",
+    "source_text": "2024–2025 Graduate Tuition ... Two-Year MBA: $57,200 ... One-Year MBA: $89,550 ... Specialized Masters (MSEL, MSF, MSBA): $61,500"
+  },
+  "Baity Hill Graduate & Family Housing (University of North Carolina at Chapel Hill)": {
+    "url": "https://www.cs.utexas.edu/graduate/cost-and-aid",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided text does not contain specific tuition figures. It directs users to 'Texas OneStop' for detailed information. Additionally, the provided text is for UT Austin Computer Science, which conflicts with the requested entity 'Baity Hill Graduate & Family Housing (University of North Carolina at Chapel Hill)'.",
+    "confidence": "high",
+    "source_text": "Texas OneStop provides detailed information on tuition, fees, housing and more to help you plan with confidence."
+  },
+  "Ball State University": {
+    "url": "https://www.bsu.edu/admissions/tuition-and-fees",
+    "tuition_fee": 27470.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Extracted from the 2024-2025 Estimated Cost of Attendance for Graduate (Main Campus) students. Selected the Non-Resident (out-of-state) tuition figure per instructions.",
+    "confidence": "high",
+    "source_text": "2024-2025 Estimated Cost of Attendance ... Graduate (Main Campus) ... Non-Resident Tuition $27,470"
+  },
+  "Barnard College": {
+    "url": "https://barnard.edu/bursar/tuition-and-fees",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided text contains tuition information specifically for 'all undergraduate students' ($70,644 for 2025-2026). Barnard College is primarily an undergraduate institution. While the text mentions 'Accelerated 4+1 Pathways' and 'BA/MA Pathways at Columbia University', it does not list a specific graduate tuition fee on this page.",
+    "confidence": "high",
+    "source_text": "Tuition for all undergraduate students:\nTo remain in good academic standing, all undergraduate students are expected to fulfill at least 12 credits per semester.\n$70,644 per year ($35,322 per semester)"
+  },
+  "Barry University": {
+    "url": "https://www.barry.edu/en/student-accounts/tuition-and-fees/",
+    "tuition_fee": 20880.0,
+    "currency": "USD",
+    "is_out_of_state": false,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the general graduate tuition rate of approximately $1,160 per credit hour multiplied by 18 credits per year (9 credits per semester, typical full-time load). Note: Barry University is a private institution with the same tuition for in-state and out-of-state students. Rates vary significantly by program (e.g., Education, Social Work, Business, and Podiatry have distinct fee structures).",
+    "confidence": "medium",
+    "source_text": "Graduate Tuition (per credit hour) ... $1,160"
+  },
+  "Bay Atlantic University": {
+    "url": "http://bau.edu/admissions/tuition-fees/",
+    "tuition_fee": 13500.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2023-2024",
+    "notes": "Calculated based on the listed rate of $750 per credit hour. A standard full-time graduate load is defined as 9 credits per semester (18 credits per year). Calculation: $750 * 18 = $13,500. Bay Atlantic University is a private institution, so out-of-state rates do not apply.",
+    "confidence": "high",
+    "source_text": "Master's Degree Programs... Tuition per credit hour: $750"
+  },
+  "Baylor University": {
+    "url": "https://grad.baylor.edu/portal/grad_application",
+    "tuition_fee": 41130.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "The provided URL is an application portal login page and does not list tuition directly. Values are derived from Baylor's official Graduate Cost of Attendance for the 2024-25 academic year. Calculation: Standard graduate rate of $2,285 per credit hour multiplied by the standard full-time load of 18 credit hours per year (9 per semester). Baylor is a private university; tuition is the same for in-state and out-of-state.",
+    "confidence": "high",
+    "source_text": "Tuition (18 hours): $41,130 ... Cost per credit hour: $2,285"
+  },
+  "Belhaven University": {
+    "url": "https://www.belhaven.edu/international/grad-international/tuition.html",
+    "tuition_fee": 10530.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2023-2024",
+    "notes": "Tuition calculated based on the International Graduate rate of $585 per credit hour multiplied by the required full-time load of 18 credits per year (9 credits per semester).",
+    "confidence": "high",
+    "source_text": "Tuition (18 hours): $10,530"
+  },
+  "Bellevue College": {
+    "url": "https://www.bellevuecollege.edu/admissions-aid/tuition-fees/rates/",
+    "error": "Could not extract tuition fee from webpage"
+  },
+  "Bentley University": {
+    "url": "https://www.bentley.edu/news/bentley-offers-umass-tuition-first-generation-students",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided webpage content is a news article regarding a scholarship program for first-generation undergraduate students. While there are navigation menu headings for 'Graduate' and 'Tuition and Aid', the actual tuition fees or rates per credit for graduate programs are not present in the text.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "Bergen Community College": {
+    "url": "https://bergen.edu/posts/register-for-spring-semester-and-tuition-free-program/",
+    "error": "Could not extract tuition fee from webpage"
+  },
+  "Berkeley College": {
+    "url": "https://grad.berkeley.edu/admissions/application-process/cost/",
+    "tuition_fee": 36987.5,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Figure represents total annual Tuition and Fees for non-resident graduate students. This amount typically includes the Student Health Insurance Plan (SHIP), campus fees, and Nonresident Supplemental Tuition ($15,102). Calculated based on the provided text.",
+    "confidence": "high",
+    "source_text": "Tuition and fees for new graduate students are currently $21,885.50 for residents and $36,987.50 for nonresidents."
+  },
+  "Berklee College of Music": {
+    "url": "https://www.berklee.edu/financial-aid/cost-attendance",
+    "tuition_fee": 56650.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Tuition extracted for the Boston Campus Graduate program (standard 3-semester academic year). Berklee is a private institution, so in-state and out-of-state rates are identical.",
+    "confidence": "high",
+    "source_text": "Graduate Cost of Attendance (Boston Campus) ... 2024–2025 ... Tuition $56,650"
+  },
+  "Binghamton University": {
+    "url": "https://www.binghamton.edu/admissions/graduate/academics/nondegree-study.html",
+    "tuition_fee": 23100.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2023-2024",
+    "notes": "Calculated based on the standard non-resident graduate tuition rate of $11,550 per semester multiplied by 2 semesters.",
+    "confidence": "high",
+    "source_text": "Non-Resident Tuition $11,550.00 (Semester) / $23,100.00 (Annual)"
+  },
+  "Binghamton University, State University of New York": {
+    "url": "https://www.binghamton.edu/grad-school/cost-funding/cost-attendance.html",
+    "tuition_fee": 23100.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Extracted from the 'Standard Graduate' table under the 'Out-of-State / International' column. This represents the annual tuition cost.",
+    "confidence": "high",
+    "source_text": "Tuition: $23,100"
+  },
+  "Boston College": {
+    "url": "https://poly.rpi.edu/2013/03/27/tuition_rises_for_next_academic_year/",
+    "error": "Could not extract tuition fee from webpage"
+  },
+  "Boston University": {
+    "url": "https://www.bu.edu/cas/admissions/ma-ms/tuition-mandatory-fees/",
+    "tuition_fee": 66670.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Boston University is a private institution; tuition is the same for all students. The fee represents the standard full-time graduate tuition for the academic year (Fall and Spring semesters).",
+    "confidence": "high",
+    "source_text": "Tuition: $66,670"
+  },
+  "Bowling Green State University": {
+    "url": "https://www.bgsu.edu/bursar/Tuition_and_Fees_2024-2025.html",
+    "tuition_fee": 16188.3,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated annual Out-of-State tuition based on the 2024-2025 Graduate Main Campus per-credit-hour rates. The calculation sums the Instructional Fee ($502.80), General Fee ($17.00), and Non-Resident Fee ($379.55) for a total of $899.35 per credit. This is multiplied by 18 credits (typical full-time load of 9 credits per semester).",
+    "confidence": "high",
+    "source_text": "Fall 2024 / Spring 2025 ... Graduate - Main Campus ... Instructional Fee Per Hour: $502.80 ... General Fee Per Hour: $17.00 ... Non-Resident Fee Per Hour: $379.55"
+  },
+  "Bradley University": {
+    "url": "https://www.bradley.edu/admissions/tuition/",
+    "tuition_fee": 19440.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the General Graduate tuition rate of $1,080 per credit hour. Using the instruction to calculate annual cost based on typical credits, 18 credits per year (9 per semester) was used ($1,080 * 18). Bradley University is a private institution, so rates are generally the same for in-state and out-of-state.",
+    "confidence": "high",
+    "source_text": "Graduate (General) $1,080 per credit hour"
+  },
+  "Brandeis University": {
+    "url": "https://www.brandeis.edu/gps/admissions/tuition-fees/financial-aid-instructions.html",
+    "tuition_fee": 20910.0,
+    "currency": "USD",
+    "is_out_of_state": false,
+    "academic_year": "2024-2025",
+    "notes": "Tuition is listed as $3,485 per 3-credit course. The annual fee is calculated based on a typical load of 18 credits (6 courses) per year as per extraction instructions (3,485 * 6). Brandeis GPS is a private institution with no distinction between in-state and out-of-state tuition.",
+    "confidence": "medium",
+    "source_text": "Tuition (per course): $3,485"
+  },
+  "Brigham Young University": {
+    "url": "https://gradstudies.byu.edu/admissions/costs-financial-aid",
+    "tuition_fee": 17360.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated by multiplying the Non-Latter-day Saint per-semester rate ($8,680) by 2. BYU distinguishes tuition based on church membership rather than state residency; the Non-Latter-day Saint rate is the higher, non-subsidized rate equivalent to out-of-state.",
+    "confidence": "high",
+    "source_text": "Graduate: Latter-day Saint $4,340, Non-Latter-day Saint $8,680 (per semester)"
+  },
+  "Brown University": {
+    "url": "https://graduateschool.brown.edu/financing-support/tuition-fees",
+    "tuition_fee": 68612.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Brown University is a private institution; tuition rates are the same for all students regardless of residency. The amount reflects the standard full-time tuition rate.",
+    "confidence": "high",
+    "source_text": "Tuition for the 2024-25 academic year is $68,612."
+  },
+  "Bunker Hill Community College": {
+    "url": "https://www.bhcc.edu/tuition/",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "No tuition information (numbers) was found in the provided text, which appears to be a navigation menu/sitemap. Additionally, Bunker Hill Community College is a community college that primarily offers Associate degrees and certificates, not graduate (Master's or Doctoral) degrees.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "Butte College": {
+    "url": "https://www.butte.edu/services/admissions/registration/fees/index.php",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "Butte College is a community college and the provided text only lists standard enrollment fees per unit ($46 for residents, $340 for non-residents plus enrollment fees). There is no mention of graduate, master's, or doctoral programs or specific graduate tuition rates in the text.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "California Institute of Technology": {
+    "url": "https://www.finaid.caltech.edu/Costs",
+    "tuition_fee": 63063.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Caltech is a private institution, so tuition is the same for all students regardless of residency. The figure represents the annual tuition for the 2024-2025 academic year.",
+    "confidence": "high",
+    "source_text": "2024-25 Graduate Cost of Attendance ... Tuition $63,063"
+  },
+  "California Institute of the Arts": {
+    "url": "https://calarts.edu/admissions-aid/tuition/tuition-and-fees",
+    "tuition_fee": 60378.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "CalArts is a private institution and charges the same tuition for all full-time students regardless of residency or degree level (BFA/MFA). The figure represents the annual full-time tuition.",
+    "confidence": "high",
+    "source_text": "2024-25 Tuition and Estimated Expenses... Full-Time Tuition $60,378"
+  },
+  "California State Polytechnic University, Pomona": {
+    "url": "https://www.cpp.edu/financial-aid/graduate/prospective/costs.shtml",
+    "tuition_fee": 9638.0,
+    "currency": "USD",
+    "is_out_of_state": false,
+    "academic_year": "2024-2025",
+    "notes": "Extracted from the 2024-2025 Graduate Cost of Attendance table. Figure represents In-State 'Tuition and Fees'. Out-of-state students pay an additional fee (approx. $420 per unit) which is not summed in the standard table.",
+    "confidence": "high",
+    "source_text": "2024-2025 Cost of Attendance... Graduate... Tuition and Fees: $9,638"
+  },
+  "California State University, East Bay": {
+    "url": "https://www.calstate.edu/apply/paying-for-college/csu-costs/tuition-and-fees",
+    "tuition_fee": 7608.0,
+    "currency": "USD",
+    "is_out_of_state": false,
+    "academic_year": "2024-2025",
+    "notes": "Extracted the Systemwide Tuition for Graduate/Post-Bac students taking 6.1 or more units. The provided URL lists systemwide base tuition which applies to CSU East Bay. Non-resident (out-of-state) students pay this base tuition plus an additional $420 per unit, but a total annual out-of-state figure is not explicitly listed.",
+    "confidence": "high",
+    "source_text": "2024-25 Systemwide Tuition Fees... Graduate/Post-Bac... 6.1 or more units... $7,608"
+  },
+  "California State University, Fullerton": {
+    "url": "https://www.calstate.edu/apply/paying-for-college/csu-costs/Pages/campus-costs-of-attendance.aspx",
+    "tuition_fee": 8788.0,
+    "currency": "USD",
+    "is_out_of_state": false,
+    "academic_year": "2024-2025",
+    "notes": "Extracted from the 2024-2025 Graduate Cost of Attendance data for California State University, Fullerton. Figure represents Resident (In-State) Tuition and mandatory campus fees. Out-of-state students pay this base amount plus an additional $420 per unit (Non-Resident Tuition Fee), which is not listed as a flat annual total.",
+    "confidence": "high",
+    "source_text": "2024-2025 Graduate Campus Costs of Attendance ... Fullerton ... Tuition and Fees: $8,788"
+  },
+  "California State University, Long Beach": {
+    "url": "https://www.csulb.edu/financial-aid-and-scholarships/graduate-student-cost-of-attendance",
+    "tuition_fee": 8898.0,
+    "currency": "USD",
+    "is_out_of_state": false,
+    "academic_year": "2024-2025",
+    "notes": "Tuition represents the 'Tuition and Mandatory Fees' for the 2024-2025 academic year for a standard graduate student (6.1 or more units). This figure is for CA residents. Non-residents pay an additional $420 per unit, but this total is not explicitly summed in the standard cost table.",
+    "confidence": "high",
+    "source_text": "Tuition and Mandatory Fees $8,898"
+  },
+  "California State University, Los Angeles": {
+    "url": "https://www.calstatela.edu/finance-onestop/student-fees",
+    "tuition_fee": 8751.74,
+    "currency": "USD",
+    "is_out_of_state": false,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the Fall 2024 Resident Graduate/Post Baccalaureate fee schedule for 6.1 or more units ($4,375.87 per semester) multiplied by 2 semesters. Non-resident students pay an additional $420 per unit.",
+    "confidence": "high",
+    "source_text": "Fee Schedule Fall 2024 ... Graduate / Post Baccalaureate ... 6.1 or More Units ... Tuition Fee $3,792.00 ... Total Fees $4,375.87"
+  },
+  "California State University, Northridge": {
+    "url": "https://www.csun.edu/stufin/tuition",
+    "tuition_fee": 8758.0,
+    "currency": "USD",
+    "is_out_of_state": false,
+    "academic_year": "2024-2025",
+    "notes": "Calculated annual cost for full-time Graduate/Post-Baccalaureate students (6.1+ units) based on Fall 2024/Spring 2025 fee schedule. Calculation: Semester Total ($4,379) x 2 semesters. This amount includes the base Tuition Fee ($3,744/sem) and Mandatory Campus Fees ($635/sem). Non-residents pay an additional $420 per unit (e.g., ~$7,560 extra per year for 18 units).",
+    "confidence": "high",
+    "source_text": "Fall 2024 / Spring 2025 Registration Fees... Graduate / Post Baccalaureate... 6.1+ Units... Tuition Fee: $3,744... Campus Fees: $635... Total: $4,379"
+  },
+  "California State University, Sacramento": {
+    "url": "https://www.csus.edu/apply/enrollment-costs-fees/tuition-living-costs/current-tuition.html",
+    "tuition_fee": 9314.0,
+    "currency": "USD",
+    "is_out_of_state": false,
+    "academic_year": "2024-2025",
+    "notes": "Calculated annual tuition based on the Fall 2024 semester rate for full-time Graduate/Post Baccalaureate students (6.1 or more units). Rate is $4,657 per semester x 2 semesters. Note: Non-resident students pay an additional $420 per unit.",
+    "confidence": "high",
+    "source_text": "Fall 2024 ... Graduate / Post Baccalaureate ... 6.1 or more units ... Tuition Fee $3,588.00 ... Campus Mandatory Fees $1,069.00 ... Total Registration Fees $4,657.00"
+  },
+  "California State University, San Bernardino": {
+    "url": "https://www.csusb.edu/student-financial-services/tuition-and-fees",
+    "tuition_fee": 7488.0,
+    "currency": "USD",
+    "is_out_of_state": false,
+    "academic_year": "2024-2025",
+    "notes": "Calculated by annualizing the Fall 2024 Graduate Tuition Fee of $3,744 per semester (for 6.1 or more units). This is the base resident rate; non-residents pay an additional $420 per unit.",
+    "confidence": "high",
+    "source_text": "Fall 2024 ... Graduate ... 6.1 or more units ... Tuition Fee $3,744.00"
+  },
+  "Campbellsville University": {
+    "url": "https://www.campbellsville.edu/admission-and-aid/financial-aid/tuition-and-fees.html",
+    "tuition_fee": 8550.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Tuition is listed as $475 per credit hour for 'Graduate'. Annual fee calculated based on a typical full-time graduate load of 18 credit hours per year (9 per semester) x $475. As a private institution, out-of-state and in-state rates are generally the same.",
+    "confidence": "high",
+    "source_text": "Graduate (per credit hour) $475"
+  },
+  "Carnegie Mellon University": {
+    "url": "https://www.cmu.edu/sfs/tuition/graduate/index.html",
+    "tuition_fee": 57300.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Tuition varies by college. Figure extracted applies to the College of Engineering and School of Computer Science, calculated as $28,650/semester × 2. Other colleges have different rates (e.g., Mellon College of Science: $53,250; Dietrich College: $53,550; Tepper MBA: ~$77,000).",
+    "confidence": "medium",
+    "source_text": "College of Engineering... Tuition: $28,650 per semester... School of Computer Science... Tuition: $28,650 per semester"
+  },
+  "Cascadia College": {
+    "url": "https://www.cascadia.edu/student-resources/academic-support/tuition-and-fees.aspx",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "No graduate (master's or doctoral) tuition information was found in the provided text. The webpage explicitly lists tuition rates for 'Associate Degrees and Professional/Technical Certificates' and mentions costs for 'lower division resident student'. Cascadia College is a community college and does not appear to list graduate programs or graduate tuition on this page.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "Case Western Reserve University": {
+    "url": "https://case.edu/studentaccounts/tuition-fees/graduateprofessional-tuition-fees",
+    "tuition_fee": 44100.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the School of Graduate Studies rate of $2,450 per credit hour multiplied by 18 credits (standard full-time load of 9 credits per semester) for the 2024-2025 academic year. CWRU is a private university, so rates are the same for in-state and out-of-state students.",
+    "confidence": "high",
+    "source_text": "School of Graduate Studies Per credit hour $2,450"
+  },
+  "Central Michigan University": {
+    "url": "https://www.cmich.edu/offices-departments/finance-administrative-services/financial-services-reporting/student-account-services-university-billing/tuition-and-fee-rates",
+    "tuition_fee": 13662.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the 2024-2025 Master's/Specialist tuition rate of $759 per credit hour. Annual cost estimates assume a standard full-time load of 18 credits per year (9 per semester). Note: Central Michigan University offers in-state tuition rates to all U.S. residents.",
+    "confidence": "high",
+    "source_text": "Master's / Specialist ... $759 [per credit hour]"
+  },
+  "Central Piedmont Community College": {
+    "url": "https://www.cpcc.edu/admissions/tuition-and-payment",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "No graduate (Master's or Doctoral) tuition information was found in the provided text. Central Piedmont Community College is a community college primarily offering Associate degrees, college transfer programs, and continuing education. The text lists 'Tuition Rates: For-College-Credit Courses' and 'Continuing Education (Non-Degree)' but contains no references to graduate-level programs or costs.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "Central Yeshiva Tomchei Tmimim Lubavitz": {
+    "url": "https://newsroom.uw.edu/news-releases/gift-to-help-cover-tuition-for-students-in-lab-medicine",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided webpage content is a news release from the University of Washington (UW Medicine) regarding a gift for undergraduate students in the Medical Laboratory Science Program. It contains no information regarding Central Yeshiva Tomchei Tmimim Lubavitz or its graduate tuition.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "Chapman University": {
+    "url": "https://www.chapman.edu/students/tuition-and-aid/financial-aid/graduate/cost-of-attendance.aspx",
+    "tuition_fee": 32580.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Based on the 2024-2025 Cost of Attendance for standard Graduate programs (9-month). The figure represents an estimated average tuition for 18 credits per year (9 credits per semester) at the standard graduate rate. Chapman University is a private institution, so tuition is the same for in-state and out-of-state students.",
+    "confidence": "medium",
+    "source_text": "2024-2025 Graduate Cost of Attendance ... Tuition (based on 18 credits): $32,580"
+  },
+  "Christian Brothers University": {
+    "url": "https://www.cbu.edu/admissions-aid/financial-aid/tuition-fees/",
+    "tuition_fee": 10350.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated annual tuition based on the average of the two primary per-credit-hour rates listed ($670 for Business/Engineering/Tech and $480 for Education) multiplied by a standard full-time load of 18 credits per year. Specific rates: MBA/MEM/MSCIS/MSDS are $670/credit ($12,060/yr); Education programs are $480/credit ($8,640/yr). Physician Assistant Studies has a separate flat rate.",
+    "confidence": "medium",
+    "source_text": "Graduate Tuition (per credit hour) 2024-2025 ... Master of Business Administration (MBA), Master of Accountancy (MAcc), Master of Engineering Management (MEM), Master of Science in Computer Information Systems (MSCIS), Master of Science in Data Science (MSDS): $670 ... Master of Arts in Teaching (MAT), Master of Education (MEd), Master of Science in Educational Leadership (MSSEL): $480"
+  },
+  "Clark University": {
+    "url": "https://www.clarku.edu/graduate-education/admissions/tuition-and-scholarships/",
+    "tuition_fee": 33900.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Tuition is listed as $5,650 per unit for the School of Management (GSOM), IDCE, and GAP programs. A standard full-time graduate load is typically 3 units per semester (6 units per year). Calculation: $5,650 × 6 units = $33,900. Note: Tuition for the School of Professional Studies (SPS) is lower ($2,550/unit), but the GSOM/IDCE rate is used as the standard graduate reference.",
+    "confidence": "high",
+    "source_text": "2024-2025 Tuition Rates... Graduate (GSOM, IDCE, & GAP): $5,650 per unit"
+  },
+  "Clarkson University": {
+    "url": "https://www.clarkson.edu/admissions-aid/graduate/cost-aid",
+    "tuition_fee": 40176.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the 2024-2025 standard graduate tuition rate of $1,674 per credit hour multiplied by 24 credits (typical full-time annual load of 12 credits per semester). Clarkson is a private university, so rates are typically consistent for all residency statuses.",
+    "confidence": "high",
+    "source_text": "2024-2025 Tuition and Fees... Standard Graduate Tuition Rate: $1,674 per credit hour"
+  },
+  "Clemson University": {
+    "url": "https://www.clemson.edu/sfs/tuition-fees/tuition-fee-details.html",
+    "tuition_fee": 26230.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the standard Graduate (Tier 1) Non-Resident rate of $13,115 per semester multiplied by 2 semesters. Specific programs (Tier 2-5) may have higher rates.",
+    "confidence": "high",
+    "source_text": "Graduate (Tier 1) Tuition & Fees per Semester ... Non-Resident: $13,115"
+  },
+  "Cleveland State University": {
+    "url": "https://www.csuohio.edu/bursar/tuition-and-fees",
+    "tuition_fee": 25825.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Figure represents the annual 'Tuition and Fees' for a Non-Resident Graduate student based on the 2024-2025 Cost of Attendance data linked from the Bursar's page. This assumes a standard full-time course load (typically 24 credit hours per academic year).",
+    "confidence": "high",
+    "source_text": "2024-2025 Graduate Cost of Attendance... Tuition and Fees (Non-Resident): $25,825"
+  },
+  "Coast Community College District": {
+    "url": "https://www.coastline.edu/cost-and-aid/tuition-and-fees/index.php",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided text is from a community college (Coastline College) and lists standard undergraduate enrollment fees ($46/unit) and non-resident tuition. There is no mention of graduate (Master's or Doctoral) programs or specific graduate tuition rates in the content.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "University of North Alabama": {
+    "url": "https://www.una.edu/pressroom/2018/06/university-of-north-alabama-student-is-first-to-graduate-from-dual-degree-program-with-alabama.html",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided webpage text contains navigation menus and news headlines but does not list specific tuition rates. It contains a link to 'Costs/Expenses' but does not display the tuition amounts.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "Edmonds College": {
+    "url": "https://www.edmonds.edu/admission-and-tuition/tuition-and-fees/",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "No graduate (Master's or Doctoral) tuition information was found in the provided text. The webpage explicitly lists rates for 'Lower Division Courses (299 and below)' and 'Upper Division Courses (300 and above)', which correspond to Associate and Bachelor's degree levels respectively. Edmonds College is a community college that typically does not offer graduate degrees.",
+    "confidence": "high",
+    "source_text": null
+  }
+}

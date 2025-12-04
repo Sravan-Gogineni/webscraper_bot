@@ -257,12 +257,13 @@
   </head>
   <body>
     <header>
-      <h1>Webscraper Console</h1>
       <nav>
         <a href="{{ url_for('admin.admin_index') }}">Dashboard</a>
         <a href="{{ url_for('forms.university_list') }}">Universities</a>
         <a href="{{ url_for('forms.department_list') }}">Departments</a>
-        <a href="{{ url_for('forms.program_list') }}">Programs</a>
+       <!-- #<a href="{{ url_for('forms.program_list') }}">Programs</a># -->
+        <a href="{{ url_for('forms.all_programs_list') }}">All Programs</a>
+        <a href="{{ url_for('forms.yocket_programs_list') }}">Yocket Programs</a>
         <a href="{{ url_for('extract.extract_page') }}">Extract Text</a>
         <a href="{{ url_for('extract.direct_contact_page') }}">Direct Contact</a>
         <a href="{{ url_for('extract.extract_departments_page') }}">Extract Departments</a>

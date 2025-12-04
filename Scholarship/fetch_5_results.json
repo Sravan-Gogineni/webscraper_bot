@@ -1,0 +1,22 @@
+{
+  "University of New Mexico": {
+    "url": "https://grad.unm.edu/about/contact-grad.html",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided webpage content is a site map/navigation menu. While it contains links to sections titled 'Cost and Funding' and 'Funding', the actual tuition figures or fee tables are not present in the provided text.",
+    "confidence": "low",
+    "source_text": null
+  },
+  "University of North Alabama": {
+    "url": "https://www.una.edu/pressroom/2018/06/university-of-north-alabama-student-is-first-to-graduate-from-dual-degree-program-with-alabama.html",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided webpage text contains navigation menus and news headlines but does not list specific tuition rates. It contains a link to 'Costs/Expenses' but does not display the tuition amounts.",
+    "confidence": "high",
+    "source_text": null
+  }
+}

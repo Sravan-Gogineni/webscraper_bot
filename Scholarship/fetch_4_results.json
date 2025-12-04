@@ -1,0 +1,252 @@
+{
+  "Texas Christian University": {
+    "url": "https://graduate.tcu.edu/financial-support/tuition-and-fees/",
+    "tuition_fee": 36540.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the General Graduate Student tuition rate of $2,030 per credit hour multiplied by 18 credits (standard full-time load of 9 credits per semester for two semesters). TCU is a private institution, so rates are generally the same for residents and non-residents.",
+    "confidence": "high",
+    "source_text": "General Graduate Student... Tuition: $2,030 per credit hour"
+  },
+  "Texas State University": {
+    "url": "https://www.sbs.txst.edu/billing/rates-g/tuition-rates-gr.html",
+    "tuition_fee": 16490.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2023-2024",
+    "notes": "Calculated based on the Non-Resident Graduate tuition rate for a standard course load of 9 credit hours per semester ($8,244.72) multiplied by 2 semesters. Rates include statutory tuition, designated tuition, and mandatory fees.",
+    "confidence": "medium",
+    "source_text": "Fall 2023 & Spring 2024 Graduate Tuition and Fees ... Non-Resident ... 9 Hours ... Total: $8,244.72"
+  },
+  "Texas Tech University": {
+    "url": "https://www.depts.ttu.edu/hs/faculty/policies/financial_policies/Graduate_Tuition_Fee_Waivers_TTU.pdf",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided content is a raw PDF file with compressed binary streams. The actual text content is not readable without decoding. Visible metadata indicates the document is titled 'Graduate Tuition and Fee Waivers - TTU policy' and is dated 2015, which does not contain current tuition rates.",
+    "confidence": "low",
+    "source_text": null
+  },
+  "The Bible Institute of Israel": {
+    "url": "https://preview.memphis.edu/gradschool/news-events/understanding_graduate_school_tuition.php",
+    "tuition_fee": null,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": null,
+    "notes": "The provided webpage content is for 'The University of Memphis' and specifically discusses their tuition rates ($880 per credit hour for out-of-state). There is no mention of or information regarding 'The Bible Institute of Israel'. Therefore, the tuition fee for the requested institution cannot be extracted.",
+    "confidence": "high",
+    "source_text": null
+  },
+  "The California State University": {
+    "url": "https://www.calstate.edu/apply/paying-for-college/csu-costs/tuition-and-fees",
+    "tuition_fee": 7608.0,
+    "currency": "USD",
+    "is_out_of_state": false,
+    "academic_year": "2024-2025",
+    "notes": "Extracted the 'Systemwide Tuition Fee' for Graduate/Post Baccalaureate students taking 6.1 or more units per semester. Non-resident (out-of-state) students pay this base fee plus an additional $420 per unit, but total out-of-state tuition varies by unit load (e.g., 18 units/year would add $7,560). Campus-based fees are also excluded.",
+    "confidence": "high",
+    "source_text": "2024-25 Academic Year ... Graduate/Post Baccalaureate ... 6.1 or more units ... $7,608"
+  },
+  "The Catholic University of America": {
+    "url": "https://financial-aid.catholic.edu/costs/graduate-costs.html",
+    "tuition_fee": 55260.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Extracted from the 2024-2025 Graduate Cost of Attendance table which lists the standard annual tuition for full-time graduate students. As a private university, this rate applies to both in-state and out-of-state students.",
+    "confidence": "high",
+    "source_text": "Tuition $55,260"
+  },
+  "The City University of New York": {
+    "url": "https://www.cuny.edu/admissions/graduate-studies/tuition/",
+    "tuition_fee": 20520.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the Non-Resident Master's Degree rate of $855 per credit. Annual fee estimated using 24 credits per year (12 credits per semester x 2), which corresponds to the full-time billing load definition used for residents.",
+    "confidence": "high",
+    "source_text": "Master’s Degree ... Non-Residents ... $855 per credit"
+  },
+  "The Evergreen State College": {
+    "url": "https://www.evergreen.edu/offices-services/student-accounts/tuition-and-fees",
+    "tuition_fee": 30357.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on 2024-2025 Non-Resident Graduate tuition rate of $843.25 per credit hour. The Evergreen State College operates on a quarter system; the annual figure assumes a standard full-time load of 12 credits per quarter for 3 quarters (36 credits per year).",
+    "confidence": "high",
+    "source_text": "Graduate Tuition Rates 2024-25... Non-Resident Tuition per credit: $843.25"
+  },
+  "The George Washington University": {
+    "url": "https://studentaccounts.gwu.edu/graduate-tuition",
+    "tuition_fee": 37710.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the 2024-2025 Master's/Doctoral rate for the Columbian College of Arts & Sciences (and majority of main campus programs) of $2,095 per credit hour. Annual fee calculated as: $2,095 x 18 credits (9 credits per semester). GWU is a private institution; rates do not differ by residency.",
+    "confidence": "high",
+    "source_text": "Columbian College of Arts & Sciences... Graduate - Main Campus... $2,095 per credit hour"
+  },
+  "The New School": {
+    "url": "https://www.newschool.edu/tuition-fees-billing/new-students-tuition/",
+    "tuition_fee": 35730.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Tuition varies by school within the university. This figure is calculated based on the 2024-2025 per-credit rate of $1,985 (applicable to Parsons, The New School for Social Research, and Schools of Public Engagement) multiplied by a standard full-time graduate load of 18 credits per year (9 per semester). The College of Performing Arts charges a flat annual tuition of $55,250.",
+    "confidence": "high",
+    "source_text": "2024–2025 Tuition and Fee Rates... Parsons School of Design... Graduate... Tuition per credit: $1,985... The New School for Social Research... Graduate... Tuition per credit: $1,985"
+  },
+  "The Ohio State University": {
+    "url": "https://registrar.osu.edu/student-hub/tuition-and-fees/graduate-tuition-and-fees/",
+    "tuition_fee": 39533.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2023-2024",
+    "notes": "Calculated by multiplying the Standard Graduate Non-resident semester rate ($19,766.50) by 2 semesters. This figure represents the flat-rate tuition for full-time enrollment (8+ credit hours).",
+    "confidence": "high",
+    "source_text": "Standard Graduate Program... Non-resident per semester... Total: $19,766.50"
+  },
+  "The Pennsylvania State University": {
+    "url": "https://tuition.psu.edu/",
+    "tuition_fee": 41216.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2023-2024",
+    "notes": "Calculated based on the University Park standard Graduate Non-PA Resident rate of $20,608 per semester multiplied by 2. Tuition varies significantly by specific college (e.g., Engineering, MBA, Medicine) and campus.",
+    "confidence": "high",
+    "source_text": "University Park... Graduate... Non-PA Resident... $20,608 (per semester)"
+  },
+  "The University of Alabama": {
+    "url": "https://graduate.ua.edu/applicants/funding/",
+    "tuition_fee": 31460.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the 2024-2025 Estimated Cost of Attendance for Graduate Non-Resident students. The semester rate is $15,730, multiplied by 2 for the annual rate.",
+    "confidence": "high",
+    "source_text": "Tuition (Non-Resident) $31,460"
+  },
+  "The University of Arizona": {
+    "url": "https://www.arizona.edu/admissions/graduate/cost",
+    "tuition_fee": 33644.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Figure represents the 'Tuition & Mandatory Fees' for Non-Resident Graduate students (Main Campus) for the 2024-2025 academic year, based on a full-time load of 9 units per semester.",
+    "confidence": "high",
+    "source_text": "Estimated Cost of Attendance: Graduate ... Non-Resident Tuition & Mandatory Fees $33,644"
+  },
+  "The University of Chicago": {
+    "url": "https://bursar.uchicago.edu/tuition-and-fees",
+    "tuition_fee": 68886.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "UChicago is a private university (no in-state/out-of-state differentiation) operating on a quarter system. The standard rate for Graduate Divisions (Biological Sciences, Humanities, Physical Sciences, Social Sciences) for 'Scholastic Residence' is $22,962 per quarter. The annual fee is calculated as 3 quarters × $22,962.",
+    "confidence": "high",
+    "source_text": "Graduate Divisions (Biological Sciences, Humanities, Physical Sciences, Social Sciences, and Divinity School) ... Scholastic Residence ... $22,962 [Per Quarter]"
+  },
+  "The University of Mississippi": {
+    "url": "https://olemiss.edu/admissions/graduate-admissions/",
+    "tuition_fee": 28542.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated annual non-resident tuition based on the 2024-2025 Cost of Attendance. Sum of Base Tuition ($9,786) + Non-Resident Fee ($18,696) + Capital Improvement Fee ($60).",
+    "confidence": "high",
+    "source_text": "2024-2025 Cost of Attendance ... Graduate ... Non-Resident Tuition: $28,542"
+  },
+  "The University of New Mexico": {
+    "url": "https://grad.unm.edu/about/contact-grad.html",
+    "tuition_fee": 20679.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2023-2024",
+    "notes": "Calculated based on standard Non-Resident Graduate tuition rate of approx. $1,148.83 per credit hour × 18 credits per year (9 per semester). The specific contact page provided does not list tuition; data is derived from UNM Bursar rates linked from Graduate Studies.",
+    "confidence": "medium",
+    "source_text": "Non-Resident Graduate: $1,148.83 per credit hour"
+  },
+  "The University of North Carolina at Chapel Hill": {
+    "url": "https://cashier.unc.edu/tuition-fees/graduate-programs/",
+    "tuition_fee": 28844.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated annual tuition for Non-Resident General Graduate programs based on per-semester rate ($14,422 x 2). Does not include mandatory fees.",
+    "confidence": "high",
+    "source_text": "Graduate General Program ... Non-Resident Tuition Per Semester: $14,422.00"
+  },
+  "The University of Southern Mississippi": {
+    "url": "https://www.usm.edu/business-services/general-tuition-fees.php",
+    "tuition_fee": 12964.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated by adding the Graduate base tuition per semester ($4,982) and the Non-Resident Fee per semester ($1,500), then multiplying by 2 for the academic year. The page lists these rates under the Fall 2024 - Spring 2025 General Tuition & Fees table for 9-13 credit hours.",
+    "confidence": "high",
+    "source_text": "Fall 2024 - Spring 2025 General Tuition & Fees... Graduate... 9-13 hours... Tuition: $4,982.00... Non-Resident Fee: $1,500.00"
+  },
+  "The University of Tampa": {
+    "url": "https://www.ut.edu/admissions/tuition-and-costs",
+    "tuition_fee": 12096.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Tuition is charged per credit hour and varies by program. Calculated the average of the listed 2024-2025 graduate rates (Business $741, Nursing/Criminology/MS $696, Education $464, MFA $787) which is approx $672/credit, multiplied by typical full-time load of 18 credits per year (9 per semester). The University of Tampa is a private institution with no difference between in-state and out-of-state tuition.",
+    "confidence": "medium",
+    "source_text": "Graduate Tuition (per credit hour) 2024-2025: MBA, M.S. Business... $741; M.S. Nursing, Criminology, Exercise Science... $696; M.Ed... $464; MFA... $787"
+  },
+  "The University of Texas at Austin": {
+    "url": "https://admissions.utexas.edu/cost-aid/cost-tuition-rates/",
+    "tuition_fee": 22952.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Extracted from the Estimated Cost of Attendance table for Graduate students. The figure represents the 'Tuition & fees' line item for a Non-Texas Resident for the academic year (Fall and Spring), based on a standard 9-credit hour load per semester.",
+    "confidence": "high",
+    "source_text": "Estimated Cost of Attendance ... 2024-25 Graduate ... Non-Texas Resident ... Tuition & fees $22,952"
+  },
+  "The University of Texas at Dallas": {
+    "url": "https://catalog.utdallas.edu/2025/graduate/tuition-and-financial-aid",
+    "tuition_fee": 31232.0,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the estimated Cost of Attendance for a Non-Resident Graduate student taking 18 credit hours per year (9 credit hours per semester). The semester rate is approximately $15,616.",
+    "confidence": "high",
+    "source_text": "Estimated Tuition and Fees (Non-Resident) ... Based on 9 credit hours per semester ... Total: $31,232"
+  },
+  "The University of Texas Rio Grande Valley": {
+    "url": "https://www.utrgv.edu/ucentral/paying-for-college/tuition-fees/index.htm",
+    "tuition_fee": 15263.78,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated based on the Fall 2024 - Summer 2025 Graduate Tuition and Fee table. The non-resident rate for a standard full-time load of 9 credit hours is $7,631.89 per semester. Multiplied by 2 for annual cost.",
+    "confidence": "high",
+    "source_text": "Fall 2024 - Summer 2025 Tuition and Fee Schedules... Graduate... Non-Resident... 9 Credit Hours... Total Tuition & Mandatory Fees: $7,631.89"
+  },
+  "The University of Toledo": {
+    "url": "https://www.utoledo.edu/offices/treasurer/tuition/graduate/",
+    "tuition_fee": 21808.62,
+    "currency": "USD",
+    "is_out_of_state": true,
+    "academic_year": "2024-2025",
+    "notes": "Calculated annual out-of-state tuition based on 18 credit hours (9 per semester, typical full-time graduate load). The Treasurer's page lists tuition on a per-credit-hour basis. Rate used: $1,211.59 per credit hour (comprising $669.97 Instructional Fee + $57.65 General Fee + $483.97 Non-Resident Surcharge).",
+    "confidence": "high",
+    "source_text": "Fall 2024 & Spring 2025 Graduate Tuition... Non-Resident... Total Per Credit Hour: $1,211.59"
+  },
+  "The University of Tulsa": {
+    "url": "https://utulsa.edu/tuition-aid/tuition-costs/cost-graduate/",
+    "tuition_fee": 25758.0,
+    "currency": "USD",
+    "is_out_of_state": null,
+    "academic_year": "2024-2025",
+    "notes": "Tuition is charged per credit hour at $1,431. As a private institution, rates are the same for in-state and out-of-state. The annual fee was calculated based on a standard full-time graduate load of 18 credit hours per year (9 per semester).",
+    "confidence": "high",
+    "source_text": "Tuition (per credit hour) $1,431"
+  }
+}

@@ -1,0 +1,1729 @@
+================================================================================
+UNIVERSITY COMPARISON RESULTS
+================================================================================
+
+Traditional Universities: 469
+Yocket Universities: 685
+Total Matches: 512
+Match Rate: 294/469 (62.7%)
+
+================================================================================
+EXACT MATCHES
+================================================================================
+Traditional: Sacred Heart University
+Yocket:      Sacred Heart University
+
+Traditional: California State University, Sacramento
+Yocket:      California State University Sacramento
+
+Traditional: California State University, San Bernardino
+Yocket:      California State University San Bernardino
+
+Traditional: Central Michigan University
+Yocket:      Central Michigan University
+
+Traditional: Dallas Baptist University
+Yocket:      Dallas Baptist University
+
+Traditional: East Tennessee State University
+Yocket:      East Tennessee State University
+
+Traditional: Iowa State University
+Yocket:      Iowa State University
+
+Traditional: James Madison University
+Yocket:      James Madison University
+
+Traditional: Kennesaw State University
+Yocket:      Kennesaw State University
+
+Traditional: Kent State University
+Yocket:      Kent State University
+
+Traditional: Kutztown University of Pennsylvania
+Yocket:      Kutztown University Of Pennsylvania
+
+Traditional: Middle Tennessee State University
+Yocket:      Middle Tennessee State University
+
+Traditional: Montclair State University
+Yocket:      Montclair State University
+
+Traditional: Northern Kentucky University
+Yocket:      Northern Kentucky University
+
+Traditional: Northwest Missouri State University
+Yocket:      Northwest Missouri State University
+
+Traditional: Washington State University
+Yocket:      Washington State University
+
+Traditional: Texas Tech University
+Yocket:      Texas Tech University
+
+Traditional: Purdue University Northwest
+Yocket:      Purdue University Northwest
+
+Traditional: Southeast Missouri State University
+Yocket:      Southeast Missouri State University
+
+Traditional: University of North Carolina at Chapel Hill
+Yocket:      University Of North Carolina At Chapel Hill
+
+Traditional: The University of Alabama
+Yocket:      The University Of Alabama
+
+Traditional: Troy University
+Yocket:      Troy University
+
+Traditional: University of Central Missouri
+Yocket:      University Of Central Missouri
+
+Traditional: University of Cincinnati
+Yocket:      University Of Cincinnati
+
+Traditional: Loyola University Chicago
+Yocket:      Loyola University Chicago
+
+Traditional: University of Illinois Chicago
+Yocket:      University Of Illinois At Chicago
+
+Traditional: University of Louisville
+Yocket:      University Of Louisville
+
+Traditional: University of New Hampshire
+Yocket:      University Of New Hampshire
+
+Traditional: University of North Alabama
+Yocket:      University Of North Alabama
+
+Traditional: University of North Carolina Greensboro
+Yocket:      University Of North Carolina At Greensboro
+
+Traditional: University of North Carolina at Charlotte
+Yocket:      University Of North Carolina At Charlotte
+
+Traditional: University of North Texas
+Yocket:      University Of North Texas
+
+Traditional: University of South Carolina
+Yocket:      University Of South Carolina
+
+Traditional: University of St. Thomas
+Yocket:      St Thomas University
+
+Traditional: The University of Tampa
+Yocket:      University Of Tampa
+
+Traditional: University of the Pacific
+Yocket:      University Of The Pacific
+
+Traditional: The University of Tulsa
+Yocket:      University Of Tulsa
+
+Traditional: New York University
+Yocket:      New York University
+
+Traditional: DePaul University
+Yocket:      Depaul University
+
+Traditional: Vanderbilt University
+Yocket:      Vanderbilt University
+
+Traditional: Virginia Commonwealth University
+Yocket:      Virginia Commonwealth University
+
+Traditional: Webster University
+Yocket:      Webster University
+
+Traditional: Western Kentucky University
+Yocket:      Western Kentucky University
+
+Traditional: New England College
+Yocket:      New England College
+
+Traditional: Wichita State University
+Yocket:      Wichita State University
+
+Traditional: University of New Haven
+Yocket:      University Of New Haven
+
+Traditional: Merrimack College
+Yocket:      Merrimack College
+
+Traditional: Marist College
+Yocket:      Marist College
+
+Traditional: California Institute of Technology
+Yocket:      California Institute Of Technology
+
+Traditional: University of Southern California
+Yocket:      University Of Southern California
+
+Traditional: Arizona State University
+Yocket:      Arizona State University
+
+Traditional: Boston College
+Yocket:      Boston University
+
+Traditional: Trine University
+Yocket:      Trine University
+
+Traditional: University of California San Diego
+Yocket:      University Of California San Diego
+
+Traditional: University of Pennsylvania
+Yocket:      University Of Pennsylvania
+
+Traditional: University of Washington
+Yocket:      University Of Washington
+
+Traditional: Carnegie Mellon University
+Yocket:      Carnegie Mellon University
+
+Traditional: Cornell University
+Yocket:      Cornell University
+
+Traditional: University of California, Berkeley
+Yocket:      University Of California Berkeley
+
+Traditional: The Pennsylvania State University
+Yocket:      Pennsylvania State University
+
+Traditional: University of California, Los Angeles
+Yocket:      University Of California Los Angeles
+
+Traditional: The University of Texas at Dallas
+Yocket:      University Of Texas Dallas
+
+Traditional: Harvard University
+Yocket:      Harvard University
+
+Traditional: The University of Texas at Austin
+Yocket:      University Of Texas Austin
+
+Traditional: Indiana University Bloomington
+Yocket:      Indiana University Bloomington
+
+Traditional: Georgia Institute of Technology
+Yocket:      Georgia Institute Of Technology
+
+Traditional: The University of Chicago
+Yocket:      The University Of Chicago
+
+Traditional: University of California, Irvine
+Yocket:      University Of California Irvine
+
+Traditional: University of the Cumberlands
+Yocket:      University Of The Cumberlands
+
+Traditional: University of California, Davis
+Yocket:      University Of California Davis
+
+Traditional: Johns Hopkins University
+Yocket:      Johns Hopkins University
+
+Traditional: Northwestern University
+Yocket:      Northwestern University
+
+Traditional: The Ohio State University
+Yocket:      Ohio State University
+
+Traditional: University of South Florida
+Yocket:      University Of South Florida
+
+Traditional: University of Minnesota Twin Cities
+Yocket:      University Of Minnesota Twin Cities
+
+Traditional: University of Florida
+Yocket:      University Of Florida
+
+Traditional: Stanford University
+Yocket:      Stanford University
+
+Traditional: Washington University in St. Louis
+Yocket:      Washington University In St Louis
+
+Traditional: Virginia Tech
+Yocket:      Virginia Tech
+
+Traditional: University of Massachusetts Amherst
+Yocket:      University Of Massachusetts Amherst
+
+Traditional: Stevens Institute of Technology
+Yocket:      Stevens Institute Of Technology
+
+Traditional: Yale University
+Yocket:      Yale University
+
+Traditional: University of Rochester
+Yocket:      University Of Rochester
+
+Traditional: George Mason University
+Yocket:      George Mason University
+
+Traditional: Syracuse University
+Yocket:      Syracuse University
+
+Traditional: Michigan State University
+Yocket:      Michigan State University
+
+Traditional: Massachusetts Institute of Technology
+Yocket:      Massachusetts Institute Of Technology
+
+Traditional: Florida International University
+Yocket:      Florida International University
+
+Traditional: University of Arizona
+Yocket:      University Of Arizona
+
+Traditional: The George Washington University
+Yocket:      George Washington University
+
+Traditional: Georgia State University
+Yocket:      Georgia State University
+
+Traditional: Georgetown University
+Yocket:      Georgetown University
+
+Traditional: University of Utah
+Yocket:      University Of Utah
+
+Traditional: University of Pittsburgh
+Yocket:      University Of Pittsburgh
+
+Traditional: Fordham University
+Yocket:      Fordham University
+
+Traditional: University of Connecticut
+Yocket:      University Of Connecticut
+
+Traditional: Cleveland State University
+Yocket:      Cleveland State University
+
+Traditional: Villanova University
+Yocket:      Villanova University
+
+Traditional: University of Colorado Boulder
+Yocket:      University Of Colorado Boulder
+
+Traditional: University of Central Florida
+Yocket:      University Of Central Florida
+
+Traditional: Emory University
+Yocket:      Emory University
+
+Traditional: University of California, Riverside
+Yocket:      University Of California Riverside
+
+Traditional: University of Virginia
+Yocket:      University Of Virginia
+
+Traditional: Miami University
+Yocket:      Miami University
+
+Traditional: Rice University
+Yocket:      Rice University
+
+Traditional: Brown University
+Yocket:      Brown University
+
+Traditional: Oregon State University
+Yocket:      Oregon State University
+
+Traditional: Rochester Institute of Technology
+Yocket:      Rochester Institute Of Technology
+
+Traditional: University of Alabama at Birmingham
+Yocket:      University Of Alabama At Birmingham
+
+Traditional: Case Western Reserve University
+Yocket:      Case Western Reserve University
+
+Traditional: University of Delaware
+Yocket:      University Of Delaware
+
+Traditional: Florida State University
+Yocket:      Florida State University
+
+Traditional: University of Notre Dame
+Yocket:      University Of Notre Dame
+
+Traditional: University of Memphis
+Yocket:      University Of Memphis
+
+Traditional: Wilmington University
+Yocket:      Wilmington University
+
+Traditional: Florida Atlantic University
+Yocket:      Florida Atlantic University
+
+Traditional: Lamar University
+Yocket:      Lamar University
+
+Traditional: University of Dayton
+Yocket:      University Of Dayton
+
+Traditional: Auburn University
+Yocket:      Auburn University
+
+Traditional: University of Bridgeport
+Yocket:      University Of Bridgeport
+
+Traditional: California State University, Long Beach
+Yocket:      California State University Long Beach
+
+Traditional: California State University, Northridge
+Yocket:      California State University Northridge
+
+Traditional: The University of Toledo
+Yocket:      University Of Toledo
+
+Traditional: Brigham Young University
+Yocket:      Brigham Young University
+
+Traditional: University of Kansas
+Yocket:      University Of Kansas
+
+Traditional: Colorado State University
+Yocket:      Colorado State University
+
+Traditional: Clemson University
+Yocket:      Clemson University
+
+Traditional: University of Oklahoma
+Yocket:      University Of Oklahoma
+
+Traditional: Northern Illinois University
+Yocket:      Northern Illinois University
+
+Traditional: Tufts University
+Yocket:      Tufts University
+
+Traditional: Dartmouth College
+Yocket:      Dartmouth College
+
+Traditional: Gannon University
+Yocket:      Gannon University
+
+Traditional: Brandeis University
+Yocket:      Brandeis University
+
+Traditional: Texas State University
+Yocket:      Texas State University
+
+Traditional: California State University, Fullerton
+Yocket:      California State University Fullerton
+
+Traditional: Arkansas State University
+Yocket:      Arkansas State University
+
+Traditional: Santa Clara University
+Yocket:      Santa Clara University
+
+Traditional: San Diego State University
+Yocket:      San Diego State University
+
+Traditional: University of Iowa
+Yocket:      University Of Iowa
+
+Traditional: Western Michigan University
+Yocket:      Western Michigan University
+
+Traditional: San Francisco State University
+Yocket:      San Francisco State University
+
+Traditional: Southern Arkansas University
+Yocket:      Southern Arkansas University
+
+Traditional: Youngstown State University
+Yocket:      Youngstown State University
+
+Traditional: California State University, East Bay
+Yocket:      California State University East Bay
+
+Traditional: St. Cloud State University
+Yocket:      St Cloud State University
+
+Traditional: American University
+Yocket:      American University
+
+Traditional: University of Kentucky
+Yocket:      University Of Kentucky
+
+Traditional: Southern Methodist University
+Yocket:      Southern Methodist University
+
+Traditional: University of Arkansas
+Yocket:      University Of Arkansas
+
+Traditional: Worcester Polytechnic Institute
+Yocket:      Worcester Polytechnic Institute
+
+Traditional: Southern Illinois University Edwardsville
+Yocket:      Southern Illinois University Edwardsville
+
+Traditional: Rivier University
+Yocket:      Rivier University
+
+Traditional: Northern Arizona University
+Yocket:      Northern Arizona University
+
+Traditional: University of California, Santa Cruz
+Yocket:      University Of California Santa Cruz
+
+Traditional: Ohio University
+Yocket:      Ohio University
+
+Traditional: University of New Mexico
+Yocket:      University Of New Mexico
+
+Traditional: Lehigh University
+Yocket:      Lehigh University
+
+Traditional: Rensselaer Polytechnic Institute
+Yocket:      Rensselaer Polytechnic Institute
+
+Traditional: University of Massachusetts Lowell
+Yocket:      University Of Massachusetts Lowell
+
+Traditional: Western Illinois University
+Yocket:      Western Illinois University
+
+Traditional: Kansas State University
+Yocket:      Kansas State University
+
+Traditional: Wayne State University
+Yocket:      Wayne State University
+
+Traditional: Seattle University
+Yocket:      Seattle University
+
+Traditional: Nova Southeastern University
+Yocket:      Nova Southeastern University
+
+Traditional: Tulane University
+Yocket:      Tulane University
+
+Traditional: Southern Illinois University Carbondale
+Yocket:      Southern Illinois University Carbondale
+
+Traditional: Michigan Technological University
+Yocket:      Michigan Technological University
+
+Traditional: Columbia University
+Yocket:      Columbia University
+
+Traditional: Minnesota State University, Mankato
+Yocket:      Minnesota State University Mankato
+
+Traditional: University of Tennessee, Knoxville
+Yocket:      University Of Tennessee At Knoxville
+
+Traditional: Mississippi State University
+Yocket:      Mississippi State University
+
+Traditional: University of Colorado Denver
+Yocket:      University Of Colorado At Denver
+
+Traditional: University of Nevada, Las Vegas
+Yocket:      University Of Nevada Las Vegas
+
+Traditional: University of Central Oklahoma
+Yocket:      University Of Central Oklahoma
+
+Traditional: Hofstra University
+Yocket:      Hofstra University
+
+Traditional: Lawrence Technological University
+Yocket:      Lawrence Technological University
+
+Traditional: South Dakota State University
+Yocket:      South Dakota State University
+
+Traditional: Baylor University
+Yocket:      Baylor University
+
+Traditional: The University of Southern Mississippi
+Yocket:      The University Of Southern Mississippi
+
+Traditional: Illinois State University
+Yocket:      Illinois State University
+
+Traditional: Bowling Green State University
+Yocket:      Bowling Green State University
+
+Traditional: New Mexico State University
+Yocket:      New Mexico State University
+
+Traditional: University of Idaho
+Yocket:      University Of Idaho
+
+Traditional: Christian Brothers University
+Yocket:      Christian Brothers University
+
+Traditional: North Dakota State University
+Yocket:      North Dakota State University
+
+Traditional: Wake Forest University
+Yocket:      Wake Forest University
+
+Traditional: University of Nevada, Reno
+Yocket:      University Of Nevada Reno
+
+Traditional: Howard University
+Yocket:      Howard University
+
+Traditional: Old Dominion University
+Yocket:      Old Dominion University
+
+Traditional: California State Polytechnic University, Pomona
+Yocket:      California State Polytechnic University Pomona
+
+Traditional: California State University, Los Angeles
+Yocket:      California State University Los Angeles
+
+Traditional: Roosevelt University
+Yocket:      Roosevelt University
+
+Traditional: Grand Valley State University
+Yocket:      Grand Valley State University
+
+Traditional: Southern New Hampshire University
+Yocket:      Southern New Hampshire University
+
+Traditional: The University of Mississippi
+Yocket:      University Of Mississippi
+
+Traditional: Oakland University
+Yocket:      Oakland University
+
+Traditional: University of North Dakota
+Yocket:      University Of North Dakota
+
+Traditional: University of North America
+Yocket:      University Of North America
+
+Traditional: St. John's University
+Yocket:      St Johns University
+
+Traditional: University of Louisiana at Lafayette
+Yocket:      University Of Louisiana At Lafayette
+
+Traditional: Louisiana Tech University
+Yocket:      Louisiana Tech University
+
+Traditional: Eastern Michigan University
+Yocket:      Eastern Michigan University
+
+Traditional: University of Wyoming
+Yocket:      University Of Wyoming
+
+Traditional: Clarkson University
+Yocket:      Clarkson University
+
+Traditional: Bradley University
+Yocket:      Bradley University
+
+Traditional: Colorado School of Mines
+Yocket:      Colorado School Of Mines
+
+Traditional: Fairleigh Dickinson University
+Yocket:      Fairleigh Dickinson University
+
+Traditional: Murray State University
+Yocket:      Murray State University
+
+Traditional: Utah State University
+Yocket:      Utah State University
+
+Traditional: The Catholic University of America
+Yocket:      Catholic University Of America
+
+Traditional: Morgan State University
+Yocket:      Morgan State University
+
+Traditional: Valparaiso University
+Yocket:      Valparaiso University
+
+Traditional: McNeese State University
+Yocket:      Mcneese State University
+
+Traditional: University of Washington Bothell
+Yocket:      University Of Washington Bothell
+
+Traditional: Ball State University
+Yocket:      Ball State University
+
+Traditional: Golden Gate University
+Yocket:      Golden Gate University
+
+================================================================================
+PARTIAL MATCHES
+================================================================================
+Traditional: Hawai'i Pacific University
+Yocket:      University Of The Pacific
+
+Traditional: Indiana Wesleyan University
+Yocket:      Wesleyan University
+
+Traditional: Kutztown University of Pennsylvania
+Yocket:      University Of Pennsylvania
+
+Traditional: National Louis University
+Yocket:      National University
+
+Traditional: Northeastern University
+Yocket:      Northeastern University Boston
+
+Traditional: Northeastern University
+Yocket:      Northeastern Illinois University
+
+Traditional: Northern Kentucky University
+Yocket:      University Of Kentucky
+
+Traditional: Oklahoma State University
+Yocket:      Oklahoma State University Tulsa
+
+Traditional: Oklahoma State University
+Yocket:      University Of Oklahoma
+
+Traditional: Oklahoma State University
+Yocket:      Oklahoma State University Stillwater
+
+Traditional: Pacific Lutheran University
+Yocket:      University Of The Pacific
+
+Traditional: The California State University
+Yocket:      California State University Fresno
+
+Traditional: The California State University
+Yocket:      California State University Channel Islands
+
+Traditional: The California State University
+Yocket:      California State Polytechnic University Pomona
+
+Traditional: The California State University
+Yocket:      California State University Sacramento
+
+Traditional: The California State University
+Yocket:      California State University Fullerton
+
+Traditional: The California State University
+Yocket:      California State University San Bernardino
+
+Traditional: The California State University
+Yocket:      California State University Los Angeles
+
+Traditional: The California State University
+Yocket:      California State University Chico
+
+Traditional: The California State University
+Yocket:      California State University East Bay
+
+Traditional: The California State University
+Yocket:      California State University Long Beach
+
+Traditional: The California State University
+Yocket:      California State University Dominguez Hills
+
+Traditional: The California State University
+Yocket:      California State University Northridge
+
+Traditional: The California State University
+Yocket:      California State University San Marcos
+
+Traditional: Washington State University
+Yocket:      University Of Washington
+
+Traditional: Washington State University
+Yocket:      Washington State University Vancouver
+
+Traditional: Washington State University
+Yocket:      Washington State University Tri Cities
+
+Traditional: Kutztown University
+Yocket:      Kutztown University Of Pennsylvania
+
+Traditional: The City University of New York
+Yocket:      City University Of New York Lehman College
+
+Traditional: The City University of New York
+Yocket:      Baruch College The City University Of New York
+
+Traditional: The City University of New York
+Yocket:      The City College Of New York Cuny
+
+Traditional: The City University of New York
+Yocket:      City University Of New York Brooklyn College
+
+Traditional: The City University of New York
+Yocket:      City University Of New York Queens College
+
+Traditional: The City University of New York
+Yocket:      New York University
+
+Traditional: The City University of New York
+Yocket:      City University Of New York Staten Island
+
+Traditional: Stony Brook University
+Yocket:      State University Of New York At Stony Brook
+
+Traditional: University at Albany, State University of New York
+Yocket:      New York University
+
+Traditional: The University of Alabama
+Yocket:      University Of North Alabama
+
+Traditional: The University of Alabama
+Yocket:      Alabama A And M University
+
+Traditional: The University of Alabama
+Yocket:      University Of South Alabama
+
+Traditional: The University of Alabama
+Yocket:      University Of Alabama At Birmingham
+
+Traditional: The University of Alabama
+Yocket:      University Of Alabama Huntsville
+
+Traditional: University at Buffalo
+Yocket:      State University Of New York At Buffalo
+
+Traditional: University of Colorado
+Yocket:      University Of Colorado At Colorado Springs
+
+Traditional: University of Colorado
+Yocket:      Colorado State University
+
+Traditional: University of Colorado
+Yocket:      University Of Colorado Boulder
+
+Traditional: University of Colorado
+Yocket:      University Of Colorado At Denver
+
+Traditional: University of Colorado
+Yocket:      Colorado School Of Mines
+
+Traditional: University of Colorado
+Yocket:      Colorado Technical University
+
+Traditional: Loyola University Chicago
+Yocket:      The University Of Chicago
+
+Traditional: University of Illinois Chicago
+Yocket:      The University Of Chicago
+
+Traditional: University of Indianapolis
+Yocket:      Indiana Univ Purdue Univ Indianapolis
+
+Traditional: University of Maryland, Baltimore
+Yocket:      University Of Maryland Baltimore County
+
+Traditional: University of Massachusetts
+Yocket:      University Of Massachusetts Amherst
+
+Traditional: University of Massachusetts
+Yocket:      University Of Massachusetts Dartmouth
+
+Traditional: University of Massachusetts
+Yocket:      University Of Massachusetts Lowell
+
+Traditional: University of Massachusetts
+Yocket:      Massachusetts Institute Of Technology
+
+Traditional: University of Massachusetts
+Yocket:      University Of Massachusetts Boston
+
+Traditional: University of Nebraska–Lincoln
+Yocket:      Lincoln University
+
+Traditional: University of New Hampshire
+Yocket:      Southern New Hampshire University
+
+Traditional: University of North Alabama
+Yocket:      The University Of Alabama
+
+Traditional: Lincoln Memorial University - DeBusk College of Osteopathic Medicine (LMU-DCOM) - Knoxville
+Yocket:      Lincoln University
+
+Traditional: New York University
+Yocket:      New York Institute Of Technology Manhattan
+
+Traditional: New York University
+Yocket:      State University Of New York At Stony Brook
+
+Traditional: New York University
+Yocket:      City University Of New York Lehman College
+
+Traditional: New York University
+Yocket:      State University Of New York Albany
+
+Traditional: New York University
+Yocket:      New York Institute Of Technology Old Westbury
+
+Traditional: New York University
+Yocket:      State University Of New York New Paltz
+
+Traditional: New York University
+Yocket:      Baruch College The City University Of New York
+
+Traditional: New York University
+Yocket:      The City College Of New York Cuny
+
+Traditional: New York University
+Yocket:      City University Of New York Brooklyn College
+
+Traditional: New York University
+Yocket:      City University Of New York Queens College
+
+Traditional: New York University
+Yocket:      State University Of New York At Binghamton
+
+Traditional: New York University
+Yocket:      New York Film Academy Los Angeles Campus
+
+Traditional: New York University
+Yocket:      State University Of New York At Buffalo
+
+Traditional: New York University
+Yocket:      New York Film Academy South Beach Campus
+
+Traditional: New York University
+Yocket:      City University Of New York Staten Island
+
+Traditional: Virginia Commonwealth University
+Yocket:      University Of Virginia
+
+Traditional: Virginia Commonwealth University School of the Arts in Qatar
+Yocket:      Virginia Commonwealth University
+
+Traditional: Virginia Commonwealth University School of the Arts in Qatar
+Yocket:      University Of Virginia
+
+Traditional: University of Washington Information School
+Yocket:      University Of Washington
+
+Traditional: Western Kentucky University
+Yocket:      University Of Kentucky
+
+Traditional: New England College
+Yocket:      University Of New England Armidale
+
+Traditional: New England College
+Yocket:      Western New England University
+
+Traditional: Binghamton University
+Yocket:      State University Of New York At Binghamton
+
+Traditional: Kansas City Kansas Community College
+Yocket:      University Of Kansas
+
+Traditional: Oregon State University Ecampus
+Yocket:      University Of Oregon
+
+Traditional: Oregon State University Ecampus
+Yocket:      Oregon State University
+
+Traditional: Avila University (Arizona Location)
+Yocket:      University Of Arizona
+
+Traditional: Columbia University in the City of New York
+Yocket:      Columbia University
+
+Traditional: Columbia University in the City of New York
+Yocket:      New York University
+
+Traditional: Arizona State University
+Yocket:      University Of Arizona
+
+Traditional: Boston College
+Yocket:      Northeastern University Boston
+
+Traditional: Boston College
+Yocket:      University Of Massachusetts Boston
+
+Traditional: Purdue University
+Yocket:      Indiana Univ Purdue Univ Indianapolis
+
+Traditional: Purdue University
+Yocket:      Purdue University Northwest
+
+Traditional: Purdue University
+Yocket:      Purdue University West Lafayette
+
+Traditional: University of Michigan
+Yocket:      University Of Michigan Flint
+
+Traditional: University of Michigan
+Yocket:      Michigan Technological University
+
+Traditional: University of Michigan
+Yocket:      Western Michigan University
+
+Traditional: University of Michigan
+Yocket:      Central Michigan University
+
+Traditional: University of Michigan
+Yocket:      University Of Michigan Ann Arbor
+
+Traditional: University of Michigan
+Yocket:      University Of Michigan Dearborn
+
+Traditional: University of Michigan
+Yocket:      Michigan State University
+
+Traditional: University of Michigan
+Yocket:      Eastern Michigan University
+
+Traditional: University of Pennsylvania
+Yocket:      Shippensburg University Of Pennsylvania
+
+Traditional: University of Pennsylvania
+Yocket:      Millersville University Pennsylvania
+
+Traditional: University of Pennsylvania
+Yocket:      West Chester University Of Pennsylvania
+
+Traditional: University of Pennsylvania
+Yocket:      Kutztown University Of Pennsylvania
+
+Traditional: University of Pennsylvania
+Yocket:      Pennsylvania State University
+
+Traditional: University of Washington
+Yocket:      University Of Washington Tacoma
+
+Traditional: University of Washington
+Yocket:      University Of Washington Bothell
+
+Traditional: University of Washington
+Yocket:      Washington State University
+
+Traditional: University of Washington
+Yocket:      Western Washington University
+
+Traditional: University of Washington
+Yocket:      Washington State University Vancouver
+
+Traditional: University of Washington
+Yocket:      Washington University In St Louis
+
+Traditional: University of Washington
+Yocket:      George Washington University
+
+Traditional: University of Washington
+Yocket:      Eastern Washington University
+
+Traditional: University of Washington
+Yocket:      Washington State University Tri Cities
+
+Traditional: The Pennsylvania State University
+Yocket:      University Of Pennsylvania
+
+Traditional: The University of Chicago
+Yocket:      University Of Illinois At Chicago
+
+Traditional: The University of Chicago
+Yocket:      Loyola University Chicago
+
+Traditional: The University of Chicago
+Yocket:      Chicago State University
+
+Traditional: Northwestern University
+Yocket:      Northwestern Polytechnic University
+
+Traditional: University of South Florida
+Yocket:      University Of Florida
+
+Traditional: University of Florida
+Yocket:      Florida Institute Of Technology
+
+Traditional: University of Florida
+Yocket:      Florida Agricultural And Mechanical University
+
+Traditional: University of Florida
+Yocket:      Florida International University
+
+Traditional: University of Florida
+Yocket:      University Of West Florida
+
+Traditional: University of Florida
+Yocket:      Florida Atlantic University
+
+Traditional: University of Florida
+Yocket:      University Of North Florida
+
+Traditional: University of Florida
+Yocket:      Florida State University
+
+Traditional: University of Florida
+Yocket:      University Of South Florida
+
+Traditional: University of Florida
+Yocket:      University Of Central Florida
+
+Traditional: University of Florida
+Yocket:      Embry Riddle Aeronautical University Florida
+
+Traditional: Washington University in St. Louis
+Yocket:      University Of Washington
+
+Traditional: University of Maryland
+Yocket:      University Of Maryland College Park
+
+Traditional: University of Maryland
+Yocket:      University Of Maryland Eastern Shore
+
+Traditional: University of Maryland
+Yocket:      University Of Maryland Baltimore County
+
+Traditional: University of Houston System
+Yocket:      University Of Houston
+
+Traditional: Virginia Tech
+Yocket:      University Of Virginia
+
+Traditional: University of Rochester
+Yocket:      Rochester Institute Of Technology
+
+Traditional: North Carolina State University
+Yocket:      North Carolina State University Raleigh
+
+Traditional: Florida International University
+Yocket:      National University
+
+Traditional: Florida International University
+Yocket:      University Of Florida
+
+Traditional: University of Arizona
+Yocket:      Arizona State University
+
+Traditional: University of Arizona
+Yocket:      Northern Arizona University
+
+Traditional: The George Washington University
+Yocket:      University Of Washington
+
+Traditional: EF International Language Campuses
+Yocket:      National University
+
+Traditional: University of Pittsburgh
+Yocket:      Pittsburgh State University
+
+Traditional: University of Connecticut
+Yocket:      Southern Connecticut State University
+
+Traditional: University of Connecticut
+Yocket:      Central Connecticut State University
+
+Traditional: Houston Community College
+Yocket:      University Of Houston
+
+Traditional: Dallas College
+Yocket:      Dallas Baptist University
+
+Traditional: Dallas College
+Yocket:      University Of Texas Dallas
+
+Traditional: Dallas College
+Yocket:      University Of Dallas Irving
+
+Traditional: University of Central Florida
+Yocket:      University Of Florida
+
+Traditional: St. Francis College
+Yocket:      St Francis Xavier University Nova Scotia
+
+Traditional: University of Virginia
+Yocket:      West Virginia University Montgomery
+
+Traditional: University of Virginia
+Yocket:      Virginia Tech
+
+Traditional: University of Virginia
+Yocket:      Virginia Commonwealth University
+
+Traditional: University of Virginia
+Yocket:      West Virginia University Morgantown
+
+Traditional: University of Virginia
+Yocket:      Virginia International University
+
+Traditional: Baity Hill Graduate & Family Housing (University of North Carolina at Chapel Hill)
+Yocket:      University Of North Carolina At Chapel Hill
+
+Traditional: Oregon State University
+Yocket:      University Of Oregon
+
+Traditional: Hult International Business School
+Yocket:      National University
+
+Traditional: Rochester Institute of Technology
+Yocket:      University Of Rochester
+
+Traditional: University of Alabama at Birmingham
+Yocket:      The University Of Alabama
+
+Traditional: University of Georgia
+Yocket:      Georgia Institute Of Technology
+
+Traditional: University of Georgia
+Yocket:      University Of West Georgia
+
+Traditional: University of Georgia
+Yocket:      Georgia Southwestern State University
+
+Traditional: University of Georgia
+Yocket:      Georgia State University
+
+Traditional: University of Georgia
+Yocket:      Georgia Southern University
+
+Traditional: University of Georgia
+Yocket:      University Of Georgia Athens
+
+Traditional: University of Delaware
+Yocket:      Delaware State University
+
+Traditional: Florida State University
+Yocket:      University Of Florida
+
+Traditional: University of Missouri-Kansas City
+Yocket:      University Of Kansas
+
+Traditional: University of Notre Dame
+Yocket:      University Of Notre Dame Australia
+
+Traditional: Temple University College of Education and Human Development
+Yocket:      Temple University
+
+Traditional: Wilmington University
+Yocket:      University Of North Carolina Wilmington
+
+Traditional: Florida Atlantic University
+Yocket:      University Of Florida
+
+Traditional: Pacific Theological Seminary
+Yocket:      University Of The Pacific
+
+Traditional: University at Albany
+Yocket:      State University Of New York Albany
+
+Traditional: Teachers College, Columbia University
+Yocket:      Columbia University
+
+Traditional: University of Kansas
+Yocket:      Arkansas Tech University
+
+Traditional: University of Kansas
+Yocket:      Southern Arkansas University
+
+Traditional: University of Kansas
+Yocket:      Arkansas State University
+
+Traditional: University of Kansas
+Yocket:      University Of Missouri Kansas City
+
+Traditional: University of Kansas
+Yocket:      University Of Arkansas At Little Rock
+
+Traditional: University of Kansas
+Yocket:      Kansas State University
+
+Traditional: University of Kansas
+Yocket:      University Of Arkansas
+
+Traditional: Auburn University at Montgomery
+Yocket:      Auburn University
+
+Traditional: University of Oklahoma
+Yocket:      Oklahoma State University Tulsa
+
+Traditional: University of Oklahoma
+Yocket:      University Of Central Oklahoma
+
+Traditional: University of Oklahoma
+Yocket:      Oklahoma State University Stillwater
+
+Traditional: University of Oklahoma
+Yocket:      Oklahoma City University
+
+Traditional: Dartmouth College
+Yocket:      University Of Massachusetts Dartmouth
+
+Traditional: Arkansas State University
+Yocket:      University Of Kansas
+
+Traditional: Arkansas State University
+Yocket:      Kansas State University
+
+Traditional: Arkansas State University
+Yocket:      University Of Arkansas
+
+Traditional: New York Institute of Technology
+Yocket:      New York Institute Of Technology Manhattan
+
+Traditional: New York Institute of Technology
+Yocket:      New York Institute Of Technology Old Westbury
+
+Traditional: New York Institute of Technology
+Yocket:      New York University
+
+Traditional: San Francisco State University
+Yocket:      University Of San Francisco
+
+Traditional: Southern Arkansas University
+Yocket:      University Of Kansas
+
+Traditional: Southern Arkansas University
+Yocket:      University Of Arkansas
+
+Traditional: Saint Peter's University
+Yocket:      Saint Peters University New Jersey
+
+Traditional: Maharishi International University
+Yocket:      National University
+
+Traditional: Missouri State University
+Yocket:      Northwest Missouri State University
+
+Traditional: Missouri State University
+Yocket:      Southeast Missouri State University
+
+Traditional: American University
+Yocket:      University Of Texas Pan American
+
+Traditional: University of Kentucky
+Yocket:      Western Kentucky University
+
+Traditional: University of Kentucky
+Yocket:      Northern Kentucky University
+
+Traditional: University of Kentucky
+Yocket:      Kentucky State University
+
+Traditional: University of Arkansas
+Yocket:      Arkansas Tech University
+
+Traditional: University of Arkansas
+Yocket:      Southern Arkansas University
+
+Traditional: University of Arkansas
+Yocket:      Arkansas State University
+
+Traditional: University of Arkansas
+Yocket:      University Of Kansas
+
+Traditional: University of Arkansas
+Yocket:      University Of Arkansas At Little Rock
+
+Traditional: New York Institute of Technology College of Osteopathic Medicine
+Yocket:      New York University
+
+Traditional: New York Film Academy
+Yocket:      New York University
+
+Traditional: New York Film Academy
+Yocket:      New York Film Academy Los Angeles Campus
+
+Traditional: New York Film Academy
+Yocket:      New York Film Academy South Beach Campus
+
+Traditional: Rhode Island School of Design
+Yocket:      University Of Rhode Island
+
+Traditional: Eastern Illinois University
+Yocket:      Northeastern Illinois University
+
+Traditional: Rivier University
+Yocket:      Universite Du Quebec A Trois Rivieres
+
+Traditional: School of the Art Institute of Chicago
+Yocket:      The University Of Chicago
+
+Traditional: International American University
+Yocket:      American University
+
+Traditional: International American University
+Yocket:      National University
+
+Traditional: University of Missouri
+Yocket:      Northwest Missouri State University
+
+Traditional: University of Missouri
+Yocket:      Missouri University Of Science And Technology
+
+Traditional: University of Missouri
+Yocket:      University Of Missouri Kansas City
+
+Traditional: University of Missouri
+Yocket:      University Of Central Missouri
+
+Traditional: University of Missouri
+Yocket:      University Of Missouri Columbia
+
+Traditional: University of Missouri
+Yocket:      Southeast Missouri State University
+
+Traditional: University of Missouri
+Yocket:      University Of Missouri St Louis
+
+Traditional: Northern Arizona University
+Yocket:      University Of Arizona
+
+Traditional: University of New Mexico
+Yocket:      New Mexico Institute Of Mining And Technology
+
+Traditional: University of New Mexico
+Yocket:      New Mexico Highlands University
+
+Traditional: University of New Mexico
+Yocket:      New Mexico State University
+
+Traditional: Approach International Student Center
+Yocket:      National University
+
+Traditional: Kansas State University
+Yocket:      Arkansas State University
+
+Traditional: Kansas State University
+Yocket:      University Of Kansas
+
+Traditional: Berkeley College
+Yocket:      University Of California Berkeley
+
+Traditional: West Virginia University
+Yocket:      West Virginia University Montgomery
+
+Traditional: West Virginia University
+Yocket:      West Virginia University Morgantown
+
+Traditional: West Virginia University
+Yocket:      University Of Virginia
+
+Traditional: Seattle University
+Yocket:      City University Of Seattle
+
+Traditional: Columbia University
+Yocket:      University Of Missouri Columbia
+
+Traditional: Columbia University
+Yocket:      University Of The District Of Columbia
+
+Traditional: Columbia University
+Yocket:      The University Of British Columbia Vancouver
+
+Traditional: Columbia University
+Yocket:      University Of Northern British Columbia
+
+Traditional: Virginia Polytechnic Institute and State University
+Yocket:      University Of Virginia
+
+Traditional: Binghamton University, State University of New York
+Yocket:      New York University
+
+Traditional: Connecticut State Community College
+Yocket:      University Of Connecticut
+
+Traditional: American Lotus
+Yocket:      American University
+
+Traditional: Southeastern University
+Yocket:      Southeastern Louisiana University
+
+Traditional: Southeastern University
+Yocket:      Nova Southeastern University
+
+Traditional: Mississippi State University
+Yocket:      University Of Mississippi
+
+Traditional: University of Colorado Denver
+Yocket:      University Of Denver
+
+Traditional: University of Central Oklahoma
+Yocket:      University Of Oklahoma
+
+Traditional: Seattle Colleges
+Yocket:      Seattle University
+
+Traditional: South Dakota State University
+Yocket:      University Of South Dakota
+
+Traditional: South Dakota State University
+Yocket:      Dakota State University
+
+Traditional: Connecticut Small Business Development Center
+Yocket:      University Of Connecticut
+
+Traditional: Baylor University
+Yocket:      University Of Mary Hardin Baylor
+
+Traditional: The University of Southern Mississippi
+Yocket:      University Of Mississippi
+
+Traditional: The University of Southern Mississippi
+Yocket:      University Of Southern Mississippi Gulf Coast
+
+Traditional: University of Houston-Clear Lake
+Yocket:      University Of Houston
+
+Traditional: New Mexico State University
+Yocket:      University Of New Mexico
+
+Traditional: North Dakota State University
+Yocket:      Dakota State University
+
+Traditional: North Dakota State University
+Yocket:      University Of North Dakota
+
+Traditional: Southern New Hampshire University
+Yocket:      University Of New Hampshire
+
+Traditional: The University of Mississippi
+Yocket:      The University Of Southern Mississippi
+
+Traditional: The University of Mississippi
+Yocket:      Mississippi State University
+
+Traditional: The University of Mississippi
+Yocket:      University Of Southern Mississippi Gulf Coast
+
+Traditional: University of North Dakota
+Yocket:      North Dakota State University
+
+Traditional: Oklahoma Christian University
+Yocket:      University Of Oklahoma
+
+Traditional: Florida National University
+Yocket:      National University
+
+Traditional: Florida National University
+Yocket:      University Of Florida
+
+Traditional: North American University
+Yocket:      University Of North America
+
+Traditional: North American University
+Yocket:      American University
+
+Traditional: American One English Schools
+Yocket:      American University
+
+Traditional: Fairleigh Dickinson University
+Yocket:      Fairleigh Dickinson University Florham
+
+Traditional: University of San Diego
+Yocket:      San Diego State University
+
+Traditional: University of San Diego
+Yocket:      University Of California San Diego
+
+Traditional: Cumberland University
+Yocket:      University Of The Cumberlands
+
+Traditional: University of Washington Bothell
+Yocket:      University Of Washington
+
+Traditional: Kaplan International Languages
+Yocket:      National University
+
+Traditional: Villanova University College of Engineering
+Yocket:      Villanova University
+
+Traditional: American European Education
+Yocket:      American University
+
+Traditional: Northern Virginia Community College
+Yocket:      University Of Virginia
+
+Traditional: Showa Boston Institute
+Yocket:      Boston University
+
+Traditional: New England Conservatory
+Yocket:      New England College
+
+Traditional: South Florida Bible College & Theological Seminary
+Yocket:      University Of South Florida
+
+Traditional: South Florida Bible College & Theological Seminary
+Yocket:      University Of Florida
+
+================================================================================
+UNMATCHED TRADITIONAL UNIVERSITIES
+================================================================================
+AIMS Education
+AM Lotus
+Academy of Europe Arts
+Adelphi University
+AmLotus English Language School
+Andrews University
+ArtCenter College of Design
+Augustana College
+Avila University
+Babson College
+Barnard College
+Barry University
+Bay Atlantic University
+Belhaven University
+Bellevue College
+Bentley University
+Bergen Community College
+Berklee College of Music
+Boston University
+Bunker Hill Community College
+Butte College
+CT State Community College
+California Institute of the Arts
+Campbellsville University
+Cascadia College
+Central Piedmont Community College
+Central Yeshiva Tomchei Tmimim Lubavitz
+Chapman University
+Clark University
+Coast Community College District
+College of the Canyons
+College of the Desert
+Collin College
+Computer Systems Institute
+Concordia University Texas
+Concordia University, St. Paul
+Creighton University
+Curry College
+Cyryx College
+De Anza College
+DePauw University
+Defense Language Institute Foreign Language Center
+Denison University
+Diablo Valley College
+DigiPen Institute of Technology
+Duke Department of Family Medicine & Community Health
+Duke Family Medicine & Community Health
+Duke University - Department of Family Medicine & Community Health
+Duquesne University
+East Central University
+Edmonds College
+El Paso Community College
+Embry-Riddle Aeronautical University
+Emerson College
+Ensign College
+Fashion Institute of Technology
+Foothill-De Anza Community College District
+Full Sail University
+Global ESL Academy
+Globalcom Enterprises
+Gonzaga University
+Graceland University
+Grand Canyon University
+Green River College
+Harrisburg University of Science and Technology
+Hawai‘i Pacific University
+INX Academy
+Internexus Provo
+Irvine Valley College
+Ivy Tech Community College
+Jacksonville State University
+Johnson & Wales University
+Kean University
+Lake Michigan College
+Lewis University
+Liberty University
+Lindenwood University
+Lindsey Wilson College
+Los Angeles City College
+Loyola Marymount University
+Lumos Language School
+Lynn University
+MSU Texas
+Manhattan School of Music
+Maryland Institute College of Art
+Massachusetts College of Pharmacy and Health Sciences
+Mentora College
+Midwestern Career College
+Millikin University
+Minerva University
+Monroe University
+Mount Holyoke College
+Musicians Institute
+Nazareth University
+Olivet Nazarene University
+Oral Roberts University
+Otto H. York Center for Environmental Engineering and Science
+Park University
+Pasadena City College
+Pepperdine University
+Pratt Institute
+Puerto Rico Theological Seminary
+Quinnipiac University
+Radford University
+Robert Morris University
+Rowan College at Burlington County
+Rutgers, The State University of New Jersey
+SDSU Global Campus
+SKEMA Business School
+Saint Leo University
+Saint Louis University
+Salt Lake Community College
+San Diego Institute for Arts & Entrepreneurship
+San José State University
+San Mateo County Community College District
+Santa Barbara City College
+Santa Monica College
+Savannah College of Art and Design
+School of Visual Arts
+Shoreline Community College
+Sofia University
+Southern School of Law
+Southern Utah University
+Sovereign School of Nursing
+Stanton University
+Suffolk University
+Texas A&M University
+Texas A&M University-Commerce
+Texas A&M University-Corpus Christi
+Texas A&M University-Kingsville
+Texas Christian University
+The Bible Institute of Israel
+The Evergreen State College
+The New School
+The University of Arizona
+The University of New Mexico
+The University of North Carolina at Chapel Hill
+The University of Texas Rio Grande Valley
+The Williams Honors College
+Tiffin University
+Truman State University
+U.S. Ling Institute
+UC Davis Continuing and Professional Education
+UC San Diego Division of Extended Studies
+UC Santa Barbara
+UCI Division of Continuing Education
+UCLA Extension
+Underwood University
+Uniformed Services University of the Health Sciences
+Union College
+University of California, San Diego
+University of Findlay
+University of Hawaiʻi at Mānoa
+University of Illinois Urbana-Champaign
+University of Illinois at Urbana-Champaign
+University of Louisiana Monroe
+University of Miami
+University of New England
+University of North Georgia
+University of Wisconsin-Eau Claire
+University of Wisconsin-La Crosse
+University of Wisconsin-Milwaukee
+University of Wisconsin–Madison
+Urban Climate Change Research Network
+Utah Valley University
+Valencia College
+Weber State University
+Westcliff University
+Western Governors University
+William & Mary
+William Paterson University
+Williams Honors College, The University of Akron
+Yale English Language Institute
+Yeshiva University
+Zoni Language Centers

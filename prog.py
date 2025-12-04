@@ -1,20 +1,142 @@
 # import modules
-import pandas as pd
 from ddgs import DDGS
 import time
 import os
 import json
 from dotenv import load_dotenv
+from sqlalchemy import MetaData, create_engine, select, func
+from urllib.parse import quote_plus
 
 # Load environment variables
 load_dotenv()
 
-# Read the Excel file
-df = pd.read_excel('Univs.xlsx')
+def get_db_engine():
+    """Create database engine for standalone script (SQL Server)."""
+    server = os.getenv("DB_SERVER", "localhost,1433")
+    database = os.getenv("DB_NAME")
+    username = os.getenv("DB_USERNAME")
+    password = os.getenv("DB_PASSWORD")
+    driver = os.getenv("DB_DRIVER", "ODBC Driver 18 for SQL Server")
+    
+    if not all([database, username, password]):
+        print("⚠️  Error: Database credentials not set.")
+        print("⚠️  Please set DB_SERVER, DB_NAME, DB_USERNAME, and DB_PASSWORD in your environment.")
+        return None
+    
+    odbc_params = (
+        f"Driver={driver};"
+        f"Server={server};"
+        f"Database={database};"
+        f"UID={username};"
+        f"PWD={password};"
+        "Encrypt=no;"
+        "TrustServerCertificate=yes;"
+    )
+    
+    connection_url = f"mssql+pyodbc:///?odbc_connect={quote_plus(odbc_params)}"
+    
+    try:
+        engine = create_engine(connection_url, pool_pre_ping=True)
+        # Test connection
+        with engine.connect() as conn:
+            conn.execute(select(1))
+        return engine
+    except Exception as e:
+        print(f"⚠️  Error: Could not connect to database: {e}")
+        return None
 
-# Get the first column (by position, regardless of column name)
-# Process ALL universities
-list_of_univs = df.iloc[:, 0].tolist()
+def get_all_colleges_from_db(engine):
+    """Get all college names from the database College table."""
+    if not engine:
+        return []
+    
+    try:
+        metadata = MetaData()
+        metadata.reflect(bind=engine)
+        college_table = metadata.tables.get("College")
+        
+        if college_table is None:
+            print("⚠️  Error: College table not found in database.")
+            return []
+        
+        with engine.connect() as conn:
+            # Get all college names from the College table
+            stmt = select(college_table.c.CollegeName).order_by(college_table.c.CollegeName)
+            rows = conn.execute(stmt).fetchall()
+            # Filter out None/null values and return as list of strings
+            college_names = [str(row.CollegeName).strip() for row in rows 
+                           if row.CollegeName and str(row.CollegeName).strip() 
+                           and str(row.CollegeName).strip().lower() != 'nan']
+            return college_names
+    except Exception as e:
+        print(f"⚠️  Error fetching colleges from database: {e}")
+        import traceback
+        traceback.print_exc()
+        return []
+
+def check_college_has_programs(engine, college_name):
+    """Check if a college already has programs in the database.
+    Returns True if the college has at least one program, False otherwise."""
+    if not engine:
+        return False
+    
+    try:
+        metadata = MetaData()
+        metadata.reflect(bind=engine)
+        college_table = metadata.tables.get("College")
+        program_link_table = metadata.tables.get("ProgramDepartmentLink")
+        
+        if college_table is None or program_link_table is None:
+            return False
+        
+        with engine.connect() as conn:
+            # Find college by name (case-insensitive)
+            college_name_clean = str(college_name).strip()
+            
+            # Try to find college by exact name match (case-insensitive)
+            college_stmt = select(college_table.c.CollegeID).where(
+                func.upper(college_table.c.CollegeName) == func.upper(college_name_clean)
+            )
+            college_result = conn.execute(college_stmt).first()
+            
+            if not college_result:
+                return False
+            
+            college_id = college_result.CollegeID
+            
+            # Count how many programs this college has
+            count_stmt = select(func.count(program_link_table.c.LinkID)).where(
+                program_link_table.c.CollegeID == college_id
+            )
+            count = conn.execute(count_stmt).scalar() or 0
+            
+            return count > 0
+            
+    except Exception as e:
+        print(f"⚠️  Error checking programs for {college_name}: {e}")
+        return False
+
+# Connect to database and get college names
+print("="*80)
+print("STEP 0: CONNECTING TO DATABASE AND LOADING COLLEGE NAMES")
+print("="*80)
+
+engine = get_db_engine()
+if not engine:
+    print("❌ Cannot proceed without database connection. Exiting.")
+    exit(1)
+
+print("✓ Connected to database successfully")
+
+# Get all college names from database
+list_of_univs = get_all_colleges_from_db(engine)
+original_univ_count = len(list_of_univs)
+
+if not list_of_univs:
+    print("⚠️  No colleges found in database. Exiting.")
+    exit(1)
+
+print(f"✓ Found {original_univ_count} colleges in database")
 
 # Program URLs cache file
 PROGRAM_URLS_CACHE_FILE = 'university_program_urls_cache.json'
@@ -75,9 +197,50 @@ def search_program_url(college_name, program_type, ddgs):
     
     return program_url
 
-# Load existing program URLs from cache
+# Filter out colleges that already have programs
+print("\n" + "="*80)
+print("STEP 1: FILTERING COLLEGES WITH PROGRAMS")
 print("="*80)
-print("STEP 1: LOADING CACHED PROGRAM URLs")
+
+colleges_with_programs = set()
+skipped_count = 0
+
+print("Checking which colleges already have programs in database...")
+
+for idx, college_name in enumerate(list_of_univs, 1):
+    if college_name and str(college_name).strip() and str(college_name).strip().lower() != 'nan':
+        college_name_clean = str(college_name).strip()
+        
+        if check_college_has_programs(engine, college_name_clean):
+            colleges_with_programs.add(college_name_clean)
+            skipped_count += 1
+            if skipped_count <= 10:  # Show first 10
+                print(f"  ⏭️  [{skipped_count}] Skipping {college_name_clean}: Already has programs")
+
+if skipped_count > 10:
+    print(f"  ... and {skipped_count - 10} more colleges with programs")
+
+if colleges_with_programs:
+    print(f"\n✓ Total: {skipped_count} colleges already have programs (will skip)")
+else:
+    print("✓ No colleges with programs found. Will process all colleges.")
+
+# Filter out colleges that already have programs
+list_of_univs_filtered = []
+for college_name in list_of_univs:
+    if college_name and str(college_name).strip() and str(college_name).strip().lower() != 'nan':
+        college_name_clean = str(college_name).strip()
+        if college_name_clean not in colleges_with_programs:
+            list_of_univs_filtered.append(college_name_clean)
+
+print(f"\n✓ Filtered list: {len(list_of_univs_filtered)}/{original_univ_count} colleges to process (skipped {skipped_count} with programs)")
+
+# Update list_of_univs to the filtered version
+list_of_univs = list_of_univs_filtered
+
+# Load existing program URLs from cache
+print("\n" + "="*80)
+print("STEP 2: LOADING CACHED PROGRAM URLs")
 print("="*80)
 
 results = load_program_urls_cache()
@@ -86,7 +249,7 @@ if results:
 else:
     print(f"ℹ️  No cache file found. Will search for all program URLs.")
 
-# Initialize results dictionary with all universities from Excel
+# Initialize results dictionary with all universities from filtered list
 for college in list_of_univs:
     if college not in results:
         results[college] = {
@@ -102,7 +265,7 @@ for college in list_of_univs:
         universities_to_search.append(college)
 
 print("\n" + "="*80)
-print("STEP 2: SEARCHING FOR PROGRAM URLs")
+print("STEP 3: SEARCHING FOR PROGRAM URLs")
 print("="*80)
 
 if universities_to_search:
@@ -155,7 +318,10 @@ both_found = sum(1 for v in results.values() if v.get("Graduate Programs URL") a
 print("\n" + "="*80)
 print("SUMMARY")
 print("="*80)
-print(f"Total universities: {len(list_of_univs)}")
+print(f"Total universities in database: {original_univ_count}")
+if skipped_count > 0:
+    print(f"Skipped (already have programs): {skipped_count}")
+print(f"Universities processed: {len(list_of_univs)}")
 print(f"Graduate Programs URLs found: {grad_found}/{len(list_of_univs)}")
 print(f"Undergraduate Programs URLs found: {undergrad_found}/{len(list_of_univs)}")
 print(f"Both URLs found: {both_found}/{len(list_of_univs)}")

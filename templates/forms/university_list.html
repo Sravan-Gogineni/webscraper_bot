@@ -4,7 +4,7 @@
 <section class="card">
   <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
     <div>
-      <h2 style="margin: 0;">Universities</h2>
+      <h2 style="margin: 0;">Universities{% if total_count is defined %} <span style="font-size: 1rem; font-weight: normal; color: #666;">({{ total_count }})</span>{% endif %}</h2>
       <p style="margin: 0.25rem 0 0;">Create or edit university records, including address, contact, and statistics.</p>
     </div>
     <a
